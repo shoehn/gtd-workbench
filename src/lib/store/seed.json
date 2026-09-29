@@ -93,16 +93,36 @@
         { "id": "ideas", "text": "Be creative and courageous" } ] }
     ]
   },
-  "reviewRun": {
-    "id": "r-2026-39", "startedAt": "2026-09-26T16:30:00+02:00", "pausedMs": 0,
-    "steps": [
-      { "stepId": "collect", "doneAt": "2026-09-26T16:33:00+02:00", "note": "desk, bag, workshop bench, car" },
-      { "stepId": "zero-email", "doneAt": "2026-09-26T16:42:00+02:00", "note": "captured 6 items to inbox" },
-      { "stepId": "mind-sweep", "doneAt": "2026-09-26T16:48:00+02:00", "note": "mind sweep with the trigger list" },
-      { "stepId": "inbox-zero", "doneAt": "2026-09-26T16:48:30+02:00", "note": "14 → 0" },
-      { "stepId": "next", "doneAt": "2026-09-26T16:55:00+02:00", "note": "marked 5 done, 2 moved to someday" },
-      { "stepId": "past-cal", "openedAt": "2026-09-26T16:55:00+02:00" }
-    ],
-    "notes": "Too many @computer A-items — the grading rubric and the bench decision compete for the same two focus blocks. Decide the bench on Monday morning, rubric Tuesday."
-  }
+  "reviewRuns": [
+    {
+      "id": "r-2026-38", "startedAt": "2026-09-18T16:00:00+02:00", "finishedAt": "2026-09-18T16:45:00+02:00", "pausedMs": 0, "outcome": "finished",
+      "steps": [
+        { "stepId": "collect", "doneAt": "2026-09-18T16:02:00+02:00" },
+        { "stepId": "zero-email", "doneAt": "2026-09-18T16:08:00+02:00" },
+        { "stepId": "mind-sweep", "doneAt": "2026-09-18T16:13:00+02:00" },
+        { "stepId": "inbox-zero", "doneAt": "2026-09-18T16:17:00+02:00" },
+        { "stepId": "next", "doneAt": "2026-09-18T16:23:00+02:00" },
+        { "stepId": "past-cal", "doneAt": "2026-09-18T16:25:00+02:00" },
+        { "stepId": "future-cal", "doneAt": "2026-09-18T16:28:00+02:00" },
+        { "stepId": "waiting", "doneAt": "2026-09-18T16:32:00+02:00" },
+        { "stepId": "projects", "doneAt": "2026-09-18T16:40:00+02:00" },
+        { "stepId": "areas", "doneAt": "2026-09-18T16:42:00+02:00" },
+        { "stepId": "someday", "doneAt": "2026-09-18T16:44:00+02:00" },
+        { "stepId": "ideas", "doneAt": "2026-09-18T16:45:00+02:00" }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "r-2026-39", "startedAt": "2026-09-26T16:30:00+02:00", "pausedMs": 0,
+      "steps": [
+        { "stepId": "collect", "doneAt": "2026-09-26T16:33:00+02:00", "note": "desk, bag, workshop bench, car" },
+        { "stepId": "zero-email", "doneAt": "2026-09-26T16:42:00+02:00", "note": "captured 6 items to inbox" },
+        { "stepId": "mind-sweep", "doneAt": "2026-09-26T16:48:00+02:00", "note": "mind sweep with the trigger list" },
+        { "stepId": "inbox-zero", "doneAt": "2026-09-26T16:48:30+02:00", "note": "14 → 0" },
+        { "stepId": "next", "doneAt": "2026-09-26T16:55:00+02:00", "note": "marked 5 done, 2 moved to someday" },
+        { "stepId": "past-cal", "openedAt": "2026-09-26T16:55:00+02:00" }
+      ],
+      "notes": "Too many @computer A-items — the grading rubric and the bench decision compete for the same two focus blocks. Decide the bench on Monday morning, rubric Tuesday."
+    }
+  ]
 }

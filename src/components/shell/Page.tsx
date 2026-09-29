@@ -1,5 +1,6 @@
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
+import * as api from '@/lib/api';
 import { PhoneTabBar } from './PhoneTabBar';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -22,6 +23,7 @@ interface PageProps {
 /** App shell: sidebar + top bar from 1024 px, phone tab bar below that. */
 export async function Page({ title, meta, tools, actions, back, toolbar, flush, children }: PageProps) {
   await connection(); // the store is live state; never prerender it
+  api.abandonStaleRuns(); // an open review older than 24 h closes itself, whichever screen loads
   return (
     <div className="flex h-dvh">
       <div className="hidden lg:flex">

@@ -2,7 +2,9 @@
 // nothing derived is ever written back to the store.
 import { parse } from './capture-syntax';
 import { SeedCalendarSource, type CalendarSource } from './calendar-source';
-import type { Energy, Item, Priority, Project, Source, TimeBucket } from './model';
+import type { Energy, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Source, TimeBucket } from './model';
+import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
+import seed from './store/seed.json';
 import { store } from './store/memory';
 import type { ExternalCalendar, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
@@ -61,14 +63,14 @@ export function ageDays(item: Item): number {
   return Math.floor(ageHours(item) / 24);
 }
 
-export type ReviewBadge = 'due' | 'in progress' | null;
+export type ReviewBadge = 'due' | 'in progress' | { finishedAt: string };
 
-/** Open run → in progress; no finished run in the last 7 days → due. */
+/** Open run → in progress; else the last finished run if it is under 7 days old; else due. */
 export function reviewBadge(): ReviewBadge {
-  const run = store.getState().reviewRun;
-  if (run && !run.finishedAt && !run.outcome) return 'in progress';
-  if (!run?.finishedAt) return 'due';
-  return now().getTime() - Date.parse(run.finishedAt) >= 7 * DAY_MS ? 'due' : null;
+  if (openRun()) return 'in progress';
+  const last = lastFinishedRun();
+  if (!last?.finishedAt || now().getTime() - Date.parse(last.finishedAt) >= 7 * DAY_MS) return 'due';
+  return { finishedAt: last.finishedAt };
 }
 
 export interface NavCounts {
@@ -709,7 +711,9 @@ export function completeProject(id: string): void {
   const open = openInProject(id);
   check(open === 0, `${open} open — finish, demote or drop them first`, 'completeProject');
   store.update((s) => {
-    s.projects.find((p) => p.id === id)!.status = 'completed';
+    const p = s.projects.find((x) => x.id === id)!;
+    p.status = 'completed';
+    p.completedAt = now().toISOString();
   });
 }
 
@@ -862,6 +866,7 @@ export function dropProject(id: string): void {
     const p = s.projects.find((x) => x.id === id)!;
     p.status = 'completed';
     p.dropped = true;
+    p.completedAt = now().toISOString();
   });
 }
 
@@ -872,6 +877,7 @@ export function undropProject(id: string): void {
     if (p?.status !== 'completed' || !p.dropped) return;
     p.status = 'someday';
     delete p.dropped;
+    delete p.completedAt;
   });
 }
 
@@ -1129,4 +1135,279 @@ export function deleteTickler(id: string): void {
   store.update((s) => {
     s.tickler = s.tickler.filter((t) => t.id !== id);
   });
+}
+
+// ── Weekly Review ──────────────────────────────────────────────────────────
+
+const STALE_RUN_MS = 24 * 3_600_000;
+const DEFAULT_TEMPLATE = seed.reviewTemplate as ReviewTemplate;
+
+export interface ReviewStep {
+  id: string;
+  text: string;
+  link?: string;
+  phaseId: string;
+}
+
+export function reviewTemplate(): ReviewTemplate {
+  return store.getState().reviewTemplate;
+}
+
+/** Put the template the app ships with back (template editing comes later). */
+export function resetTemplate(): void {
+  store.update((s) => {
+    s.reviewTemplate = structuredClone(DEFAULT_TEMPLATE);
+  });
+}
+
+/** The template's steps in order, across phases. */
+export function reviewSteps(): ReviewStep[] {
+  return reviewTemplate().phases.flatMap((ph) => ph.steps.map((st) => ({ ...st, phaseId: ph.id })));
+}
+
+/** The one run in progress (no outcome yet), if any. */
+export function openRun(): ReviewRun | undefined {
+  return store.getState().reviewRuns.find((r) => !r.outcome);
+}
+
+export function lastFinishedRun(): ReviewRun | undefined {
+  return store.getState().reviewRuns.findLast((r) => r.outcome === 'finished');
+}
+
+/** The newest run that is over, finished or abandoned. */
+export function lastClosedRun(): ReviewRun | undefined {
+  return store.getState().reviewRuns.findLast((r) => !!r.outcome);
+}
+
+/** Average length of finished runs in minutes (pauses excluded); `undefined` without any. */
+export function usualReviewMinutes(): number | undefined {
+  const done = store.getState().reviewRuns.filter((r) => r.outcome === 'finished' && r.finishedAt);
+  if (!done.length) return undefined;
+  return Math.round(done.reduce((sum, r) => sum + reviewElapsedMs(r), 0) / done.length / 60_000);
+}
+
+/** Time spent on a run: start to finish (or now), minus pauses. */
+export function reviewElapsedMs(run: ReviewRun): number {
+  const end = run.finishedAt ? Date.parse(run.finishedAt) : now().getTime();
+  const paused = run.pausedMs + (run.pausedAt ? end - Date.parse(run.pausedAt) : 0);
+  return Math.max(0, end - Date.parse(run.startedAt) - paused);
+}
+
+/** Steps ticked in a run: an abandoned run was "abandoned at step n". */
+export function ticked(run: ReviewRun): number {
+  return run.steps.filter((s) => s.doneAt).length;
+}
+
+/** The step to work on: the first unticked one in template order. */
+export function currentStep(run: ReviewRun): string | undefined {
+  return reviewSteps().find((st) => !run.steps.some((s) => s.stepId === st.id && s.doneAt))?.id;
+}
+
+/** Whole minutes a ticked step took: from becoming current (else the tick before it) to its tick. */
+export function stepMinutes(run: ReviewRun, stepId: string): number | undefined {
+  const entry = run.steps.find((s) => s.stepId === stepId);
+  if (!entry?.doneAt) return undefined;
+  const end = Date.parse(entry.doneAt);
+  const before = run.steps.map((s) => (s.doneAt ? Date.parse(s.doneAt) : 0)).filter((t) => t < end);
+  const start = entry.openedAt ? Date.parse(entry.openedAt) : Math.max(Date.parse(run.startedAt), ...before);
+  const ms = end - start;
+  return ms < 60_000 ? 0 : Math.round(ms / 60_000);
+}
+
+function reviewCounters(): ReviewCounters {
+  const h = health();
+  return {
+    inbox: listInbox().length,
+    someday: store.getState().items.filter((i) => i.status === 'someday').length,
+    waitingOverdue: h.waitingOverdue,
+    stalled: h.stalled,
+  };
+}
+
+const CALENDAR_THINGS = new Set<CalendarEntry['kind']>(['appointment', 'timeblock', 'dayaction']);
+
+function calendarFigures(): CalendarFigures {
+  const day = today();
+  const count = (from: string, to: string) =>
+    landscape(from, to).filter((e) => CALENDAR_THINGS.has(e.kind) && !('projected' in e && e.projected)).length;
+  return {
+    past7: count(addDays(day, -6), day),
+    next14: count(addDays(day, 1), addDays(day, 14)),
+    deadlines14: upcomingDeadlines(14).map((d) => ({ text: d.text, day: d.day })),
+  };
+}
+
+/** Numbers from the lists the review steps link to. */
+export function reviewFacts(): ListFacts {
+  const { items } = store.getState();
+  const active = listProjects();
+  const h = health();
+  return {
+    inbox: listInbox().length,
+    next: listNext().length,
+    waiting: items.filter((i) => i.status === 'waiting').length,
+    waitingOverdue: h.waitingOverdue,
+    projects: active.length,
+    stalled: h.stalled,
+    someday: items.filter((i) => i.status === 'someday').length,
+    areas: [...new Set(active.map((p) => p.area).filter((a): a is string => !!a))],
+    calendar: calendarFigures(),
+  };
+}
+
+/** The live figure of an open step. */
+export function reviewLiveLine(stepId: string): LiveLine | undefined {
+  return liveLine(stepId, reviewFacts());
+}
+
+function requireOpenRun(scope: string): ReviewRun {
+  const run = openRun();
+  check(run, 'no review in progress', scope);
+  return run;
+}
+
+function checkStep(stepId: string, scope: string) {
+  check(reviewSteps().some((s) => s.id === stepId), `unknown step ${stepId}`, scope);
+}
+
+/** Mark a step current: remember when, and snapshot the counters its note will compare against. */
+function openIn(run: ReviewRun, stepId: string) {
+  let entry = run.steps.find((s) => s.stepId === stepId);
+  if (!entry) run.steps.push((entry = { stepId }));
+  if (entry.openedAt || entry.doneAt) return;
+  entry.openedAt = now().toISOString();
+  entry.snapshot = reviewCounters();
+}
+
+/** Start a review: one open run at a time; the first step becomes current. */
+export function startReview(): ReviewRun {
+  check(!openRun(), 'a review is already in progress', 'startReview');
+  const run: ReviewRun = { id: `r-${crypto.randomUUID()}`, startedAt: now().toISOString(), pausedMs: 0, steps: [], notes: '' };
+  const first = reviewSteps()[0];
+  if (first) openIn(run, first.id);
+  store.update((s) => {
+    s.reviewRuns.push(run);
+  });
+  return run;
+}
+
+/** A step becomes current by moving to it or following its link. Idempotent. */
+export function openStep(stepId: string): void {
+  requireOpenRun('openStep');
+  checkStep(stepId, 'openStep');
+  store.update(() => openIn(openRun()!, stepId));
+}
+
+/**
+ * Tick a step and write its measured note: the delta since it became current (or since the
+ * latest snapshot before, when it never did). The next unticked step becomes current.
+ */
+export function tickStep(stepId: string): void {
+  const run = requireOpenRun('tickStep');
+  checkStep(stepId, 'tickStep');
+  check(!run.steps.some((s) => s.stepId === stepId && s.doneAt), `step ${stepId} is already ticked`, 'tickStep');
+  const at = now();
+  const own = run.steps.find((s) => s.stepId === stepId);
+  const base = own?.snapshot
+    ? own
+    : run.steps.filter((s) => s.snapshot && s.openedAt).sort((a, b) => a.openedAt!.localeCompare(b.openedAt!)).at(-1);
+  const since = Date.parse(base?.openedAt ?? run.startedAt);
+  const { items } = store.getState();
+  store.update(() => {
+    const r = openRun()!;
+    let entry = r.steps.find((s) => s.stepId === stepId);
+    if (!entry) r.steps.push((entry = { stepId }));
+    entry.doneAt = at.toISOString();
+    entry.note = measuredNote({
+      stepId,
+      opened: base?.snapshot,
+      now: reviewCounters(),
+      captured: items.filter((i) => Date.parse(i.capturedAt) >= since).length,
+      done: items.filter((i) => i.status === 'done' && i.doneAt && Date.parse(i.doneAt) >= since).length,
+      calendar: calendarFigures(),
+      minutes: stepMinutes(r, stepId) ?? 0,
+    });
+    const next = currentStep(r);
+    if (next) openIn(r, next);
+  });
+}
+
+/** Untick a step: its note goes; it keeps when it was opened. */
+export function untickStep(stepId: string): void {
+  requireOpenRun('untickStep');
+  store.update(() => {
+    const entry = openRun()!.steps.find((s) => s.stepId === stepId);
+    if (!entry) return;
+    delete entry.doneAt;
+    delete entry.note;
+  });
+}
+
+export function pauseReview(): void {
+  check(!requireOpenRun('pauseReview').pausedAt, 'already paused', 'pauseReview');
+  store.update(() => {
+    openRun()!.pausedAt = now().toISOString();
+  });
+}
+
+function resumeIn(run: ReviewRun) {
+  if (!run.pausedAt) return;
+  run.pausedMs += Math.max(0, now().getTime() - Date.parse(run.pausedAt));
+  delete run.pausedAt;
+}
+
+export function resumeReview(): void {
+  check(requireOpenRun('resumeReview').pausedAt, 'not paused', 'resumeReview');
+  store.update(() => resumeIn(openRun()!));
+}
+
+export function setReviewNotes(notes: string): void {
+  requireOpenRun('setReviewNotes');
+  store.update(() => {
+    openRun()!.notes = notes;
+  });
+}
+
+/** Finish the review. Emptying the trash is its implicit last step. */
+export function finishReview(): void {
+  requireOpenRun('finishReview');
+  store.update(() => {
+    const run = openRun()!;
+    resumeIn(run);
+    run.finishedAt = now().toISOString();
+    run.outcome = 'finished';
+  });
+  purgeTrash();
+}
+
+/** Close open runs started 24 h ago or earlier as abandoned. Called on every page load. */
+export function abandonStaleRuns(): number {
+  const cutoff = now().getTime() - STALE_RUN_MS;
+  const stale = store.getState().reviewRuns.filter((r) => !r.outcome && Date.parse(r.startedAt) <= cutoff);
+  if (stale.length) {
+    store.update((s) => {
+      for (const r of s.reviewRuns) if (!r.outcome && Date.parse(r.startedAt) <= cutoff) r.outcome = 'abandoned';
+    });
+  }
+  return stale.length;
+}
+
+export interface WeekStats {
+  done: number;
+  captured: number;
+  completedProjects: number;
+  stalled: number;
+}
+
+/** "This week, so far": the last 7 days; stalled is the count right now. */
+export function weekStats(): WeekStats {
+  const since = now().getTime() - 7 * DAY_MS;
+  const after = (iso?: string) => !!iso && Date.parse(iso) >= since;
+  const { items, projects } = store.getState();
+  return {
+    done: items.filter((i) => i.status === 'done' && after(i.doneAt)).length,
+    captured: items.filter((i) => after(i.capturedAt)).length,
+    completedProjects: projects.filter((p) => p.status === 'completed' && !p.dropped && after(p.completedAt)).length,
+    stalled: health().stalled,
+  };
 }

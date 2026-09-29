@@ -42,7 +42,8 @@ screens; this screen attributes it.
 ## Definition of done
 
 - Seed run renders as the mockup: Get clear 4/4 with notes, Get current 1/6 with "Review
-  past calendar" current, Get creative 0/2, timer running, notes filled, tiles 19/27/1/2.
+  past calendar" current, Get creative 0/2, timer running, notes filled, tiles computed
+  from the seed (the mockup's 19/27/1/2 are illustrative; the seed gives 3/26/0/1).
 - Start a fresh run, go to `/clarify`, process one item, come back, tick "Process the
   inbox to zero": its note reads "n → n−1". Finish: sidebar shows today's date.
 - An open run with `startedAt` 25 h ago closes as abandoned on load and the start card

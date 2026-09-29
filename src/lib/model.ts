@@ -42,13 +42,17 @@ export interface Project {
   createdAt?: string;         // ISO
   createdFrom?: 'inbox' | 'projects';  // Clarify step 3, or "+ Project" (later)
   dropped?: boolean;          // completed by Drop on Someday/Maybe, not by finishing it
+  completedAt?: string;       // ISO; set when it is completed or dropped
   // derived: nextActions = items(status='next', projectId), stalled = active && nextActions.length===0
 }
 
 export interface ReviewTemplate { phases: { id: string; name: string; steps: { id: string; text: string; link?: string }[] }[] }
+/** Counters a review step snapshots when it becomes current; its note is the delta to tick time. */
+export interface ReviewCounters { inbox: number; someday: number; waitingOverdue: number; stalled: number }
 export interface ReviewRun {
   id: string; startedAt: string; finishedAt?: string; pausedMs: number;
-  steps: { stepId: string; doneAt?: string; note?: string; openedAt?: string }[];
+  pausedAt?: string;          // ISO; set while paused
+  steps: { stepId: string; doneAt?: string; note?: string; openedAt?: string; snapshot?: ReviewCounters }[];
   notes: string;
   outcome?: 'finished' | 'abandoned';
 }

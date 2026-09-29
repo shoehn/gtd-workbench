@@ -175,6 +175,25 @@ review, bins) repeat here. Everything else stays on the lists.
 - Pause exists; an abandoned review closes itself after 24 h as "abandoned at step n".
 - Review notes textarea saved with the run; "This week so far" counters.
 - Finishing a review empties the trash (implicit last step, not a checklist entry).
+- Sidebar badge: "in progress" (open run), else the date of the last finished run when it is
+  under 7 days old, else "due". One open run at a time; runs are kept as history.
+- Without an open run `/review` shows a start card: last review, step count, the usual
+  length (average of finished runs, pauses excluded) and, if the latest run was abandoned,
+  "abandoned at step n · yesterday" (n = steps ticked in it). An open run whose start is 24 h
+  or more ago is closed as abandoned on any page load.
+- The current step is the first unticked one. A step becomes current by ticking the one
+  before it, moving the cursor to it (`j k`) or following its link; at that moment the run
+  snapshots inbox, someday, overdue waiting-for and stalled counts. Ticking writes the note
+  from that snapshot (or the latest one taken before it): inbox "14 → 13"; next actions
+  "marked n done, m moved to someday"; collect / email / mind sweep / ideas "captured n items
+  to inbox"; calendars "last 7 days: n events" / "next 14 days: n events, m hard
+  deadlines"; waiting, projects, someday "overdue / stalled / someday a → b"; anything else
+  the minutes it took. Rules live in `src/lib/review-notes.ts`.
+- An open step shows a live figure from its list as a link (orange when that list needs
+  attention: overdue waiting-for, stalled projects); a phase's count turns orange then.
+  A ticked step shows its note and how long it took (from becoming current to the tick).
+- "This week, so far": items done and captured in the last 7 days, projects completed in
+  the last 7 days (dropped ones not counted), projects stalled now.
 - Parked ideas (not v1): pinned step strip on other screens, auto-tick when a linked list
   reaches its target state, inline rapid log on the mind-sweep step.
 
@@ -237,6 +256,7 @@ interface Project {
   createdAt?: string;         // ISO
   createdFrom?: 'inbox' | 'projects';  // Clarify step 3, or "+ Project" (later)
   dropped?: boolean;          // completed by Drop on Someday/Maybe, not by finishing it
+  completedAt?: string;       // ISO; when it was completed or dropped
   // derived: nextActions = items(status='next', projectId), stalled = active && nextActions.length===0
 }
 
@@ -245,9 +265,11 @@ interface Project {
 type AreaKinds = Record<string, 'work' | 'home'>;
 
 interface ReviewTemplate { phases: { id: string; name: string; steps: { id: string; text: string; link?: string }[] }[] }
+interface ReviewCounters { inbox: number; someday: number; waitingOverdue: number; stalled: number }
 interface ReviewRun {
   id: string; startedAt: string; finishedAt?: string; pausedMs: number;
-  steps: { stepId: string; doneAt?: string; note?: string; openedAt?: string }[];
+  pausedAt?: string;          // set while paused
+  steps: { stepId: string; doneAt?: string; note?: string; openedAt?: string; snapshot?: ReviewCounters }[];
   notes: string;
   outcome?: 'finished' | 'abandoned';
 }
@@ -255,7 +277,8 @@ interface ReviewRun {
 interface ExternalEvent { id: string; calendar: string; title: string; start: string; end: string; allDay: boolean }
 ```
 
-Derived, never stored: project stalled flag, inbox age, review counters, health numbers.
+Derived, never stored: project stalled flag, inbox age, "this week" review counters, health
+numbers. (A review step's `snapshot` is stored on purpose: it is the "before" of its note.)
 
 ## 6. Keyboard map (desktop)
 
@@ -266,7 +289,8 @@ action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Act
 Waiting: `j k` move in the current pane, `Tab` switch pane (only while a row cursor is
 active, `esc` drops it and Tab moves focus again), `f` follow up and `x` received (Waiting
 For), `x` activate and `⌫` drop (Someday/Maybe), `u` (or `⌘Z`) undo within 5 s.
-Review: `space` tick current step.
+Review: `space` tick the step under the cursor, `j k` move the cursor, `p` pause / resume,
+`⌘⏎` finish.
 
 ## 7. Visual system
 

@@ -33,7 +33,9 @@ export function Sidebar() {
       <NavLink href="/waiting?tab=someday" badge={c.someday} noCurrent>Someday / Maybe</NavLink>
       <NavLink href="/projects" badge="—" noCurrent>Reference</NavLink>
       <div className="grow" />
-      <NavLink href="/review" badge={review} badgeWarn boxed>Weekly Review</NavLink>
+      <NavLink href="/review" badge={typeof review === 'string' ? review : fmtDay(review.finishedAt)} badgeWarn={typeof review === 'string'} boxed>
+        Weekly Review
+      </NavLink>
     </nav>
   );
 }

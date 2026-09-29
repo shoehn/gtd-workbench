@@ -159,3 +159,43 @@ export async function deleteTicklerAction(id: string): Promise<void> {
   api.deleteTickler(id);
   revalidatePath('/', 'layout');
 }
+
+export async function startReviewAction(): Promise<void> {
+  api.startReview();
+  revalidatePath('/', 'layout');
+}
+
+export async function openStepAction(stepId: string): Promise<void> {
+  api.openStep(stepId);
+  revalidatePath('/', 'layout');
+}
+
+export async function tickStepAction(stepId: string): Promise<void> {
+  api.tickStep(stepId);
+  revalidatePath('/', 'layout');
+}
+
+export async function untickStepAction(stepId: string): Promise<void> {
+  api.untickStep(stepId);
+  revalidatePath('/', 'layout');
+}
+
+export async function pauseReviewAction(): Promise<void> {
+  api.pauseReview();
+  revalidatePath('/', 'layout');
+}
+
+export async function resumeReviewAction(): Promise<void> {
+  api.resumeReview();
+  revalidatePath('/', 'layout');
+}
+
+export async function setReviewNotesAction(notes: string): Promise<void> {
+  api.setReviewNotes(notes);
+  revalidatePath('/', 'layout');
+}
+
+export async function finishReviewAction(): Promise<void> {
+  api.finishReview();
+  revalidatePath('/', 'layout');
+}

@@ -21,7 +21,8 @@ export interface State {
   externalSyncedAt?: string;
   externalEvents: ExternalEvent[];
   reviewTemplate: ReviewTemplate;
-  reviewRun?: ReviewRun;
+  /** All review runs, oldest first; at most one is open (no `outcome`). */
+  reviewRuns: ReviewRun[];
 }
 
 /** The persistence seam: memory.ts now, sqlite.ts later. */
