@@ -1,0 +1,90 @@
+/* GTD Workbench — design tokens. The only place colors, type and radii are defined.
+   Values are taken 1:1 from the mockups in ./mockups. Map them in the Tailwind v4
+   @theme block in src/app/globals.css (see the comment block at the end) and never use raw hexes in components. */
+
+:root {
+  /* ground and surfaces */
+  --wb-ground: #eef0f3;        /* page background */
+  --wb-panel: #ffffff;         /* cards, rows, header bars */
+  --wb-rail: #e6e9ee;          /* sidebar, phone tab bar */
+  --wb-line: #d5dae1;          /* panel borders, strong dividers */
+  --wb-line-soft: #eef0f3;     /* row dividers inside a panel */
+  --wb-control: #c3c9d2;       /* button/input borders */
+  --wb-muted-bg: #e2e6ec;      /* B-priority chip, synced calendar blocks */
+
+  /* text */
+  --wb-ink: #171a1f;
+  --wb-muted: #5a6370;         /* 5.6:1 on white — meta, labels, keys */
+  --wb-disabled: #c3c9d2;      /* unstarred star, decorative only */
+
+  /* accents — one blue, orange only for "needs attention", green only for "healthy" */
+  --wb-accent: #2456c4;
+  --wb-accent-hover: #1a44a0;
+  --wb-accent-tint: #eef3fc;   /* selected row, active project row */
+  --wb-accent-ring: rgba(36, 86, 196, 0.12);
+  --wb-warn: #b8560f;          /* overdue, stalled, deadlines, inbox age ≥3d, A-priority chip */
+  --wb-warn-tint: #fdf4ec;     /* overdue waiting-for row */
+  --wb-ok: #1f7a5c;            /* has-next-action dot, completed counters */
+
+  /* type */
+  --wb-font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --wb-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --wb-text-body: 13px;        /* desktop */
+  --wb-text-body-phone: 15px;
+  --wb-text-meta: 11px;        /* mono meta: counts, dates, keys */
+  --wb-text-label: 10px;       /* mono, letter-spacing 0.1em, uppercase section labels */
+  --wb-text-title: 14px;       /* screen h1 desktop */
+  --wb-text-title-phone: 20px;
+  --wb-text-detail-h2: 20px;   /* project title in detail */
+  --wb-tracking-label: 0.1em;
+  --wb-leading: 1.4;
+
+  /* shape and space */
+  --wb-radius: 3px;
+  --wb-radius-chip: 2px;
+  --wb-sidebar-w: 224px;
+  --wb-topbar-h: 48px;
+  --wb-tabbar-h: 84px;         /* phone, includes 24px safe-area padding */
+  --wb-row-pad-y: 8px;
+  --wb-row-pad-x: 12px;
+  --wb-panel-gap: 12px;
+  --wb-page-pad: 16px 20px;
+  --wb-hit-desktop: 26px;      /* small buttons */
+  --wb-hit-input: 30px;        /* inputs, primary buttons desktop */
+  --wb-hit-phone: 44px;
+}
+
+/* Dark theme: tokens are prepared, no UI switch in v1. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="dark"] {
+    --wb-ground: #15171b; --wb-panel: #1e2126; --wb-rail: #191c21; --wb-line: #2c3037;
+    --wb-line-soft: #24272d; --wb-control: #3a3f48; --wb-muted-bg: #2a2e35;
+    --wb-ink: #e8eaee; --wb-muted: #9aa3ae; --wb-disabled: #3a3f48;
+    --wb-accent: #7ea2ff; --wb-accent-hover: #9db8ff; --wb-accent-tint: #1d2740;
+    --wb-warn: #e08a3c; --wb-warn-tint: #2e2218; --wb-ok: #4fb08a;
+  }
+}
+
+/* Google Fonts link for layout.tsx (or use next/font/google with the same families):
+   https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap
+*/
+
+/* Tailwind v4 mapping — paste into src/app/globals.css after the tokens import:
+@theme inline {
+  --color-ground: var(--wb-ground);   --color-panel: var(--wb-panel);   --color-rail: var(--wb-rail);
+  --color-line: var(--wb-line);       --color-line-soft: var(--wb-line-soft);
+  --color-control: var(--wb-control); --color-muted-bg: var(--wb-muted-bg);
+  --color-ink: var(--wb-ink);         --color-muted: var(--wb-muted);
+  --color-accent: var(--wb-accent);   --color-accent-hover: var(--wb-accent-hover);
+  --color-accent-tint: var(--wb-accent-tint);
+  --color-warn: var(--wb-warn);       --color-warn-tint: var(--wb-warn-tint);
+  --color-ok: var(--wb-ok);
+  --font-sans: var(--wb-font-sans);   --font-mono: var(--wb-font-mono);
+  --text-body: 13px;  --text-body--line-height: 1.4;
+  --text-meta: 11px;  --text-meta--line-height: 1.4;
+  --text-label: 10px; --text-label--line-height: 1.2;
+  --text-title: 14px; --text-title--line-height: 1.4;
+  --radius: var(--wb-radius);         --radius-chip: var(--wb-radius-chip);
+  --shadow-ring: 0 0 0 3px var(--wb-accent-ring);
+}
+*/

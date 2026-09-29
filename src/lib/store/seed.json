@@ -1,0 +1,106 @@
+{
+  "today": "2026-09-26",
+  "contexts": ["@computer", "@office", "@home", "@calls", "@errands", "@workshop"],
+  "buckets": ["Workshop & electronics", "Teaching & research", "Home & travel"],
+  "projects": [
+    { "id": "p-bench", "title": "Workshop bench decided and ordered", "successfulWhen": "A bench that fits the 180 cm alcove is ordered, delivery date known, old bench listed for sale.", "area": "Home & workshop", "goal": "Workshop usable for pedal builds by winter", "deadline": "2026-10-03", "status": "active", "notes": "Alcove: 180 × 62 cm, socket on the left wall. Holzwerk offer includes delivery to the door only — stairs are our problem. Quote A is cheaper but 190 cm wide.", "lastReviewedAt": "2026-09-23" },
+    { "id": "p-module", "title": "Module HS26 ready to teach", "area": "Teaching", "status": "active", "notes": "", "lastReviewedAt": "2026-09-25" },
+    { "id": "p-grant", "title": "Grant report submitted", "area": "Research", "status": "active", "notes": "", "lastReviewedAt": "2026-09-17" },
+    { "id": "p-conf", "title": "Conference trip organised", "area": "Research", "status": "active", "notes": "", "lastReviewedAt": "2026-09-24" },
+    { "id": "p-delay", "title": "Delay pedal built", "area": "Workshop", "status": "active", "notes": "", "lastReviewedAt": "2026-09-21" },
+    { "id": "p-home", "title": "Home maintenance 2026", "area": "Home", "status": "active", "notes": "", "lastReviewedAt": "2026-09-20" },
+    { "id": "p-gridfinity", "title": "Workshop reorganised (Gridfinity)", "area": "Workshop", "status": "active", "notes": "", "lastReviewedAt": "2026-09-05" },
+    { "id": "p-blog", "title": "Blog post on the fuzz build published", "area": "Workshop", "status": "active", "notes": "", "lastReviewedAt": "2026-09-22" }
+  ],
+  "items": [
+    { "id": "i1", "text": "Call the dentist about the invoice", "captured": "Call the dentist about the invoice", "source": "typed", "capturedAt": "2026-09-26T09:12:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i2", "text": "Idea: run the module retrospective as a silent brainstorm", "captured": "Idea: run the module retrospective as a silent brainstorm", "source": "voice", "capturedAt": "2026-09-26T08:40:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i3", "text": "Fwd: Offer for the new workshop bench — decide by Oct 3", "captured": "Fwd: Offer for the new workshop bench — decide by Oct 3", "source": "email", "capturedAt": "2026-09-25T17:02:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i4", "text": "Replace the kitchen tap cartridge", "captured": "Replace the kitchen tap cartridge", "source": "typed", "capturedAt": "2026-09-25T12:31:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i5", "text": "Read: \"Deep Work\" chapter 3 notes from Anna", "captured": "Read: \"Deep Work\" chapter 3 notes from Anna", "source": "share", "capturedAt": "2026-09-24T21:15:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i6", "text": "Book train for the Zurich conference", "captured": "Book train for the Zurich conference", "source": "typed", "capturedAt": "2026-09-24T16:48:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i7", "text": "Warranty card for the printer — where to file?", "captured": "Warranty card for the printer — where to file?", "source": "scan", "capturedAt": "2026-09-24T10:03:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i8", "text": "Ask Marc whether the grant report needs the annex", "captured": "Ask Marc whether the grant report needs the annex", "source": "voice", "capturedAt": "2026-09-23T19:20:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i9", "text": "Maybe learn to solder SMD by hand", "captured": "Maybe learn to solder SMD by hand", "source": "typed", "capturedAt": "2026-09-23T08:55:00+02:00", "status": "inbox", "tags": [] },
+
+    { "id": "n1", "text": "Compare the Holzwerk offer with the two quotes in Reference", "captured": "Fwd: Offer for the new workshop bench — decide by Oct 3", "source": "email", "capturedAt": "2026-09-25T17:02:00+02:00", "status": "next", "projectId": "p-bench", "context": "@computer", "priority": "A", "priorityNo": 1, "time": 30, "energy": "focus", "deadline": "2026-10-03", "focusOn": "2026-09-26", "tags": [] },
+    { "id": "n2", "text": "Draft grading rubric for the case-study assignment", "captured": "Draft grading rubric for the case-study assignment", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "next", "projectId": "p-module", "context": "@computer", "priority": "A", "priorityNo": 2, "time": 60, "energy": "focus", "focusOn": "2026-09-26", "tags": [] },
+    { "id": "n3", "text": "Reply to Marc re: annex for the grant report", "captured": "Reply to Marc re: annex", "source": "typed", "capturedAt": "2026-09-21T10:00:00+02:00", "status": "next", "projectId": "p-grant", "context": "@computer", "priority": "B", "priorityNo": 1, "time": 15, "energy": "low", "tags": [] },
+    { "id": "n4", "text": "Book train Bern → Zurich for the conference, 14.10", "captured": "Book train for the Zurich conference", "source": "typed", "capturedAt": "2026-09-21T10:00:00+02:00", "status": "next", "projectId": "p-conf", "context": "@computer", "priority": "B", "priorityNo": 2, "time": 15, "energy": "low", "tags": [] },
+    { "id": "n5", "text": "Export BOM for the delay pedal and check stock", "captured": "Export BOM for the delay pedal and check stock", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "next", "projectId": "p-delay", "context": "@computer", "priority": "B", "priorityNo": 3, "time": 30, "energy": "normal", "tags": [] },
+    { "id": "n6", "text": "Clean up the shared drive folder for last semester", "captured": "Clean up the shared drive folder for last semester", "source": "typed", "capturedAt": "2026-08-20T10:00:00+02:00", "status": "next", "context": "@computer", "priority": "C", "time": 30, "energy": "low", "tags": [] },
+    { "id": "n7", "text": "Call dentist: ask for the corrected invoice", "captured": "Call the dentist about the invoice", "source": "typed", "capturedAt": "2026-09-26T09:12:00+02:00", "status": "next", "context": "@calls", "priority": "A", "priorityNo": 3, "time": 15, "energy": "low", "tags": [] },
+    { "id": "n8", "text": "Call Lena (Holzwerk): ask about delivery lead time", "captured": "Call Lena about delivery", "source": "typed", "capturedAt": "2026-09-25T10:00:00+02:00", "status": "next", "projectId": "p-bench", "context": "@calls", "priority": "B", "priorityNo": 4, "time": 15, "energy": "normal", "tags": [] },
+    { "id": "n9", "text": "Call plumber for a quote on the tap cartridge", "captured": "Replace the kitchen tap cartridge", "source": "typed", "capturedAt": "2026-09-25T12:31:00+02:00", "status": "next", "projectId": "p-home", "context": "@calls", "priority": "C", "time": 15, "energy": "low", "tags": [] },
+    { "id": "n10", "text": "Photograph the finished enclosure", "captured": "Photograph the finished enclosure", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "next", "projectId": "p-blog", "context": "@workshop", "priority": "B", "priorityNo": 5, "time": 30, "energy": "normal", "tags": [] },
+
+    { "id": "l1", "text": "Place the order and pay the deposit", "captured": "Place the order and pay the deposit", "source": "typed", "capturedAt": "2026-09-25T17:10:00+02:00", "status": "later", "projectId": "p-bench", "tags": [] },
+    { "id": "l2", "text": "List the old bench on the marketplace", "captured": "List the old bench on the marketplace", "source": "typed", "capturedAt": "2026-09-25T17:10:00+02:00", "status": "later", "projectId": "p-bench", "tags": [] },
+    { "id": "l3", "text": "Clear the alcove the weekend before delivery", "captured": "Clear the alcove the weekend before delivery", "source": "typed", "capturedAt": "2026-09-25T17:10:00+02:00", "status": "later", "projectId": "p-bench", "tags": [] },
+    { "id": "d1", "text": "Measure bench alcove width", "captured": "Measure bench alcove width", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "done", "projectId": "p-bench", "context": "@home", "doneAt": "2026-09-26T08:30:00+02:00", "tags": [] },
+
+    { "id": "w1", "text": "Annex decision for the grant report", "captured": "Annex decision for the grant report", "source": "typed", "capturedAt": "2026-09-14T10:00:00+02:00", "status": "waiting", "projectId": "p-grant", "waiting": { "who": "Marc", "since": "2026-09-14", "followUp": "2026-09-24" }, "tags": [] },
+    { "id": "w2", "text": "Confirm stair delivery surcharge", "captured": "Confirm stair delivery surcharge", "source": "typed", "capturedAt": "2026-09-25T10:00:00+02:00", "status": "waiting", "projectId": "p-bench", "waiting": { "who": "Lena, Holzwerk", "since": "2026-09-25", "followUp": "2026-09-29" }, "tags": [] },
+    { "id": "w3", "text": "Room booking for the module kickoff", "captured": "Room booking for the module kickoff", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "waiting", "projectId": "p-module", "waiting": { "who": "Facilities desk", "since": "2026-09-22", "followUp": "2026-09-30" }, "tags": [] },
+    { "id": "w4", "text": "Parts order #4471 (PCB + pots)", "captured": "Parts order #4471", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "waiting", "projectId": "p-delay", "waiting": { "who": "Distributor", "since": "2026-09-20", "followUp": "2026-10-02" }, "tags": [] },
+    { "id": "w5", "text": "Reviewer comments on the abstract", "captured": "Reviewer comments on the abstract", "source": "typed", "capturedAt": "2026-09-24T10:00:00+02:00", "status": "waiting", "projectId": "p-conf", "waiting": { "who": "Programme committee", "since": "2026-09-24", "followUp": "2026-10-12" }, "tags": [] },
+    { "id": "w6", "text": "Refund for the returned multimeter", "captured": "Refund for the returned multimeter", "source": "typed", "capturedAt": "2026-09-18T10:00:00+02:00", "status": "waiting", "waiting": { "who": "Shop support", "since": "2026-09-18", "followUp": "2026-10-05" }, "tags": [] },
+    { "id": "w7", "text": "Borrowed oscilloscope probe back", "captured": "Borrowed oscilloscope probe back", "source": "typed", "capturedAt": "2026-09-07T10:00:00+02:00", "status": "waiting", "waiting": { "who": "Jonas", "since": "2026-09-07" }, "tags": [] },
+
+    { "id": "s1", "text": "Learn to solder SMD by hand", "captured": "Learn to solder SMD by hand", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Workshop & electronics", "tags": [] },
+    { "id": "s2", "text": "Build a tube-screamer style overdrive from scratch", "captured": "Build a tube-screamer style overdrive from scratch", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Workshop & electronics", "tags": [] },
+    { "id": "s3", "text": "Dust extraction for the workshop", "captured": "Dust extraction for the workshop", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Workshop & electronics", "tags": [] },
+    { "id": "s4", "text": "Silent-brainstorm format for the retrospective", "captured": "Silent-brainstorm format for the retrospective", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Teaching & research", "tags": [] },
+    { "id": "s5", "text": "Write up the CTF results as a short paper", "captured": "Write up the CTF results as a short paper", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Teaching & research", "tags": [] },
+    { "id": "s6", "text": "Hut-to-hut week in the Jotunheimen", "captured": "Hut-to-hut week in the Jotunheimen", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Home & travel", "tags": [] },
+    { "id": "s7", "text": "Replace the garden fence", "captured": "Replace the garden fence", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Home & travel", "tags": [] },
+
+    { "id": "c1", "text": "Submit conference abstract", "captured": "Submit conference abstract", "source": "typed", "capturedAt": "2026-09-10T10:00:00+02:00", "status": "calendar", "projectId": "p-conf", "day": "2026-09-26", "deadline": "2026-09-26", "tags": [] },
+    { "id": "c2", "text": "Pay the printer invoice", "captured": "Pay the printer invoice", "source": "typed", "capturedAt": "2026-09-15T10:00:00+02:00", "status": "done", "day": "2026-09-23", "doneAt": "2026-09-23T12:00:00+02:00", "tags": [] },
+    { "id": "c3", "text": "Hand in the module description", "captured": "Hand in the module description", "source": "typed", "capturedAt": "2026-09-15T10:00:00+02:00", "status": "done", "projectId": "p-module", "day": "2026-09-22", "doneAt": "2026-09-22T12:00:00+02:00", "tags": [] },
+    { "id": "c4", "text": "Deep work: grading rubric", "captured": "Deep work: grading rubric", "source": "typed", "capturedAt": "2026-09-24T10:00:00+02:00", "status": "calendar", "projectId": "p-module", "day": "2026-09-25", "timeSlot": { "start": "2026-09-25T10:00:00+02:00", "end": "2026-09-25T11:00:00+02:00" }, "tags": [] },
+    { "id": "c5", "text": "Weekly review", "captured": "Weekly review", "source": "typed", "capturedAt": "2026-01-01T10:00:00+01:00", "status": "calendar", "day": "2026-09-27", "timeSlot": { "start": "2026-09-27T17:00:00+02:00", "end": "2026-09-27T18:00:00+02:00" }, "tags": ["recurring:weekly"] }
+  ],
+  "tickler": [
+    { "day": "2026-09-25", "text": "Holzwerk offer arrives · decide by 03.10" },
+    { "day": "2026-09-27", "text": "Bins out · paper" }
+  ],
+  "externalEvents": [
+    { "id": "e1", "calendar": "Work", "title": "Lecture block", "start": "2026-09-21T09:00:00+02:00", "end": "2026-09-21T12:00:00+02:00", "allDay": false },
+    { "id": "e2", "calendar": "Work", "title": "Institute meeting", "start": "2026-09-22T13:00:00+02:00", "end": "2026-09-22T14:00:00+02:00", "allDay": false },
+    { "id": "e3", "calendar": "Work", "title": "Office hours", "start": "2026-09-24T16:00:00+02:00", "end": "2026-09-24T18:00:00+02:00", "allDay": false },
+    { "id": "e4", "calendar": "Private", "title": "Dentist", "start": "2026-09-26T10:00:00+02:00", "end": "2026-09-26T10:45:00+02:00", "allDay": false },
+    { "id": "e5", "calendar": "Work", "title": "Call with Marc — grant report", "start": "2026-09-26T14:00:00+02:00", "end": "2026-09-26T14:30:00+02:00", "allDay": false }
+  ],
+  "reviewTemplate": {
+    "phases": [
+      { "id": "clear", "name": "Get clear", "steps": [
+        { "id": "collect", "text": "Collect loose papers and materials" },
+        { "id": "zero-email", "text": "Get email and notes to zero" },
+        { "id": "mind-sweep", "text": "Empty your head" },
+        { "id": "inbox-zero", "text": "Process the inbox to zero", "link": "/clarify" } ] },
+      { "id": "current", "name": "Get current", "steps": [
+        { "id": "next", "text": "Review Next Actions", "link": "/next" },
+        { "id": "past-cal", "text": "Review past calendar", "link": "/calendar" },
+        { "id": "future-cal", "text": "Review upcoming calendar", "link": "/calendar" },
+        { "id": "waiting", "text": "Review Waiting For", "link": "/waiting" },
+        { "id": "projects", "text": "Review Projects — one next action each", "link": "/projects" },
+        { "id": "areas", "text": "Review checklists and areas" } ] },
+      { "id": "creative", "name": "Get creative", "steps": [
+        { "id": "someday", "text": "Review Someday / Maybe", "link": "/waiting" },
+        { "id": "ideas", "text": "Be creative and courageous" } ] }
+    ]
+  },
+  "reviewRun": {
+    "id": "r-2026-39", "startedAt": "2026-09-26T16:30:00+02:00", "pausedMs": 0,
+    "steps": [
+      { "stepId": "collect", "doneAt": "2026-09-26T16:33:00+02:00", "note": "desk, bag, workshop bench, car" },
+      { "stepId": "zero-email", "doneAt": "2026-09-26T16:42:00+02:00", "note": "captured 6 items to inbox" },
+      { "stepId": "mind-sweep", "doneAt": "2026-09-26T16:48:00+02:00", "note": "mind sweep with the trigger list" },
+      { "stepId": "inbox-zero", "doneAt": "2026-09-26T16:48:30+02:00", "note": "14 → 0" },
+      { "stepId": "next", "doneAt": "2026-09-26T16:55:00+02:00", "note": "marked 5 done, 2 moved to someday" },
+      { "stepId": "past-cal", "openedAt": "2026-09-26T16:55:00+02:00" }
+    ],
+    "notes": "Too many @computer A-items — the grading rubric and the bench decision compete for the same two focus blocks. Decide the bench on Monday morning, rubric Tuesday."
+  }
+}

@@ -1,26 +1,25 @@
 @import "tailwindcss";
 
+/* next/font exposes hashed family names; route them through the design tokens. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --wb-font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --wb-font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  --color-ground: var(--wb-ground);   --color-panel: var(--wb-panel);   --color-rail: var(--wb-rail);
+  --color-line: var(--wb-line);       --color-line-soft: var(--wb-line-soft);
+  --color-control: var(--wb-control); --color-muted-bg: var(--wb-muted-bg);
+  --color-ink: var(--wb-ink);         --color-muted: var(--wb-muted);
+  --color-accent: var(--wb-accent);   --color-accent-hover: var(--wb-accent-hover);
+  --color-accent-tint: var(--wb-accent-tint);
+  --color-warn: var(--wb-warn);       --color-warn-tint: var(--wb-warn-tint);
+  --color-ok: var(--wb-ok);
+  --font-sans: var(--wb-font-sans);   --font-mono: var(--wb-font-mono);
+  --text-body: 13px;  --text-body--line-height: 1.4;
+  --text-meta: 11px;  --text-meta--line-height: 1.4;
+  --text-label: 10px; --text-label--line-height: 1.2;
+  --text-title: 14px; --text-title--line-height: 1.4;
+  --radius: var(--wb-radius);         --radius-chip: var(--wb-radius-chip);
+  --shadow-ring: 0 0 0 3px var(--wb-accent-ring);
 }
