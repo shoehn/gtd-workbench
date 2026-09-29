@@ -1,7 +1,7 @@
-import seed from './seed.json';
 import type { State, Store } from './types';
 
-function createMemoryStore(initial: State): Store {
+/** The whole state in memory; a restart starts from the seed again. */
+export function createMemoryStore(initial: State): Store {
   const state = initial;
   const listeners = new Set<() => void>();
   return {
@@ -16,8 +16,3 @@ function createMemoryStore(initial: State): Store {
     },
   };
 }
-
-// Kept on globalThis so dev-server module reloads do not reset captured items.
-const g = globalThis as typeof globalThis & { __wbStore?: Store };
-
-export const store: Store = (g.__wbStore ??= createMemoryStore(structuredClone(seed) as State));

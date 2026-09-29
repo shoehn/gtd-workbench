@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
 import seed from './store/seed.json';
-import { store } from './store/memory';
+import { store } from './store';
 import type { State } from './store/types';
 
 beforeEach(() => {
@@ -83,6 +83,18 @@ describe('weekly review', () => {
     expect(api.lastClosedRun()).toMatchObject({ id: 'r-2026-39', outcome: 'abandoned' });
     expect(api.ticked(api.lastClosedRun()!)).toBe(5);
     expect(api.abandonStaleRuns()).toBe(0);
+  });
+
+  it('a stale run reads as abandoned without anything written (no nightly job)', () => {
+    store.update((s) => {
+      s.reviewRuns.at(-1)!.startedAt = new Date(api.now().getTime() - 25 * 3_600_000).toISOString();
+    });
+    expect(api.openRun()).toBeUndefined();
+    expect(api.reviewBadge()).toBe('due');
+    expect(api.lastClosedRun()).toMatchObject({ id: 'r-2026-39', outcome: 'abandoned' });
+    expect(store.getState().reviewRuns.at(-1)!.outcome).toBeUndefined();
+    api.startReview();
+    expect(store.getState().reviewRuns.find((r) => r.id === 'r-2026-39')!.outcome).toBe('abandoned');
   });
 
   it('this week so far counts the last 7 days', () => {

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
 import { parseProjectFilter, projectsHref } from './project-filter';
 import seed from './store/seed.json';
-import { store } from './store/memory';
+import { store } from './store';
 import type { State } from './store/types';
 
 const item = (id: string) => api.getItem(id)!;

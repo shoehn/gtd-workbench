@@ -300,6 +300,21 @@ interface ReviewRun {
 interface ExternalEvent { id: string; calendar: string; title: string; start: string; end: string; allDay: boolean }
 ```
 
+Storage (`STORE=memory|sqlite`, sqlite by default in production, memory in dev and tests;
+`DATABASE_FILE`, default `data/gtd.db`): SQLite through Drizzle, one table per interface
+above plus the store-level lists (contexts, buckets, area kinds, tickler, external
+calendars, settings). Deviations from the interfaces, each for a reason:
+- `Item.timeSlot` and `Item.waiting` are flattened into `time_slot_start/_end` and
+  `waiting_who/_since/_follow_up`: always read with their item, and `waiting` is queried.
+- `Item.tags`, `ReviewRun.steps` and `ReviewTemplate.phases` are JSON columns: read whole,
+  never queried on their own.
+- `priority_no` is `real`: undoing a done action parks it half a step ahead until the same
+  write renumbers.
+- Every list table has `seq`, the position the store keeps it in (capture order, run
+  order), so a reload gives the same order the memory store had.
+- A stale review run (open, started ≥ 24 h ago) reads as abandoned; it is written as
+  abandoned the next time a review starts. No job runs at night.
+
 Derived, never stored: project stalled flag, inbox age, "this week" review counters, health
 numbers. (A review step's `snapshot` is stored on purpose: it is the "before" of its note.)
 

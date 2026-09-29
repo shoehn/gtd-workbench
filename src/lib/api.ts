@@ -5,7 +5,7 @@ import { SeedCalendarSource, type CalendarSource } from './calendar-source';
 import type { Energy, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Source, TimeBucket } from './model';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
 import seed from './store/seed.json';
-import { store } from './store/memory';
+import { store } from './store';
 import type { ExternalCalendar, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
 import { addDays, isoWeek, weekDays } from './week';
@@ -1170,18 +1170,24 @@ export function reviewSteps(): ReviewStep[] {
   return reviewTemplate().phases.flatMap((ph) => ph.steps.map((st) => ({ ...st, phaseId: ph.id })));
 }
 
-/** The one run in progress (no outcome yet), if any. */
+/** An open run started 24 h ago or earlier: it reads as abandoned, whether or not that was written. */
+function isStale(run: ReviewRun): boolean {
+  return !run.outcome && Date.parse(run.startedAt) <= now().getTime() - STALE_RUN_MS;
+}
+
+/** The one run in progress (no outcome yet, not stale), if any. */
 export function openRun(): ReviewRun | undefined {
-  return store.getState().reviewRuns.find((r) => !r.outcome);
+  return store.getState().reviewRuns.find((r) => !r.outcome && !isStale(r));
 }
 
 export function lastFinishedRun(): ReviewRun | undefined {
   return store.getState().reviewRuns.findLast((r) => r.outcome === 'finished');
 }
 
-/** The newest run that is over, finished or abandoned. */
+/** The newest run that is over, finished or abandoned (a stale open run counts as abandoned). */
 export function lastClosedRun(): ReviewRun | undefined {
-  return store.getState().reviewRuns.findLast((r) => !!r.outcome);
+  const run = store.getState().reviewRuns.findLast((r) => !!r.outcome || isStale(r));
+  return run && isStale(run) ? { ...run, outcome: 'abandoned' } : run;
 }
 
 /** Average length of finished runs in minutes (pauses excluded); `undefined` without any. */
@@ -1287,6 +1293,7 @@ function openIn(run: ReviewRun, stepId: string) {
 /** Start a review: one open run at a time; the first step becomes current. */
 export function startReview(): ReviewRun {
   check(!openRun(), 'a review is already in progress', 'startReview');
+  abandonStaleRuns(); // write down what reads already show
   const run: ReviewRun = { id: `r-${crypto.randomUUID()}`, startedAt: now().toISOString(), pausedMs: 0, steps: [], notes: '' };
   const first = reviewSteps()[0];
   if (first) openIn(run, first.id);
@@ -1385,13 +1392,15 @@ export function finishReview(): void {
   purgeTrash();
 }
 
-/** Close open runs started 24 h ago or earlier as abandoned. Called on every page load. */
+/**
+ * Record open runs started 24 h ago or earlier as abandoned. Reads already treat them so
+ * (`openRun`, `lastClosedRun`), so no job has to run at night; `startReview` calls this.
+ */
 export function abandonStaleRuns(): number {
-  const cutoff = now().getTime() - STALE_RUN_MS;
-  const stale = store.getState().reviewRuns.filter((r) => !r.outcome && Date.parse(r.startedAt) <= cutoff);
+  const stale = store.getState().reviewRuns.filter(isStale);
   if (stale.length) {
     store.update((s) => {
-      for (const r of s.reviewRuns) if (!r.outcome && Date.parse(r.startedAt) <= cutoff) r.outcome = 'abandoned';
+      for (const r of s.reviewRuns) if (isStale(r)) r.outcome = 'abandoned';
     });
   }
   return stale.length;

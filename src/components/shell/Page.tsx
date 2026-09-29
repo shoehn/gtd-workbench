@@ -1,6 +1,5 @@
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
-import * as api from '@/lib/api';
 import { cx } from '../ui/cx';
 import { CaptureLink, PhoneHeader } from './PhoneHeader';
 import { PhoneTabBar } from './PhoneTabBar';
@@ -44,7 +43,6 @@ interface PageProps {
 /** App shell: sidebar + top bar from 1024 px; phone header + tab bar below that. */
 export async function Page({ title, meta, tools, actions, back, toolbar, flush, phone = {}, children }: PageProps) {
   await connection(); // the store is live state; never prerender it
-  api.abandonStaleRuns(); // an open review older than 24 h closes itself, whichever screen loads
   return (
     <div className="flex h-dvh max-lg:text-(length:--wb-text-body-phone)">
       <div className="hidden lg:flex">

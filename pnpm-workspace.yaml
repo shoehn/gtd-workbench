@@ -1,4 +1,6 @@
 allowBuilds:
+  esbuild: false
+  better-sqlite3: false # ships prebuilds; its node-gyp install script is not needed
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@next/env@16.3.7'

@@ -34,10 +34,12 @@ Next.js (app router, `src/`), TypeScript strict, Tailwind v4 with the tokens
 mapped in an `@theme inline` block in `src/app/globals.css` (no
 `tailwind.config.ts`), no component library. State in a single store module
 (`src/lib/store/`) behind a small typed API (`src/lib/api.ts`); UI never touches
-storage. Start with an in-memory store seeded from `seed.json`; iteration 09
-swaps in SQLite. In memory mode a dev-server restart resets everything to the
-seed — that is expected, not data loss. Server components by default; client
-components only where there is interaction.
+storage. `STORE=memory|sqlite` picks the store (sqlite in production, memory in
+dev and tests; `STORE=sqlite pnpm dev` for the real thing, `pnpm db:reset` to
+start over). In memory mode a dev-server restart resets everything to the
+seed — that is expected, not data loss. Writes go through server actions in
+`src/lib/actions.ts` only; server components read the api directly. Server
+components by default; client components only where there is interaction.
 
 ## Layout of `src/`
 
@@ -48,7 +50,7 @@ components/ui/       primitives: Card, SectionHead, Row (grid row), Tag, Chip, K
 components/<screen>/ screen-specific pieces
 lib/model.ts         types (Item, Project, Context, WaitingFor, ReviewRun …) — see SPEC §5
 lib/api.ts           typed operations: capture, clarify, complete, star, promote/demote …
-lib/store/           memory.ts now, sqlite.ts later; same interface
+lib/store/           index.ts picks memory.ts or sqlite.ts (same interface), schema.ts
 lib/capture-syntax.ts  parser for `#tag @context !prio ^date`
 ```
 
