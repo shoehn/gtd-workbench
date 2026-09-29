@@ -28,14 +28,11 @@ export default async function InboxPage() {
       title="Inbox"
       meta={meta}
       actions={
-        <>
-          {items.length ? (
-            <Btn variant="primary" href="/clarify">Clarify inbox{hotkey}</Btn>
-          ) : (
-            <Btn variant="primary" disabled>Clarify inbox{hotkey}</Btn>
-          )}
-          <Btn className="hidden lg:inline-flex">Sort ▾</Btn>
-        </>
+        items.length ? (
+          <Btn variant="primary" href="/clarify">Clarify inbox{hotkey}</Btn>
+        ) : (
+          <Btn variant="primary" disabled>Clarify inbox{hotkey}</Btn>
+        )
       }
     >
       <div className="flex h-full flex-col gap-4">

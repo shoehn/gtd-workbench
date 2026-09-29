@@ -2,9 +2,7 @@ import { FilterBar } from '@/components/next/FilterBar';
 import { HealthCard } from '@/components/next/HealthCard';
 import { NextBoard, type NextGroup } from '@/components/next/NextBoard';
 import { TodayCard } from '@/components/next/TodayCard';
-import { CaptureField } from '@/components/shell/CaptureField';
 import { Page } from '@/components/shell/Page';
-import { Btn } from '@/components/ui/Btn';
 import * as api from '@/lib/api';
 import { daysBetween, fmtDate, fmtDay, fmtMins, fmtTotal } from '@/lib/format';
 import { groupByContext, isFiltered, matches, parseFilter } from '@/lib/next-filter';
@@ -45,12 +43,6 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
     <Page
       title="Next Actions"
       meta={isFiltered(filter) ? `${all.length} · ${shown.length} match filter` : `${all.length}`}
-      actions={
-        <>
-          <CaptureField />
-          <Btn className="hidden lg:inline-flex">Group: context ▾</Btn>
-        </>
-      }
       toolbar={<FilterBar contexts={contexts} filter={filter} />}
     >
       <NextBoard

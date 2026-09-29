@@ -20,7 +20,7 @@ export function HealthCard({ health }: { health: Health }) {
         </dd>
         <dt>Waiting-for overdue</dt>
         <dd className="m-0">
-          <Link href="/waiting" aria-label={`${health.waitingOverdue} waiting-for overdue`} className={cx(num, health.waitingOverdue ? 'text-warn' : 'text-muted')}>
+          <Link href="/waiting?filter=overdue" aria-label={`${health.waitingOverdue} waiting-for overdue`} className={cx(num, health.waitingOverdue ? 'text-warn' : 'text-muted')}>
             {health.waitingOverdue}
           </Link>
         </dd>

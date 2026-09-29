@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useOptimistic, useRef, useState, useTransition, type ReactNode } from 'react';
-import { completeAction, editNextAction, toggleFocusAction, uncompleteAction } from '@/lib/actions';
+import { completeAction, editNextAction, reopenAction, toggleFocusAction, uncompleteAction } from '@/lib/actions';
 import type { Completed, NextEdit } from '@/lib/api';
 import type { Priority } from '@/lib/model';
 import { isTyping } from '../inbox/keys';
@@ -117,6 +117,15 @@ export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, t
     setFading(without);
     setCursorId(done.id);
     startTransition(() => uncompleteAction(done));
+  }
+
+  /** Unticking a done focus item: the footer undo when it is that item, else reopen. */
+  function reopen(id: string) {
+    if (pending.current?.id === id || undo?.done.id === id) return undoComplete();
+    const without = (prev: ReadonlySet<string>) => new Set([...prev].filter((x) => x !== id));
+    setGone(without);
+    setFading(without);
+    startTransition(() => reopenAction(id));
   }
 
   function toggleFocus(id: string) {
@@ -290,8 +299,7 @@ export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, t
                 <input
                   type="checkbox"
                   checked={f.done}
-                  disabled={f.done}
-                  onChange={() => complete(f.id)}
+                  onChange={() => (f.done ? reopen(f.id) : complete(f.id))}
                   className="m-0 size-4 shrink-0"
                 />
                 <span className={cx(f.done && 'text-muted line-through')}>{f.text}</span>

@@ -489,6 +489,21 @@ export function uncomplete(done: Completed): void {
   });
 }
 
+/**
+ * Unticking a done item in the Focus card: back to Next Actions, still starred, numbered last
+ * within its priority. (The footer undo uses `uncomplete` instead, which keeps the old number.)
+ */
+export function reopen(id: string): void {
+  const item = getItem(id);
+  check(item?.status === 'done', `item ${id} is not done`, 'reopen');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    it.status = 'next';
+    delete it.doneAt;
+    renumberIn(s.items);
+  });
+}
+
 /** Inline edit on Next Actions: text, context, project (`null` = single action). */
 export interface NextEdit {
   text?: string;

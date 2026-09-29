@@ -37,6 +37,11 @@ export async function uncompleteAction(done: api.Completed): Promise<void> {
   revalidatePath('/', 'layout');
 }
 
+export async function reopenAction(id: string): Promise<void> {
+  api.reopen(id);
+  revalidatePath('/', 'layout');
+}
+
 export async function toggleFocusAction(id: string): Promise<boolean> {
   const on = api.toggleFocus(id);
   revalidatePath('/', 'layout');

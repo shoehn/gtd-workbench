@@ -75,6 +75,9 @@ from Next and Inbox respectively.
   api on every change: gaps close, C carries none, undoing a done puts the action back
   under its old number.
 - Done fades the row out (400 ms); undo within 5 s (`u` or `⌘Z`, also during the fade).
+- Unticking a done item in the Focus card reopens it: back to Next Actions, still starred
+  (within the 5 s undo window it is the same as the footer undo and keeps its number;
+  after that it is numbered last in its priority).
 - Inline edit: text (`e` or double-click), context (`@`), project (`p`, the Clarify picker;
   Enter on an empty field = single action). Enter saves, Esc cancels.
 - Row: done checkbox · focus star · priority chip (A1, B3, C) · text · project link ·
@@ -226,3 +229,7 @@ tracked mono section labels. Hit targets ≥ 44 px on phone, ≥ 26 px desktop b
 Multi-user, sharing, external calendar write-back, email/voice/scan ingestion (only the
 `source` field exists), Reference screen, command palette, dark theme (tokens are ready for
 it, no UI yet), AI features of any kind.
+
+Planned for v1.1: sort and group menus on the lists ("Sort ▾" on Inbox, "Group: context ▾"
+on Next Actions, as drawn in the mockups). v1 ships the fixed order: Inbox newest first,
+Next Actions grouped by context.

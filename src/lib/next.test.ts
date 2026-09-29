@@ -95,6 +95,17 @@ describe('complete and renumber', () => {
     expect([label('n2'), label('n7')]).toEqual(['A2', 'A3']);
   });
 
+  it('reopen from the Focus card: next again, starred, numbered last', () => {
+    api.complete('n1');
+    api.reopen('n1');
+    expect(item('n1')).toMatchObject({ status: 'next', focusOn: '2026-09-26' });
+    expect(item('n1').doneAt).toBeUndefined();
+    expect([label('n2'), label('n7'), label('n1')]).toEqual(['A1', 'A2', 'A3']);
+    api.reopen('d1'); // a seed item done before this session
+    expect(item('d1').status).toBe('next');
+    expect(() => api.reopen('n2')).toThrow(/^reopen:/);
+  });
+
   it('renumber closes gaps and clears numbers on C', () => {
     store.update((s) => {
       s.items.find((i) => i.id === 'n2')!.priorityNo = 7;
