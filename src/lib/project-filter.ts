@@ -1,6 +1,6 @@
 // Projects list filter, kept in the URL: `/projects?filter=stalled&p=<id>`.
 
-export const PROJECT_FILTERS = ['active', 'work', 'home', 'stalled'] as const;
+export const PROJECT_FILTERS = ['active', 'work', 'home', 'stalled', 'someday'] as const;
 /** The chips, plus "completed", which shows completed projects instead. */
 export type ProjectFilter = (typeof PROJECT_FILTERS)[number] | 'completed';
 

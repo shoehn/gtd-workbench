@@ -6,13 +6,18 @@ import { useEffect, useRef, useState } from 'react';
 import { PROJECT_FILTERS, projectsHref, type ProjectFilter } from '@/lib/project-filter';
 import { ContextChip } from '../ui/ContextChip';
 import { cx } from '../ui/cx';
+import { Tag } from '../ui/Tag';
+
+const DOT = { ok: 'bg-ok', stalled: 'bg-warn', someday: 'bg-control', completed: 'bg-control' };
+const DOT_LABEL = { ok: 'has next action', stalled: 'stalled', someday: 'someday', completed: 'completed' };
 
 /** One list row, already formatted on the server. */
 export interface ProjectRow {
   id: string;
   title: string;
   href: string;
-  stalled: boolean;
+  /** ok = has next action; someday / completed projects are not judged. */
+  state: 'ok' | 'stalled' | 'someday' | 'completed';
   /** `→ first next action`, or the reason it is stalled. */
   line?: string;
   nextActions: number;
@@ -61,9 +66,9 @@ export function ProjectList({
 
   return (
     <section aria-label="Project list" className="flex min-h-0 flex-col border-line bg-panel lg:border-r">
-      <div role="group" aria-label="Filter projects" className="flex flex-wrap items-center gap-1.5 border-b border-line px-3 py-2.5">
+      <div role="group" aria-label="Filter projects" className="flex flex-wrap items-center gap-1 border-b border-line px-3 py-2.5">
         {PROJECT_FILTERS.map((f) => (
-          <ContextChip key={f} pressed={filter === f} onClick={() => go(f)}>
+          <ContextChip key={f} pressed={filter === f} onClick={() => go(f)} className="px-1.5!">
             {f}
           </ContextChip>
         ))}
@@ -73,7 +78,7 @@ export function ProjectList({
           aria-pressed={filter === 'completed'}
           onClick={() => go(filter === 'completed' ? 'active' : 'completed')}
           className={cx(
-            'h-(--wb-hit-desktop) rounded px-2 font-mono text-xs',
+            'h-(--wb-hit-desktop) whitespace-nowrap rounded px-1.5 font-mono text-xs',
             filter === 'completed' ? 'bg-ink text-panel' : 'text-muted hover:text-ink',
           )}
         >
@@ -98,14 +103,17 @@ export function ProjectList({
                 aria-current={selected ? 'true' : undefined}
                 className={cx(COLS, 'items-start border-b border-line-soft px-3 py-2.25 text-ink no-underline', selected ? 'bg-accent-tint' : 'hover:bg-ground/60')}
               >
-                <span className={cx('mt-1.25 size-2 rounded-full', r.stalled ? 'bg-warn' : 'bg-ok')}>
-                  <span className="sr-only">{r.stalled ? 'stalled' : 'has next action'}</span>
+                <span className={cx('mt-1.25 size-2 rounded-full', DOT[r.state])}>
+                  <span className="sr-only">{DOT_LABEL[r.state]}</span>
                 </span>
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className={selected ? 'font-semibold' : 'font-medium'}>{r.title}</span>
-                  {r.line && <span className={cx('truncate text-xs', r.stalled ? 'text-warn' : 'text-muted')}>{r.line}</span>}
+                  <span className={selected ? 'font-semibold' : 'font-medium'}>
+                    {r.title}
+                    {(r.state === 'someday' || r.state === 'completed') && <Tag className="ml-1.5 align-[1px]">{r.state}</Tag>}
+                  </span>
+                  {r.line && <span className={cx('truncate text-xs', r.state === 'stalled' ? 'text-warn' : 'text-muted')}>{r.line}</span>}
                 </span>
-                <span className={cx('font-mono text-meta', r.nextActions ? 'text-muted' : 'text-warn')}>{r.nextActions}</span>
+                <span className={cx('font-mono text-meta', r.state === 'stalled' ? 'text-warn' : 'text-muted')}>{r.nextActions}</span>
                 <span className={cx('font-mono text-meta', r.reviewWarn ? 'text-warn' : 'text-muted')}>{r.reviewed}</span>
               </Link>
             );
@@ -113,7 +121,11 @@ export function ProjectList({
         </div>
         {rows.length === 0 && (
           <p className="m-0 px-3 py-8 text-center font-mono text-meta text-muted">
-            {filter === 'stalled' ? 'No stalled projects — every one has a next action.' : 'No projects here.'}
+            {filter === 'stalled'
+              ? 'No stalled projects — every one has a next action.'
+              : filter === 'someday'
+                ? 'No projects on hold.'
+                : 'No projects here.'}
           </p>
         )}
       </div>

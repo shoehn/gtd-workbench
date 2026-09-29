@@ -90,8 +90,9 @@ from Next and Inbox respectively.
 
 ### 3.4 Projects
 - List: state dot (green = has next action, orange = stalled), title, first next action,
-  count of next actions, last reviewed. Filters active / work / home / stalled; completed
-  count at the right. The filter lives in the URL (`/projects?filter=stalled&p=<id>`).
+  count of next actions, last reviewed. Filters active / work / home / stalled / someday;
+  completed count at the right. someday lists projects on hold with a "someday" tag and a
+  grey dot (not judged stalled); their detail offers → Active. The filter lives in the URL (`/projects?filter=stalled&p=<id>`).
   work / home come from the store's `areaKinds` map (area → kind); an unmapped area counts
   as neither.
 - Detail: outcome ("successful when"), deadline; **Next actions** (read-only rows linking to
@@ -118,6 +119,10 @@ from Next and Inbox respectively.
   creates the next action).
 - Someday/Maybe: grouped by bucket (user-defined). Activate → goes through Clarify;
   Drop → gone.
+- **Projects on hold**: a section above the buckets listing someday projects (title, later
+  step count). Activate → the project is active again (stalled until a step is promoted)
+  and `/projects?p=<id>` opens. Drop → status completed with `dropped: true`; it shows
+  under Projects' "completed" as "dropped", and its later steps stay with it.
 
 ### 3.6 Calendar — the hard landscape only
 Exactly five kinds of things, each drawn differently:
@@ -204,6 +209,7 @@ interface Project {
   lastReviewedAt?: string;
   createdAt?: string;         // ISO
   createdFrom?: 'inbox' | 'projects';  // Clarify step 3, or "+ Project" (later)
+  dropped?: boolean;          // completed by Drop on Someday/Maybe, not by finishing it
   // derived: nextActions = items(status='next', projectId), stalled = active && nextActions.length===0
 }
 
@@ -247,6 +253,12 @@ Multi-user, sharing, external calendar write-back, email/voice/scan ingestion (o
 `source` field exists), Reference screen, command palette, dark theme (tokens are ready for
 it, no UI yet), AI features of any kind.
 
-Planned for v1.1: sort and group menus on the lists ("Sort ▾" on Inbox, "Group: context ▾"
-on Next Actions, as drawn in the mockups). v1 ships the fixed order: Inbox newest first,
-Next Actions grouped by context.
+Planned for v1.1:
+- Sort and group menus on the lists ("Sort ▾" on Inbox, "Group: context ▾" on Next
+  Actions, "Sort: follow-up ▾" on Waiting For, "Group: bucket ▾" on Someday/Maybe, as drawn
+  in the mockups). v1 ships fixed orders: Inbox newest first, Next Actions grouped by
+  context, Waiting For by follow-up, Someday/Maybe grouped by bucket.
+- "+ Project" on Projects, with capture-then-Clarify semantics: it captures the typed line
+  into the inbox marked as a project, and Clarify opens on it with step 3 preset to
+  "+ New project: <line>". Projects are still only born through Clarify; the button is a
+  shortcut, not a second way in.

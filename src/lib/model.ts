@@ -41,6 +41,7 @@ export interface Project {
   lastReviewedAt?: string;
   createdAt?: string;         // ISO
   createdFrom?: 'inbox' | 'projects';  // Clarify step 3, or "+ Project" (later)
+  dropped?: boolean;          // completed by Drop on Someday/Maybe, not by finishing it
   // derived: nextActions = items(status='next', projectId), stalled = active && nextActions.length===0
 }
 

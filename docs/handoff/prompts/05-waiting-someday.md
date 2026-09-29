@@ -26,6 +26,12 @@ Reference: `docs/handoff/design/mockups/Waiting.dc.html`; SPEC §3.5.
    - `api.activate(id)`: status → inbox (keeps text and captured), then navigate to
      `/clarify?item=<id>`. `api.drop(id)`: status → trash with the 5 s undo toast.
    - Bucket editing: a row's bucket is changeable via a small select shown on hover/focus.
+   - **Projects on hold** (SPEC §3.5): a section above the buckets, tracked mono title
+     "PROJECTS ON HOLD" and count, one row per someday project: title (link to
+     `/projects?p=<id>`), "n later steps", Activate + × Drop.
+     `api.activateProject(id)` (exists since 04) → active again, then navigate to
+     `/projects?p=<id>`. `api.dropProject(id)`: status → completed with `dropped: true`
+     (same 5 s undo toast); Projects' "completed" list shows it tagged "dropped".
 4. **Keys**: `j/k` move within the focused pane, `Tab` switches panes, `f` follow up,
    `x` received / activate (pane-dependent), `⌫` drop.
 
@@ -34,3 +40,5 @@ Reference: `docs/handoff/design/mockups/Waiting.dc.html`; SPEC §3.5.
 - Seed renders as the mockup: 7 waiting rows with w1 overdue-tinted, 3 bucket sections.
 - `f` on w1 creates the @calls action visible in `/next` and moves w1's follow-up a week.
 - Activate on s1 lands in Clarify with the text prefilled; Drop + undo restores the row.
+- A project moved to someday on Projects shows under "Projects on hold"; Activate opens it
+  active (stalled) on Projects; Drop moves it to "completed" tagged "dropped".

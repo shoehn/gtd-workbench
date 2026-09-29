@@ -100,6 +100,7 @@ describe('complete / someday / update', () => {
 describe('filter param', () => {
   it('parses and writes hrefs', () => {
     expect(parseProjectFilter('stalled')).toBe('stalled');
+    expect(parseProjectFilter('someday')).toBe('someday');
     expect(parseProjectFilter('nope')).toBe('active');
     expect(projectsHref('active')).toBe('/projects');
     expect(projectsHref('stalled', 'p-bench')).toBe('/projects?filter=stalled&p=p-bench');

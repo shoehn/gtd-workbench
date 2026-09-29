@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useId, useRef, useState, useTransition, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
 import {
   activateProjectAction,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/actions';
 import type { NextFields as Fields, ProjectPatch } from '@/lib/api';
 import type { Priority, Project } from '@/lib/model';
+import { projectsHref, type ProjectFilter } from '@/lib/project-filter';
 import { Btn } from '../ui/Btn';
 import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
@@ -54,6 +56,7 @@ const addBtn = 'h-6 rounded px-2 text-xs text-accent hover:text-accent-hover';
 const inputCls = 'h-(--wb-hit-phone) min-w-0 rounded border border-control bg-panel px-2 text-ink outline-none focus:border-accent focus:shadow-ring lg:h-7';
 
 export function ProjectDetail({ project: p, contexts }: { project: DetailData; contexts: string[] }) {
+  const router = useRouter();
   const [, startTransition] = useTransition();
   const [adding, setAdding] = useState<'action' | 'step' | null>(null);
   const [promoting, setPromoting] = useState<string | null>(null);
@@ -64,6 +67,12 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
 
   const run = (fn: () => Promise<void>) => startTransition(fn);
   const update = (patch: ProjectPatch) => run(() => updateProjectAction(p.id, patch));
+  /** A status change follows the project to the list it now belongs to, still selected. */
+  const move = (action: (id: string) => Promise<void>, to: ProjectFilter) =>
+    run(async () => {
+      await action(p.id);
+      router.replace(projectsHref(to, p.id), { scroll: false });
+    });
 
   function dropZone(zone: 'next' | 'later') {
     const accepts = drag && drag.kind !== zone;
@@ -114,16 +123,16 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
                   {p.open} open — finish, demote or drop them first
                 </span>
               )}
-              <Btn size="sm" disabled={p.open > 0} aria-describedby={p.open > 0 ? blockId : undefined} onClick={() => run(() => completeProjectAction(p.id))}>
+              <Btn size="sm" disabled={p.open > 0} aria-describedby={p.open > 0 ? blockId : undefined} onClick={() => move(completeProjectAction, 'completed')}>
                 Complete
               </Btn>
-              <Btn size="sm" onClick={() => run(() => moveProjectToSomedayAction(p.id))}>→ Someday</Btn>
+              <Btn size="sm" onClick={() => move(moveProjectToSomedayAction, 'someday')}>→ Someday</Btn>
             </>
           )}
           {p.status === 'someday' && (
             <>
               <span className={mono}>someday</span>
-              <Btn size="sm" onClick={() => run(() => activateProjectAction(p.id))}>→ Active</Btn>
+              <Btn size="sm" onClick={() => move(activateProjectAction, 'active')}>→ Active</Btn>
             </>
           )}
           {p.status === 'completed' && <span className="font-mono text-meta text-ok">completed</span>}
@@ -167,8 +176,12 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
           </Row>
         ))}
         {p.next.length === 0 && adding !== 'action' && (
-          <p className="m-0 px-3 py-2 text-xs text-warn">
-            No next action — the project is stalled. Promote a later step or add one.
+          <p className={cx('m-0 px-3 py-2 text-xs', active ? 'text-warn' : 'text-muted')}>
+            {active
+              ? 'No next action — the project is stalled. Promote a later step or add one.'
+              : p.status === 'someday'
+                ? 'On hold — nothing of it is on Next Actions. → Active to resume.'
+                : 'Completed.'}
           </p>
         )}
         {adding === 'action' && (

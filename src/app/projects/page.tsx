@@ -10,7 +10,7 @@ import { parseProjectFilter, projectsHref, type ProjectFilter } from '@/lib/proj
 const REVIEW_WARN_DAYS = 14;
 
 function inFilter(p: Project, filter: ProjectFilter): boolean {
-  if (filter === 'completed') return p.status === 'completed';
+  if (filter === 'completed' || filter === 'someday') return p.status === filter;
   if (p.status !== 'active') return false;
   if (filter === 'stalled') return api.projectStalled(p);
   if (filter === 'work' || filter === 'home') return api.projectKind(p) === filter;
@@ -21,6 +21,12 @@ function inFilter(p: Project, filter: ProjectFilter): boolean {
 function stalledReason(projectId: string): string {
   const who = [...new Set(api.projectItems(projectId).filter((i) => i.status === 'waiting').map((i) => i.waiting!.who))];
   return `No next action — ${who.length ? `waiting on ${who.join(', ')} only` : 'define one in review'}`;
+}
+
+/** Second line for a parked project: what is waiting for it when it comes back. */
+function laterCount(projectId: string): string {
+  const n = api.projectItems(projectId).filter((i) => i.status === 'later').length;
+  return `${n} later step${n === 1 ? '' : 's'} · → Active to resume`;
 }
 
 export default async function ProjectsPage({ searchParams }: PageProps<'/projects'>) {
@@ -36,13 +42,19 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
   const rows: ProjectRow[] = listed.map((p) => {
     const next = api.listNext().filter((i) => i.projectId === p.id).sort(byPriority);
     const stalled = api.projectStalled(p);
+    const state = p.status === 'active' ? (stalled ? 'stalled' : 'ok') : p.status;
     const reviewedDays = p.lastReviewedAt ? daysBetween(p.lastReviewedAt, today) : undefined;
     return {
       id: p.id,
       title: p.title,
       href: projectsHref(filter, p.id),
-      stalled,
-      line: stalled ? stalledReason(p.id) : next[0] && `→ ${next[0].text}`,
+      state,
+      line:
+        p.status === 'someday'
+          ? laterCount(p.id)
+          : stalled
+            ? stalledReason(p.id)
+            : next[0] && `→ ${next[0].text}`,
       nextActions: next.length,
       reviewed: reviewedDays === undefined ? '—' : fmtDaysAgo(reviewedDays),
       reviewWarn: reviewedDays === undefined || reviewedDays > REVIEW_WARN_DAYS,
