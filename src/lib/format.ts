@@ -18,3 +18,16 @@ export function fmtDay(iso: string): string {
   const { date, dd, mm } = parts(iso);
   return `${WEEKDAYS[date.getDay()]} ${dd}.${mm}`;
 }
+
+/** `sat 09:12` */
+export function fmtWeekdayTime(iso: string): string {
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  return `${WEEKDAYS[d.getDay()]} ${hh}:${mi}`;
+}
+
+/** `2 h` below a day, `1 d` from there. */
+export function fmtAge(hours: number): string {
+  return hours < 24 ? `${hours} h` : `${Math.floor(hours / 24)} d`;
+}

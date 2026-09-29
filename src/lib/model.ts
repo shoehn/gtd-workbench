@@ -26,6 +26,7 @@ export interface Item {
   bucket?: string;            // someday/maybe grouping
   tags: string[];
   doneAt?: string;
+  trashedAt?: string;         // ISO; trash is purged by the weekly review or after 30 d
 }
 
 export interface Project {

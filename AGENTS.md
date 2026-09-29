@@ -35,8 +35,9 @@ mapped in an `@theme inline` block in `src/app/globals.css` (no
 `tailwind.config.ts`), no component library. State in a single store module
 (`src/lib/store/`) behind a small typed API (`src/lib/api.ts`); UI never touches
 storage. Start with an in-memory store seeded from `seed.json`; iteration 09
-swaps in SQLite. Server components by default; client components only where
-there is interaction.
+swaps in SQLite. In memory mode a dev-server restart resets everything to the
+seed — that is expected, not data loss. Server components by default; client
+components only where there is interaction.
 
 ## Layout of `src/`
 
@@ -65,6 +66,8 @@ lib/capture-syntax.ts  parser for `#tag @context !prio ^date`
   Enforce in the store, surface in the UI, never auto-fix.
 - Priorities are `A|B|C` + running number within priority; contexts are `@name`
   strings; energy `focus|normal|low`; time buckets `15|30|60|120+` minutes.
+- Time comes from `api.now()` / `api.today()` only, never `new Date()`. Outside
+  production they run on the seed's pinned date; removing that pin is one line.
 - Dates are ISO strings in the store; display formats follow the mockups
   (`sat 26.09`, `03.10`).
 - Accessibility as drawn: real `<button>`, `<a>`, `<input>`+`<label>`; icon-only

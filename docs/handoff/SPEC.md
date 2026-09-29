@@ -39,6 +39,8 @@ from Next and Inbox respectively.
   the others are placeholders for integrations.
 - List shows item, source, captured time, age. Age ≥ 3 d turns orange.
 - Keys: `j/k` move, `x` select, `c` clarify selected (or first), `⌫` trash.
+- Trash is a status, not a delete: `⌫` shows a 5 s undo toast, and trashed items stay in the
+  store until the weekly review empties the trash or 30 days after they were trashed.
 
 ### 3.2 Clarify — the four steps, always in this order, all visible at once (no wizard)
 1. **Is it actionable?** Yes / No→Trash / No→Someday-Maybe / No→Reference.
@@ -55,6 +57,8 @@ from Next and Inbox respectively.
    skip it. Do now (< 2 min) / Delegate → Waiting For (asks who) / Defer → Next Actions
    (context, priority, time, energy) / Defer → Calendar (day, optional time).
    Deadline field: hard deadlines only.
+   A `^date` typed at capture is an intent, not a commitment: it is kept as `day` (never as
+   `deadline`), and when present step 4 preselects Defer → Calendar with that day.
 - "File it and next" (Enter) commits and loads the next inbox item. "Skip" leaves it.
 - Right rail: similar items already on the lists (search by words), "Result of this
   clarify" summary (what will be created), keys.
@@ -112,6 +116,7 @@ review, bins) repeat here. Everything else stays on the lists.
   between opening a step and ticking it, not typed.
 - Pause exists; an abandoned review closes itself after 24 h as "abandoned at step n".
 - Review notes textarea saved with the run; "This week so far" counters.
+- Finishing a review empties the trash (implicit last step, not a checklist entry).
 - Parked ideas (not v1): pinned step strip on other screens, auto-tick when a linked list
   reaches its target state, inline rapid log on the mind-sweep step.
 
@@ -158,6 +163,7 @@ interface Item {
   bucket?: string;            // someday/maybe grouping
   tags: string[];
   doneAt?: string;
+  trashedAt?: string;         // ISO; purged by the weekly review or after 30 d
 }
 
 interface Project {
@@ -189,7 +195,7 @@ Derived, never stored: project stalled flag, inbox age, review counters, health 
 ## 6. Keyboard map (desktop)
 
 Global: `⌘K` command palette (later), `›`-field on every screen captures to inbox.
-Inbox: `j k x c ⌫`. Clarify: `y t m r` (step 1), `p` project picker, `a` toggle next
+Inbox: `j k x c ⌫`, `u` (or `⌘Z`) undo trash within 5 s, `/` focus the rapid log, `esc` leave it. Clarify: `y t m r` (step 1), `p` project picker, `a` toggle next
 action, `2 w n k` (step 4), `⏎` file and next, `s` skip. Next Actions: `x f e p @`.
 Waiting: `f x`. Review: `space` tick current step.
 

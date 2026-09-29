@@ -1,23 +1,31 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
+import { parse } from './capture-syntax';
 import type { Item, Project, Source } from './model';
 import { store } from './store/memory';
 
 const DAY_MS = 86_400_000;
 
-/** Today as an ISO date (yyyy-mm-dd). The seed pins it; otherwise the real date. */
-export function today(): string {
-  return store.getState().today ?? new Date().toISOString().slice(0, 10);
+/** The seed's pinned date outside production; `undefined` means the real clock. Delete to unpin. */
+const PINNED_DAY = process.env.NODE_ENV !== 'production' ? store.getState().today : undefined;
+
+/**
+ * The one clock. Everything time-dependent (ages, "today", focus, review due) reads this,
+ * never `new Date()`. Pinned: the real time of day on the seed's date.
+ */
+export function now(): Date {
+  const real = new Date();
+  if (!PINNED_DAY) return real;
+  const d = new Date(`${PINNED_DAY}T00:00:00`);
+  d.setHours(real.getHours(), real.getMinutes(), real.getSeconds(), real.getMilliseconds());
+  return d;
 }
 
-/** "Now" consistent with today(): the real clock time on the (possibly pinned) date. */
-function now(): Date {
-  const real = new Date();
-  const pinned = store.getState().today;
-  if (!pinned) return real;
-  const d = new Date(`${pinned}T00:00:00`);
-  d.setHours(real.getHours(), real.getMinutes(), real.getSeconds());
-  return d;
+/** Today as a local ISO date (yyyy-mm-dd), from `now()`. */
+export function today(): string {
+  const d = now();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 const byNewest = (a: Item, b: Item) => b.capturedAt.localeCompare(a.capturedAt);
@@ -39,9 +47,14 @@ export function projectStalled(project: Project): boolean {
   return project.status === 'active' && !listNext().some((i) => i.projectId === project.id);
 }
 
+/** Whole hours since capture. */
+export function ageHours(item: Item): number {
+  return Math.max(0, Math.floor((now().getTime() - Date.parse(item.capturedAt)) / 3_600_000));
+}
+
 /** Whole days since capture. */
 export function ageDays(item: Item): number {
-  return Math.max(0, Math.floor((now().getTime() - Date.parse(item.capturedAt)) / DAY_MS));
+  return Math.floor(ageHours(item) / 24);
 }
 
 export type ReviewBadge = 'due' | 'in progress' | null;
@@ -79,21 +92,79 @@ export function navCounts(): NavCounts {
   };
 }
 
-/** Capture one line into the inbox. Never asks, never throws on input. */
+/**
+ * Capture one line into the inbox. Never asks, never throws on input. Shorthand is parsed
+ * best-effort; a `^date` is kept as `day` for Clarify to offer, not as a hard deadline.
+ */
 export function capture(line: string, source: Source = 'typed'): Item | null {
-  const text = line.trim();
-  if (!text) return null;
+  if (!line.trim()) return null;
+  const { text, tags, context, priority, date } = parse(line, today(), store.getState().contexts);
   const item: Item = {
     id: crypto.randomUUID(),
-    text,
+    text: text || line.trim(),
     captured: line,
     source,
-    capturedAt: new Date().toISOString(),
+    capturedAt: now().toISOString(),
     status: 'inbox',
-    tags: [],
+    tags,
+    ...(context && { context }),
+    ...(priority && { priority }),
+    ...(date && { day: date }),
   };
   store.update((s) => {
     s.items.push(item);
   });
   return item;
+}
+
+const TRASH_KEEP_DAYS = 30;
+
+/**
+ * Trash is a status, not a delete: items stay in the store until the weekly review empties
+ * the trash or they have been there 30 days. Returns what moved, with the old status, for undo.
+ */
+export function trash(ids: string[]): { id: string; status: Item['status'] }[] {
+  const moved: { id: string; status: Item['status'] }[] = [];
+  const at = now().toISOString();
+  store.update((s) => {
+    for (const item of s.items) {
+      if (ids.includes(item.id) && item.status !== 'trash') {
+        moved.push({ id: item.id, status: item.status });
+        item.status = 'trash';
+        item.trashedAt = at;
+      }
+    }
+  });
+  purgeTrash(TRASH_KEEP_DAYS);
+  return moved;
+}
+
+/** Undo for `trash`: put each item back to the status it had. Items no longer in trash are left alone. */
+export function untrash(entries: { id: string; status: Item['status'] }[]): void {
+  store.update((s) => {
+    for (const { id, status } of entries) {
+      const item = s.items.find((i) => i.id === id);
+      if (item?.status === 'trash') {
+        item.status = status;
+        delete item.trashedAt;
+      }
+    }
+  });
+}
+
+/**
+ * Delete trashed items for good: all of them (the weekly review's implicit last step), or only
+ * those trashed at least `olderThanDays` ago. Returns how many were removed.
+ */
+export function purgeTrash(olderThanDays?: number): number {
+  const cutoff = olderThanDays === undefined ? undefined : now().getTime() - olderThanDays * DAY_MS;
+  const purge = (i: Item) =>
+    i.status === 'trash' && (cutoff === undefined || (!!i.trashedAt && Date.parse(i.trashedAt) <= cutoff));
+  const count = store.getState().items.filter(purge).length;
+  if (count) {
+    store.update((s) => {
+      s.items = s.items.filter((i) => !purge(i));
+    });
+  }
+  return count;
 }
