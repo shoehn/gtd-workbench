@@ -7,8 +7,8 @@ appear here — that is the point of the screen.
 ## Do
 
 1. **Route** `/calendar?week=2026-W39` (ISO week; default current). Top bar: h1
-   "Calendar", meta "week 39 · 21.09 – 27.09", ‹ Today › buttons, capture field, "Week ▾"
-   (only Week in v1; Agenda comes with the phone layout in 08).
+   "Calendar", meta "week 39 · 21.09 – 27.09", ‹ Today › buttons, capture field. No "Week ▾"
+   menu (v1.1, SPEC §8): only Week in v1; Agenda comes with the phone layout in 08.
 2. **Week grid** in a `Card`: `48px repeat(7, 1fr)` columns, rows `40px 96px 1fr`.
    Day headers with tracked weekday + number; today's column tinted accent with
    "SAT · TODAY". Row 2 is the **day-only strip**; row 3 the time grid 08–18, 48 px per
@@ -45,7 +45,7 @@ appear here — that is the point of the screen.
 
 ## Definition of done
 
-- Week 39 of the seed renders as the mockup: Mon lecture block, Tue meeting, Wed/Thu
+- Week 39 of the seed renders as the mockup: Mon lecture block, Tue meeting, Tue/Wed
   done day-actions, Thu office hours, Fri tickler + deep-work time block, Sat dentist,
   Marc call, abstract deadline, now-line, Sun bins tickler + weekly review block.
 - Dragging n2 from `/next` onto Mon 09:00 creates a time block there and stars n2.

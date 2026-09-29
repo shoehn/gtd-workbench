@@ -82,7 +82,7 @@ from Next and Inbox respectively.
   Enter on an empty field = single action). Enter saves, Esc cancels.
 - Row: done checkbox · focus star · priority chip (A1, B3, C) · text · project link ·
   time · energy · due. "Single action" rows show no project.
-- **Focus star = today's pick.** Set only here (or by time-blocking on the calendar).
+- **Focus star = today's pick.** Set only here (or by time-blocking an action on today in the calendar).
   Clears at midnight. Not a priority.
 - Today panel: hard landscape for today (read-only, links to Calendar) and the focus list.
 - Health box: projects without next action, overdue waiting-for, actions older than 30 d.
@@ -100,8 +100,9 @@ from Next and Inbox respectively.
   through); Waiting for / Reference / Horizon in a row below; Support notes.
 - No done checkboxes and no focus stars in this view (planning view). A read-only "today"
   tag shows where a focus is set.
-- Demoting a next action to later is allowed at any time; it drops context/priority/time
-  (re-asked on promotion). Demoting the last next action marks the project stalled at once.
+- Demoting a next action to later is allowed at any time; it drops context, priority, time,
+  energy, day, time block and focus star (all re-asked on promotion: the step-4 fields inline
+  on Projects, day and block on Calendar, the star on Next Actions). Demoting the last next action marks the project stalled at once.
 - Stalled = active project with zero next actions (waiting-for alone does not count).
 - Complete is refused while the project has open next actions or later steps ("n open —
   finish, demote or drop them first"); nothing is closed on the user's behalf.
@@ -142,6 +143,26 @@ Exactly five kinds of things, each drawn differently:
 Week view desktop (Mon–Sun, "day only" strip on top of each day, hours 08–18), agenda list
 on phone. Nothing is written back to external calendars. Recurring checklists (weekly
 review, bins) repeat here. Everything else stays on the lists.
+- Route `/calendar?week=2026-W39` (ISO week; invalid or missing = the current week).
+  ‹ Today › step through weeks. A warn line marks now in today's column (08–18 only).
+- Time blocks: dropping a Next Actions row (or a block) on the grid snaps to 15 min. A new
+  block lasts the action's time estimate (1 h without one); a moved block keeps its length.
+  Overlapping blocks sit side by side. A block on today stars the next action for today; a
+  block on any other day leaves stars alone. × removes the block and never touches a star.
+  Demoting a next action drops its block (SPEC §3.4).
+  Clicking a block opens it where it is looked after (Next Actions row, else its project).
+- Calendar items (from Clarify → Defer → Calendar) can be dragged between days in the day-only
+  strip or onto a slot; removing a calendar item's block leaves it on its day.
+- Deadlines: a day-specific action due the day it sits on is drawn once, as the action with
+  the DEADLINE tag. An action due the same day as its project shows only as the project.
+  Deadlines of open items (next, later, waiting, calendar) and active projects count.
+  "Upcoming hard deadlines" lists tomorrow to 30 days ahead (today's are on the grid);
+  orange within 7 days.
+- Tickler notes: "+ note" on a day (shown on hover/focus) adds one; click to edit, emptying or
+  × deletes. No undo.
+- Recurring: an item tagged `recurring:weekly` is drawn on every later week at the same
+  weekday and time with "↻" (projected, not interactive). Completing it stores the next
+  occurrence a week later; undoing the completion takes that occurrence back.
 
 ### 3.7 Weekly Review
 - A checklist template shipped with the app (Get clear 4 steps / Get current 6 / Get
@@ -267,6 +288,8 @@ Planned for v1.1:
   Actions, "Sort: follow-up ▾" on Waiting For, "Group: bucket ▾" on Someday/Maybe, as drawn
   in the mockups). v1 ships fixed orders: Inbox newest first, Next Actions grouped by
   context, Waiting For by follow-up, Someday/Maybe grouped by bucket.
+- "Week ▾" view menu on Calendar (Week / Agenda on desktop). v1 ships Week on desktop and
+  the agenda on the phone (iteration 08).
 - "+ Project" on Projects, with capture-then-Clarify semantics: it captures the typed line
   into the inbox marked as a project, and Clarify opens on it with step 3 preset to
   "+ New project: <line>". Projects are still only born through Clarify; the button is a

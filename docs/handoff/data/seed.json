@@ -7,7 +7,7 @@
     { "id": "p-bench", "title": "Workshop bench decided and ordered", "successfulWhen": "A bench that fits the 180 cm alcove is ordered, delivery date known, old bench listed for sale.", "area": "Home & workshop", "goal": "Workshop usable for pedal builds by winter", "deadline": "2026-10-03", "status": "active", "createdAt": "2026-09-26T08:20:00+02:00", "createdFrom": "inbox", "notes": "Alcove: 180 × 62 cm, socket on the left wall. Holzwerk offer includes delivery to the door only — stairs are our problem. Quote A is cheaper but 190 cm wide.", "lastReviewedAt": "2026-09-23" },
     { "id": "p-module", "title": "Module HS26 ready to teach", "area": "Teaching", "status": "active", "notes": "", "lastReviewedAt": "2026-09-25" },
     { "id": "p-grant", "title": "Grant report submitted", "area": "Research", "status": "active", "notes": "", "lastReviewedAt": "2026-09-17" },
-    { "id": "p-conf", "title": "Conference trip organised", "area": "Research", "status": "active", "notes": "", "lastReviewedAt": "2026-09-24" },
+    { "id": "p-conf", "title": "Conference trip organised", "area": "Research", "deadline": "2026-10-14", "status": "active", "notes": "", "lastReviewedAt": "2026-09-24" },
     { "id": "p-delay", "title": "Delay pedal built", "area": "Workshop", "status": "active", "notes": "", "lastReviewedAt": "2026-09-21" },
     { "id": "p-home", "title": "Home maintenance 2026", "area": "Home", "status": "active", "notes": "", "lastReviewedAt": "2026-09-20" },
     { "id": "p-gridfinity", "title": "Workshop reorganised (Gridfinity)", "area": "Workshop", "status": "active", "notes": "", "lastReviewedAt": "2026-09-05" },
@@ -43,7 +43,7 @@
     { "id": "w2", "text": "Confirm stair delivery surcharge", "captured": "Confirm stair delivery surcharge", "source": "typed", "capturedAt": "2026-09-25T10:00:00+02:00", "status": "waiting", "projectId": "p-bench", "waiting": { "who": "Lena, Holzwerk", "since": "2026-09-25", "followUp": "2026-09-29" }, "tags": [] },
     { "id": "w3", "text": "Room booking for the module kickoff", "captured": "Room booking for the module kickoff", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "waiting", "projectId": "p-module", "waiting": { "who": "Facilities desk", "since": "2026-09-22", "followUp": "2026-09-30" }, "tags": [] },
     { "id": "w4", "text": "Parts order #4471 (PCB + pots)", "captured": "Parts order #4471", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "waiting", "projectId": "p-delay", "waiting": { "who": "Distributor", "since": "2026-09-20", "followUp": "2026-10-02" }, "tags": [] },
-    { "id": "w5", "text": "Reviewer comments on the abstract", "captured": "Reviewer comments on the abstract", "source": "typed", "capturedAt": "2026-09-24T10:00:00+02:00", "status": "waiting", "projectId": "p-conf", "waiting": { "who": "Programme committee", "since": "2026-09-24", "followUp": "2026-10-12" }, "tags": [] },
+    { "id": "w5", "text": "Reviewer comments on the abstract", "captured": "Reviewer comments on the abstract", "source": "typed", "capturedAt": "2026-09-24T10:00:00+02:00", "status": "waiting", "projectId": "p-conf", "deadline": "2026-10-12", "waiting": { "who": "Programme committee", "since": "2026-09-24", "followUp": "2026-10-12" }, "tags": [] },
     { "id": "w6", "text": "Refund for the returned multimeter", "captured": "Refund for the returned multimeter", "source": "typed", "capturedAt": "2026-09-18T10:00:00+02:00", "status": "waiting", "waiting": { "who": "Shop support", "since": "2026-09-18", "followUp": "2026-10-05" }, "tags": [] },
     { "id": "w7", "text": "Borrowed oscilloscope probe back", "captured": "Borrowed oscilloscope probe back", "source": "typed", "capturedAt": "2026-09-07T10:00:00+02:00", "status": "waiting", "waiting": { "who": "Jonas", "since": "2026-09-07" }, "tags": [] },
 
@@ -62,9 +62,11 @@
     { "id": "c5", "text": "Weekly review", "captured": "Weekly review", "source": "typed", "capturedAt": "2026-01-01T10:00:00+01:00", "status": "calendar", "day": "2026-09-27", "timeSlot": { "start": "2026-09-27T17:00:00+02:00", "end": "2026-09-27T18:00:00+02:00" }, "tags": ["recurring:weekly"] }
   ],
   "tickler": [
-    { "day": "2026-09-25", "text": "Holzwerk offer arrives · decide by 03.10" },
-    { "day": "2026-09-27", "text": "Bins out · paper" }
+    { "id": "t1", "day": "2026-09-25", "text": "Holzwerk offer arrives · decide by 03.10" },
+    { "id": "t2", "day": "2026-09-27", "text": "Bins out · paper" }
   ],
+  "externalCalendars": [{ "name": "Work", "via": "Exchange" }, { "name": "Private", "via": "CalDAV" }],
+  "externalSyncedAt": "2026-09-26T09:14:00+02:00",
   "externalEvents": [
     { "id": "e1", "calendar": "Work", "title": "Lecture block", "start": "2026-09-21T09:00:00+02:00", "end": "2026-09-21T12:00:00+02:00", "allDay": false },
     { "id": "e2", "calendar": "Work", "title": "Institute meeting", "start": "2026-09-22T13:00:00+02:00", "end": "2026-09-22T14:00:00+02:00", "allDay": false },

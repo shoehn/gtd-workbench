@@ -129,3 +129,33 @@ export async function undropProjectAction(id: string): Promise<void> {
   api.undropProject(id);
   revalidatePath('/', 'layout');
 }
+
+export async function setTimeSlotAction(id: string, start: string, end?: string): Promise<void> {
+  api.setTimeSlot(id, start, end);
+  revalidatePath('/', 'layout');
+}
+
+export async function clearTimeSlotAction(id: string): Promise<void> {
+  api.clearTimeSlot(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function setDayAction(id: string, day: string): Promise<void> {
+  api.setDay(id, day);
+  revalidatePath('/', 'layout');
+}
+
+export async function addTicklerAction(day: string, text: string): Promise<void> {
+  api.addTickler(day, text);
+  revalidatePath('/', 'layout');
+}
+
+export async function updateTicklerAction(id: string, text: string): Promise<void> {
+  api.updateTickler(id, text);
+  revalidatePath('/', 'layout');
+}
+
+export async function deleteTicklerAction(id: string): Promise<void> {
+  api.deleteTickler(id);
+  revalidatePath('/', 'layout');
+}

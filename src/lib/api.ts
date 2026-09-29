@@ -1,9 +1,12 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
 import { parse } from './capture-syntax';
+import { SeedCalendarSource, type CalendarSource } from './calendar-source';
 import type { Energy, Item, Priority, Project, Source, TimeBucket } from './model';
 import { store } from './store/memory';
+import type { ExternalCalendar, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
+import { addDays, isoWeek, weekDays } from './week';
 
 const DAY_MS = 86_400_000;
 
@@ -228,7 +231,10 @@ function nextPriorityNo(items: Item[], priority: Priority): number | undefined {
   return Math.max(0, ...nos) + 1;
 }
 
-/** File as a later step, without what only a next action carries (SPEC §3.4). */
+/**
+ * File as a later step, without what only a next action carries (SPEC §3.4): the step-4 fields,
+ * its day, its time block and its focus star. Promotion asks for them again.
+ */
 function toLater(item: Item) {
   item.status = 'later';
   delete item.context;
@@ -237,6 +243,8 @@ function toLater(item: Item) {
   delete item.time;
   delete item.energy;
   delete item.focusOn;
+  delete item.day;
+  delete item.timeSlot;
 }
 
 function check(ok: unknown, message: string, scope = 'clarify'): asserts ok {
@@ -462,13 +470,17 @@ export interface Completed {
   priorityNo?: number;
 }
 
-/** Mark a next action (or a day-specific calendar action) done. A project may become stalled. */
+/**
+ * Mark a next action (or a day-specific calendar action) done. A project may become stalled.
+ * A weekly recurring calendar item leaves its next occurrence behind, a week later.
+ */
 export function complete(id: string): Completed {
   const item = getItem(id);
   check(item?.status === 'next' || item?.status === 'calendar', `item ${id} cannot be completed`, 'complete');
   const undo: Completed = { id, status: item.status, ...(item.priorityNo && { priorityNo: item.priorityNo }) };
   store.update((s) => {
     const it = s.items.find((i) => i.id === id)!;
+    if (it.status === 'calendar' && isRecurring(it)) s.items.push(nextOccurrence(it));
     it.status = 'done';
     it.doneAt = now().toISOString();
     renumberIn(s.items);
@@ -481,6 +493,13 @@ export function uncomplete(done: Completed): void {
   store.update((s) => {
     const it = s.items.find((i) => i.id === done.id);
     if (it?.status !== 'done') return;
+    if (done.status === 'calendar' && isRecurring(it)) {
+      // Take back the occurrence completing it created, if nothing happened to it since.
+      const successor = nextOccurrence(it);
+      s.items = s.items.filter(
+        (x) => !(x.status === 'calendar' && isRecurring(x) && x.text === it.text && x.day === successor.day),
+      );
+    }
     it.status = done.status;
     delete it.doneAt;
     // Half a step ahead of whoever took its number meanwhile; renumbering makes it whole again.
@@ -546,10 +565,10 @@ export function listPickerProjects() {
     .map((p) => ({ id: p.id, title: p.title, active: p.status === 'active', nextActions: nextActionCount(p.id) }));
 }
 
-/** One entry of today's hard landscape (SPEC §3.6). */
+/** One entry of today's hard landscape, for the Today card on Next Actions. */
 export interface LandscapeEntry {
   id: string;
-  kind: 'appointment' | 'block' | 'day-action' | 'tickler' | 'deadline';
+  kind: CalendarEntry['kind'];
   /** `hh:mm`; absent = all day. */
   time?: string;
   text: string;
@@ -558,40 +577,18 @@ export interface LandscapeEntry {
   done: boolean;
 }
 
-/**
- * The hard landscape of one day: external appointments, time blocks, day-specific actions and
- * information, and hard deadlines due that day. Timed entries first, by time; then all-day ones.
- */
+/** The calendar's entries for one day, flattened: timed ones first, by time; then all-day ones. */
 export function todayLandscape(day = today()): LandscapeEntry[] {
-  const { items, projects, externalEvents, tickler } = store.getState();
-  const entries: LandscapeEntry[] = [];
-  for (const e of externalEvents) {
-    if (e.start.slice(0, 10) !== day) continue;
-    entries.push({ id: e.id, kind: 'appointment', ...(!e.allDay && { time: e.start.slice(11, 16) }), text: e.title, deadline: false, done: false });
-  }
-  for (const i of items) {
-    if (i.status === 'trash') continue;
-    const onDay = i.day === day && (i.status === 'calendar' || i.status === 'done');
-    if (onDay) {
-      entries.push({
-        id: i.id,
-        kind: i.timeSlot ? 'block' : 'day-action',
-        ...(i.timeSlot && { time: i.timeSlot.start.slice(11, 16) }),
-        text: i.text,
-        deadline: i.deadline === day,
-        done: i.status === 'done',
-      });
-    } else if (i.deadline === day && i.status !== 'done') {
-      entries.push({ id: i.id, kind: 'deadline', text: i.text, deadline: true, done: false });
-    }
-  }
-  for (const [n, t] of tickler.entries()) {
-    if (t.day === day) entries.push({ id: `tickler-${n}`, kind: 'tickler', text: t.text, deadline: false, done: false });
-  }
-  for (const p of projects) {
-    if (p.status === 'active' && p.deadline === day) entries.push({ id: p.id, kind: 'deadline', text: p.title, deadline: true, done: false });
-  }
-  return entries.sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'));
+  return landscape(day, day)
+    .map((e) => ({
+      id: e.id,
+      kind: e.kind,
+      ...('start' in e && e.start && { time: e.start }),
+      text: e.text,
+      deadline: e.kind === 'deadline' || (e.kind === 'dayaction' && e.deadline),
+      done: 'done' in e && e.done,
+    }))
+    .sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'));
 }
 
 export interface Health {
@@ -773,14 +770,6 @@ export function listWaiting(): Item[] {
     .sort((a, b) => key(a).localeCompare(key(b)) || (a.waiting?.since ?? '').localeCompare(b.waiting?.since ?? ''));
 }
 
-/** `day` plus `n` days, as an ISO date. */
-function addDays(day: string, n: number): string {
-  const [y, m, d] = day.split('-').map(Number);
-  const date = new Date(y, m - 1, d + n);
-  const pad = (x: number) => String(x).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
 /** Whoever answers by mail or ticket rather than by phone. */
 const WRITES_BACK = /desk|support|committee/i;
 
@@ -883,5 +872,261 @@ export function undropProject(id: string): void {
     if (p?.status !== 'completed' || !p.dropped) return;
     p.status = 'someday';
     delete p.dropped;
+  });
+}
+
+// ── Calendar ───────────────────────────────────────────────────────────────
+
+const calendarSource: CalendarSource = new SeedCalendarSource(() => store.getState());
+
+export function listExternalCalendars(): ExternalCalendar[] {
+  return calendarSource.calendars();
+}
+
+export function calendarSyncedAt(): string | undefined {
+  return calendarSource.syncedAt();
+}
+
+const RECURRING_WEEKLY = 'recurring:weekly';
+const SLOT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+const DEFAULT_BLOCK_MIN = 60;
+
+function isRecurring(item: Item): boolean {
+  return item.tags.includes(RECURRING_WEEKLY);
+}
+
+/** The day an item sits on in the calendar: its slot's day, else its `day`. */
+function calendarDay(item: Item): string | undefined {
+  return item.timeSlot?.start.slice(0, 10) ?? item.day;
+}
+
+/** `2026-09-27T17:00…` moved by `n` days, time of day and anything after it kept. */
+function shiftStamp(stamp: string, n: number): string {
+  return addDays(stamp.slice(0, 10), n) + stamp.slice(10);
+}
+
+/** A recurring item's next occurrence: the same item a week later, open, with a new id. */
+function nextOccurrence(item: Item): Item {
+  const next: Item = {
+    ...item,
+    id: crypto.randomUUID(),
+    status: 'calendar',
+    capturedAt: now().toISOString(),
+    tags: [...item.tags],
+  };
+  const day = calendarDay(item);
+  if (day) next.day = addDays(day, 7);
+  if (item.timeSlot) next.timeSlot = { start: shiftStamp(item.timeSlot.start, 7), end: shiftStamp(item.timeSlot.end, 7) };
+  delete next.doneAt;
+  delete next.focusOn;
+  return next;
+}
+
+const hhmm = (stamp: string) => stamp.slice(11, 16);
+const minutesOf = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
+const fromMinutes = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+/** Where an item is looked after: its list, or its project. */
+function ownerHref(item: Item): string | undefined {
+  if (item.status === 'next') return `/next?highlight=${encodeURIComponent(item.id)}`;
+  if (item.status === 'waiting') return '/waiting';
+  if (item.projectId) return `/projects?p=${encodeURIComponent(item.projectId)}`;
+  return undefined;
+}
+
+interface EntryBase {
+  /** Unique per entry; a projected recurrence is `<item id>@<day>`. */
+  id: string;
+  day: string;
+  text: string;
+}
+
+/** Item-backed entries: what the calendar can move, tick or open. */
+interface ItemEntry extends EntryBase {
+  itemId: string;
+  status: Item['status'];
+  done: boolean;
+  recurring: boolean;
+  /** A later occurrence of a recurring item, drawn but not stored; not interactive. */
+  projected: boolean;
+  href?: string;
+}
+
+/** The five kinds of the hard landscape (SPEC §3.6). Times are `hh:mm`. */
+export type CalendarEntry =
+  | (EntryBase & { kind: 'appointment'; calendar: string; start?: string; end?: string })
+  | (ItemEntry & { kind: 'timeblock'; start: string; end: string })
+  | (ItemEntry & { kind: 'dayaction'; deadline: boolean })
+  | (EntryBase & { kind: 'info'; ticklerId: string })
+  | (EntryBase & { kind: 'deadline'; href: string });
+
+/**
+ * Everything on the calendar between `from` and `to` (ISO dates, inclusive):
+ * - appointments from the calendar source;
+ * - time blocks: open or done next actions and calendar items with a `timeSlot`;
+ * - day actions: calendar items (or done ones) with a `day` and no slot;
+ * - info: tickler entries;
+ * - deadlines of open items and active projects. A day action due the day it sits on is drawn
+ *   once, as a day action flagged `deadline`; an item due with its project shows as the project.
+ * Weekly recurring calendar items repeat on every later week, projected from their next date.
+ */
+function landscape(from: string, to: string): CalendarEntry[] {
+  const { items, projects, tickler } = store.getState();
+  const inRange = (day: string | undefined): day is string => !!day && day >= from && day <= to;
+  const out: CalendarEntry[] = [];
+
+  for (const e of calendarSource.events(from, to)) {
+    out.push({
+      kind: 'appointment',
+      id: e.id,
+      day: e.start.slice(0, 10),
+      text: e.title,
+      calendar: e.calendar,
+      ...(!e.allDay && { start: hhmm(e.start), end: hhmm(e.end) }),
+    });
+  }
+
+  const projectDeadline = new Map(projects.filter((p) => p.status === 'active' && p.deadline).map((p) => [p.id, p.deadline]));
+  for (const i of items) {
+    const placed = i.timeSlot ? ['next', 'calendar', 'done'].includes(i.status) : ['calendar', 'done'].includes(i.status);
+    const day = calendarDay(i);
+    if (placed && day) {
+      const days: [string, boolean][] = inRange(day) ? [[day, false]] : [];
+      if (i.status === 'calendar' && isRecurring(i)) {
+        for (let d = addDays(day, 7); d <= to; d = addDays(d, 7)) if (d >= from) days.push([d, true]);
+      }
+      for (const [d, projected] of days) {
+        const base = {
+          id: projected ? `${i.id}@${d}` : i.id,
+          itemId: i.id,
+          status: i.status,
+          day: d,
+          text: i.text,
+          done: !projected && i.status === 'done',
+          recurring: isRecurring(i),
+          projected,
+          ...(ownerHref(i) && { href: ownerHref(i) }),
+        };
+        if (i.timeSlot) out.push({ ...base, kind: 'timeblock', start: hhmm(i.timeSlot.start), end: hhmm(i.timeSlot.end) });
+        else out.push({ ...base, kind: 'dayaction', deadline: !projected && i.deadline === d });
+      }
+    }
+    const open = ['next', 'later', 'waiting', 'calendar'].includes(i.status);
+    const drawnAsDayAction = placed && !i.timeSlot && i.day === i.deadline;
+    const coveredByProject = !!i.projectId && projectDeadline.get(i.projectId) === i.deadline;
+    if (open && inRange(i.deadline) && !drawnAsDayAction && !coveredByProject) {
+      out.push({
+        kind: 'deadline',
+        id: `deadline-${i.id}`,
+        day: i.deadline,
+        text: i.text,
+        href: ownerHref(i) ?? `/calendar?week=${isoWeek(i.deadline)}`,
+      });
+    }
+  }
+
+  for (const t of tickler) {
+    if (inRange(t.day)) out.push({ kind: 'info', id: t.id, ticklerId: t.id, day: t.day, text: t.text });
+  }
+  for (const p of projects) {
+    if (p.status === 'active' && inRange(p.deadline)) {
+      out.push({ kind: 'deadline', id: `deadline-${p.id}`, day: p.deadline, text: p.title, href: `/projects?p=${encodeURIComponent(p.id)}` });
+    }
+  }
+  return out;
+}
+
+/** The hard landscape of an ISO week (`2026-W39`), Monday to Sunday. */
+export function weekLandscape(week: string): CalendarEntry[] {
+  const days = weekDays(week);
+  return landscape(days[0], days[6]);
+}
+
+export interface UpcomingDeadline {
+  id: string;
+  day: string;
+  text: string;
+  href: string;
+}
+
+/** Hard deadlines after today, up to `days` ahead, soonest first. Today's are on the grid. */
+export function upcomingDeadlines(days = 30): UpcomingDeadline[] {
+  const from = addDays(today(), 1);
+  const out: UpcomingDeadline[] = [];
+  for (const e of landscape(from, addDays(today(), days))) {
+    if (e.kind === 'deadline') out.push({ id: e.id, day: e.day, text: e.text, href: e.href });
+    else if (e.kind === 'dayaction' && e.deadline && !e.done) {
+      out.push({ id: e.id, day: e.day, text: e.text, href: e.href ?? `/calendar?week=${isoWeek(e.day)}` });
+    }
+  }
+  return out.sort((a, b) => a.day.localeCompare(b.day));
+}
+
+/**
+ * Give a next action or a calendar item a time slot (`yyyy-mm-ddThh:mm`). Without `end` the slot
+ * lasts the action's time estimate (1 h when it has none). A calendar item moves to that day.
+ * A next action blocked for today is starred for today; a block on any other day leaves stars alone.
+ */
+export function setTimeSlot(id: string, start: string, end?: string): void {
+  const item = getItem(id);
+  check(item?.status === 'next' || item?.status === 'calendar', `item ${id} cannot be time-blocked`, 'setTimeSlot');
+  check(SLOT.test(start) && (!end || SLOT.test(end)), 'slot is not yyyy-mm-ddThh:mm', 'setTimeSlot');
+  const day = start.slice(0, 10);
+  const until = end ?? `${day}T${fromMinutes(Math.min(24 * 60 - 1, minutesOf(hhmm(start)) + (item.time ?? DEFAULT_BLOCK_MIN)))}`;
+  check(until.slice(0, 10) === day && until > start, 'slot must end after it starts, on the same day', 'setTimeSlot');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    it.timeSlot = { start, end: until };
+    if (it.status === 'calendar') {
+      it.day = day;
+    } else if (day === today()) {
+      it.focusOn = day;
+    }
+  });
+}
+
+/** Remove a time block. Stars are never touched; a calendar item stays on its day. */
+export function clearTimeSlot(id: string): void {
+  const item = getItem(id);
+  check(item?.timeSlot && (item.status === 'next' || item.status === 'calendar'), `item ${id} has no open time block`, 'clearTimeSlot');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    delete it.timeSlot;
+  });
+}
+
+/** Put a calendar item on a day, any time: a day-specific action (its time slot, if any, goes). */
+export function setDay(id: string, day: string): void {
+  check(getItem(id)?.status === 'calendar', `item ${id} is not a calendar item`, 'setDay');
+  check(ISO_DATE.test(day), 'day is not an ISO date', 'setDay');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    it.day = day;
+    delete it.timeSlot;
+  });
+}
+
+/** Day-specific information (tickler): a note on a day, nothing to do. */
+export function addTickler(day: string, text: string): TicklerEntry {
+  check(ISO_DATE.test(day), 'day is not an ISO date', 'addTickler');
+  check(text.trim(), 'text is empty', 'addTickler');
+  const entry: TicklerEntry = { id: `t-${crypto.randomUUID()}`, day, text: text.trim() };
+  store.update((s) => {
+    s.tickler.push(entry);
+  });
+  return entry;
+}
+
+export function updateTickler(id: string, text: string): void {
+  check(store.getState().tickler.some((t) => t.id === id), `unknown tickler ${id}`, 'updateTickler');
+  check(text.trim(), 'text is empty', 'updateTickler');
+  store.update((s) => {
+    s.tickler.find((t) => t.id === id)!.text = text.trim();
+  });
+}
+
+export function deleteTickler(id: string): void {
+  store.update((s) => {
+    s.tickler = s.tickler.filter((t) => t.id !== id);
   });
 }

@@ -22,7 +22,7 @@ export function TodayCard({ day, entries }: { day: string; entries: LandscapeEnt
               <span className={cx(e.done && 'text-muted line-through')}>
                 {e.text}
                 {e.deadline && <span className="ml-1 font-mono text-meta text-warn">deadline</span>}
-                {e.kind === 'tickler' && <span className="ml-1 font-mono text-meta text-muted">info</span>}
+                {e.kind === 'info' && <span className="ml-1 font-mono text-meta text-muted">info</span>}
               </span>
             </li>
           ))}

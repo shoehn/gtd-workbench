@@ -1,7 +1,10 @@
 import type { ExternalEvent, Item, Project, ReviewRun, ReviewTemplate } from '../model';
 
 /** Day-specific information (SPEC §3.6, kind 4). */
-export interface TicklerEntry { day: string; text: string }
+export interface TicklerEntry { id: string; day: string; text: string }
+
+/** An external calendar the appointments are synced from, e.g. `Work` via `Exchange`. */
+export interface ExternalCalendar { name: string; via: string }
 
 export interface State {
   /** Fixed "today" (ISO date) for the seed; absent means the real date. */
@@ -13,6 +16,9 @@ export interface State {
   projects: Project[];
   items: Item[];
   tickler: TicklerEntry[];
+  externalCalendars: ExternalCalendar[];
+  /** ISO; when the external calendars last synced. */
+  externalSyncedAt?: string;
   externalEvents: ExternalEvent[];
   reviewTemplate: ReviewTemplate;
   reviewRun?: ReviewRun;

@@ -153,12 +153,11 @@ describe('today and health', () => {
     ]);
   });
 
-  it('includes tickler info and deadlines owned by lists', () => {
+  it('includes tickler info and deadlines owned by lists; an action due with its project shows once', () => {
     const day = '2026-10-03';
     expect(api.todayLandscape(day).map((e) => [e.kind, e.text])).toEqual([
-      ['deadline', 'Compare the Holzwerk offer with the two quotes in Reference'],
       ['deadline', 'Workshop bench decided and ordered'],
     ]);
-    expect(api.todayLandscape('2026-09-27').map((e) => e.kind)).toEqual(['block', 'tickler']);
+    expect(api.todayLandscape('2026-09-27').map((e) => e.kind)).toEqual(['timeblock', 'info']);
   });
 });

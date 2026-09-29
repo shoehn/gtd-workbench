@@ -5,6 +5,7 @@ import { useEffect, useOptimistic, useRef, useState, useTransition, type ReactNo
 import { completeAction, editNextAction, reopenAction, toggleFocusAction, uncompleteAction } from '@/lib/actions';
 import type { Completed, NextEdit } from '@/lib/api';
 import type { Priority } from '@/lib/model';
+import { DRAG_ITEM } from '../calendar/blocks';
 import { isTyping } from '../inbox/keys';
 import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
@@ -342,6 +343,12 @@ function ActionRow({ row: r, isCursor, fading, starred, editing, contexts, proje
       id={`next-row-${r.id}`}
       cols={COLS}
       onClick={onCursor}
+      // Drag source for time-blocking: drop the row on a slot in the Calendar (SPEC §3.6).
+      draggable={!editing}
+      onDragStart={(e) => {
+        e.dataTransfer.setData(DRAG_ITEM, r.id);
+        e.dataTransfer.setData('text/plain', r.text);
+      }}
       className={cx(
         'gap-2.5! transition-opacity duration-400 last:border-b-0',
         isCursor && 'bg-accent-tint',
