@@ -239,8 +239,22 @@ function toLater(item: Item) {
   delete item.focusOn;
 }
 
-function check(ok: unknown, message: string): asserts ok {
-  if (!ok) throw new Error(`clarify: ${message}`);
+function check(ok: unknown, message: string, scope = 'clarify'): asserts ok {
+  if (!ok) throw new Error(`${scope}: ${message}`);
+}
+
+/** Refuse an empty title or one an open project already has (no two open projects share a title). */
+function checkNewTitle(state: Readonly<{ projects: Project[] }>, title: string, scope?: string) {
+  check(title.trim(), 'new project title is empty', scope);
+  const twin = state.projects.find((p) => p.status !== 'completed' && sameTitle(p.title, title));
+  check(!twin, `project "${twin?.title}" already exists`, scope);
+}
+
+/** Create an active project in `s` and return its id. */
+function addProject(s: { projects: Project[] }, title: string): string {
+  const id = `p-${crypto.randomUUID()}`;
+  s.projects.push({ id, title: title.trim(), status: 'active', notes: '' });
+  return id;
 }
 
 /**
@@ -268,11 +282,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   if (choice && 'id' in choice) {
     check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`);
   }
-  if (choice && 'newTitle' in choice) {
-    check(choice.newTitle.trim(), 'new project title is empty');
-    const twin = state.projects.find((p) => p.status !== 'completed' && sameTitle(p.title, choice.newTitle));
-    check(!twin, `project "${twin?.title}" already exists`);
-  }
+  if (choice && 'newTitle' in choice) checkNewTitle(state, choice.newTitle);
   const route = decision.kind === 'action' ? decision.route : undefined;
   if (route?.to === 'waiting') {
     check(route.who.trim(), 'waiting for whom is empty');
@@ -292,8 +302,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   store.update((s) => {
     let projectId: string | undefined;
     if (choice && 'newTitle' in choice) {
-      projectId = `p-${crypto.randomUUID()}`;
-      s.projects.push({ id: projectId, title: choice.newTitle.trim(), status: 'active', notes: '' });
+      projectId = addProject(s, choice.newTitle);
       result.projectCreated = true;
     } else if (choice) {
       projectId = choice.id;
@@ -344,6 +353,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
       delete item.context;
       delete item.priority;
     }
+    renumberIn(s.items);
   });
   return result;
 }
@@ -385,4 +395,205 @@ export function similar(text: string, excludeId?: string, limit = 3): Similar[] 
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((f) => f.entry);
+}
+
+// ── Next Actions ───────────────────────────────────────────────────────────
+
+/**
+ * Close the gaps in the running numbers: A1, A2… and B1, B2… across the whole list, in their
+ * current order (numberless ones last). C and everything that is not a next action carry none.
+ */
+function renumberIn(items: Item[]) {
+  for (const priority of ['A', 'B'] as const) {
+    items
+      .filter((i) => i.status === 'next' && i.priority === priority)
+      .sort((a, b) => (a.priorityNo ?? Infinity) - (b.priorityNo ?? Infinity) || a.capturedAt.localeCompare(b.capturedAt))
+      .forEach((i, n) => {
+        i.priorityNo = n + 1;
+      });
+  }
+  for (const i of items) {
+    if (i.status !== 'next' || i.priority === 'C' || !i.priority) delete i.priorityNo;
+  }
+}
+
+/** Recompute the priority numbers. Every api change that touches next actions does this itself. */
+export function renumber(): void {
+  store.update((s) => renumberIn(s.items));
+}
+
+/** A star counts only on the day it was set for; older ones are ignored ("clears at midnight"). */
+export function isFocused(item: Item, day = today()): boolean {
+  return item.focusOn === day;
+}
+
+/** Set or clear the focus star of a next action for `day`. Returns whether it is now starred. */
+export function toggleFocus(id: string, day = today()): boolean {
+  const item = getItem(id);
+  check(item?.status === 'next', `item ${id} is not a next action`, 'focus');
+  const on = !isFocused(item, day);
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    if (on) it.focusOn = day;
+    else delete it.focusOn;
+  });
+  return on;
+}
+
+/** Everything starred for today, done ones first (by when they were done), then by priority. */
+export function focusToday(): Item[] {
+  const rank = (i: Item) => `${i.priority ?? 'D'}${String(i.priorityNo ?? 999).padStart(3, '0')}`;
+  return store
+    .getState()
+    .items.filter((i) => (i.status === 'next' || i.status === 'done') && isFocused(i))
+    .sort((a, b) =>
+      a.status !== b.status
+        ? a.status === 'done' ? -1 : 1
+        : a.status === 'done'
+          ? (a.doneAt ?? '').localeCompare(b.doneAt ?? '')
+          : rank(a).localeCompare(rank(b)),
+    );
+}
+
+/** What `uncomplete` needs to put a completed action back where it was. */
+export interface Completed {
+  id: string;
+  status: Item['status'];
+  priorityNo?: number;
+}
+
+/** Mark a next action (or a day-specific calendar action) done. A project may become stalled. */
+export function complete(id: string): Completed {
+  const item = getItem(id);
+  check(item?.status === 'next' || item?.status === 'calendar', `item ${id} cannot be completed`, 'complete');
+  const undo: Completed = { id, status: item.status, ...(item.priorityNo && { priorityNo: item.priorityNo }) };
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    it.status = 'done';
+    it.doneAt = now().toISOString();
+    renumberIn(s.items);
+  });
+  return undo;
+}
+
+/** Undo for `complete`: back to its list, back to its old number. Left alone if no longer done. */
+export function uncomplete(done: Completed): void {
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === done.id);
+    if (it?.status !== 'done') return;
+    it.status = done.status;
+    delete it.doneAt;
+    // Half a step ahead of whoever took its number meanwhile; renumbering makes it whole again.
+    if (done.priorityNo) it.priorityNo = done.priorityNo - 0.5;
+    renumberIn(s.items);
+  });
+}
+
+/** Inline edit on Next Actions: text, context, project (`null` = single action). */
+export interface NextEdit {
+  text?: string;
+  context?: string;
+  project?: ProjectChoice | null;
+}
+
+/** Apply an inline edit to a next action. A project named by a new title is created. */
+export function editNext(id: string, edit: NextEdit): { projectId?: string } {
+  const state = store.getState();
+  const item = state.items.find((i) => i.id === id);
+  check(item?.status === 'next', `item ${id} is not a next action`, 'edit');
+  if (edit.text !== undefined) check(edit.text.trim(), 'text is empty', 'edit');
+  if (edit.context !== undefined) check(state.contexts.includes(edit.context), `unknown context ${edit.context}`, 'edit');
+  const choice = edit.project;
+  if (choice && 'id' in choice) check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`, 'edit');
+  if (choice && 'newTitle' in choice) checkNewTitle(state, choice.newTitle, 'edit');
+
+  let projectId = item.projectId;
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    if (edit.text !== undefined) it.text = edit.text.trim();
+    if (edit.context !== undefined) it.context = edit.context;
+    if (choice === null) {
+      delete it.projectId;
+      projectId = undefined;
+    } else if (choice) {
+      projectId = 'id' in choice ? choice.id : addProject(s, choice.newTitle);
+      it.projectId = projectId;
+    }
+    renumberIn(s.items);
+  });
+  return projectId ? { projectId } : {};
+}
+
+/** Projects the picker can offer (active first, then someday), with their next-action counts. */
+export function listPickerProjects() {
+  return listProjects('active')
+    .concat(listProjects('someday'))
+    .map((p) => ({ id: p.id, title: p.title, active: p.status === 'active', nextActions: nextActionCount(p.id) }));
+}
+
+/** One entry of today's hard landscape (SPEC §3.6). */
+export interface LandscapeEntry {
+  id: string;
+  kind: 'appointment' | 'block' | 'day-action' | 'tickler' | 'deadline';
+  /** `hh:mm`; absent = all day. */
+  time?: string;
+  text: string;
+  /** Also a hard deadline due that day. */
+  deadline: boolean;
+  done: boolean;
+}
+
+/**
+ * The hard landscape of one day: external appointments, time blocks, day-specific actions and
+ * information, and hard deadlines due that day. Timed entries first, by time; then all-day ones.
+ */
+export function todayLandscape(day = today()): LandscapeEntry[] {
+  const { items, projects, externalEvents, tickler } = store.getState();
+  const entries: LandscapeEntry[] = [];
+  for (const e of externalEvents) {
+    if (e.start.slice(0, 10) !== day) continue;
+    entries.push({ id: e.id, kind: 'appointment', ...(!e.allDay && { time: e.start.slice(11, 16) }), text: e.title, deadline: false, done: false });
+  }
+  for (const i of items) {
+    if (i.status === 'trash') continue;
+    const onDay = i.day === day && (i.status === 'calendar' || i.status === 'done');
+    if (onDay) {
+      entries.push({
+        id: i.id,
+        kind: i.timeSlot ? 'block' : 'day-action',
+        ...(i.timeSlot && { time: i.timeSlot.start.slice(11, 16) }),
+        text: i.text,
+        deadline: i.deadline === day,
+        done: i.status === 'done',
+      });
+    } else if (i.deadline === day && i.status !== 'done') {
+      entries.push({ id: i.id, kind: 'deadline', text: i.text, deadline: true, done: false });
+    }
+  }
+  for (const [n, t] of tickler.entries()) {
+    if (t.day === day) entries.push({ id: `tickler-${n}`, kind: 'tickler', text: t.text, deadline: false, done: false });
+  }
+  for (const p of projects) {
+    if (p.status === 'active' && p.deadline === day) entries.push({ id: p.id, kind: 'deadline', text: p.title, deadline: true, done: false });
+  }
+  return entries.sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'));
+}
+
+export interface Health {
+  /** Active projects with no next action. */
+  stalled: number;
+  /** Waiting-for items whose follow-up date has passed. */
+  waitingOverdue: number;
+  /** Next actions captured more than 30 days ago. */
+  oldActions: number;
+}
+
+export function health(): Health {
+  const day = today();
+  const { items } = store.getState();
+  return {
+    stalled: listProjects().filter(projectStalled).length,
+    waitingOverdue: items.filter((i) => i.status === 'waiting' && i.waiting?.followUp && i.waiting.followUp < day).length,
+    oldActions: listNext().filter((i) => ageDays(i) > 30).length,
+  };
 }

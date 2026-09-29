@@ -1,5 +1,4 @@
 import { ClarifyForm } from '@/components/clarify/ClarifyForm';
-import type { PickerProject } from '@/components/clarify/ProjectPicker';
 import { Page } from '@/components/shell/Page';
 import { Btn } from '@/components/ui/Btn';
 import { Kbd } from '@/components/ui/Kbd';
@@ -32,15 +31,7 @@ export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'
   const pos = queue.indexOf(item);
   // Skip wraps round the queue; filing moves on to the item after this one.
   const after = queue.slice(pos + 1).concat(queue.slice(0, pos)).map((i) => i.id);
-  const projects: PickerProject[] = api
-    .listProjects('active')
-    .concat(api.listProjects('someday'))
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      active: p.status === 'active',
-      nextActions: api.nextActionCount(p.id),
-    }));
+  const projects = api.listPickerProjects();
 
   const meta = (
     <span className="inline-flex items-center gap-4">

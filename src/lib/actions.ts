@@ -25,3 +25,25 @@ export async function clarifyAction(itemId: string, decision: api.Decision): Pro
   revalidatePath('/', 'layout');
   return result;
 }
+
+export async function completeAction(id: string): Promise<api.Completed> {
+  const done = api.complete(id);
+  revalidatePath('/', 'layout');
+  return done;
+}
+
+export async function uncompleteAction(done: api.Completed): Promise<void> {
+  api.uncomplete(done);
+  revalidatePath('/', 'layout');
+}
+
+export async function toggleFocusAction(id: string): Promise<boolean> {
+  const on = api.toggleFocus(id);
+  revalidatePath('/', 'layout');
+  return on;
+}
+
+export async function editNextAction(id: string, edit: api.NextEdit): Promise<void> {
+  api.editNext(id, edit);
+  revalidatePath('/', 'layout');
+}

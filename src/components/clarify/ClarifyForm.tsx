@@ -15,7 +15,7 @@ import { Kbd } from '../ui/Kbd';
 import { PrioChip } from '../ui/PrioChip';
 import { SectionHead } from '../ui/SectionHead';
 import { Tag } from '../ui/Tag';
-import { ProjectPicker, type Picked, type PickerProject } from './ProjectPicker';
+import { ProjectPicker, type Picked, type PickerProject } from '../ui/ProjectPicker';
 
 export interface ClarifyItem {
   id: string;

@@ -2,7 +2,7 @@
 
 import { useId, useState, type Ref } from 'react';
 import { sameTitle } from '@/lib/titles';
-import { cx } from '../ui/cx';
+import { cx } from './cx';
 
 export interface PickerProject {
   id: string;

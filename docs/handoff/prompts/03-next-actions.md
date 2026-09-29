@@ -39,7 +39,8 @@ Reference: `docs/handoff/design/mockups/Next.dc.html`; SPEC §3.3 and §4.
 ## Definition of done
 
 - Seed renders as the mockup (two groups visible with @computer + @calls + ≤1h filters,
-  A1 and A2 starred, Focus card with 3 picked · 1 done, Health 2 / 1 / 4).
+  A1 and A2 starred, Focus card with 3 picked · 1 done, Health from the seed 1 / 1 / 1 —
+  the mockup's 2 / 1 / 4 and "23 · 9" come from a larger data set than the seed).
 - Toggling a star updates the Focus card immediately; completing A1 keeps the project
-  green (it still has B4); completing B4 afterwards turns it stalled in Health.
+  green (it still has B4); completing B4 afterwards turns it stalled in Health (1 → 2).
 - URL `?ctx=@computer,@calls&time=60` reproduces the mockup's filter state.

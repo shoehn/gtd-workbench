@@ -1,0 +1,496 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useOptimistic, useRef, useState, useTransition, type ReactNode } from 'react';
+import { completeAction, editNextAction, toggleFocusAction, uncompleteAction } from '@/lib/actions';
+import type { Completed, NextEdit } from '@/lib/api';
+import type { Priority } from '@/lib/model';
+import { isTyping } from '../inbox/keys';
+import { Card } from '../ui/Card';
+import { cx } from '../ui/cx';
+import { Kbd } from '../ui/Kbd';
+import { PrioChip } from '../ui/PrioChip';
+import { ProjectPicker, type PickerProject } from '../ui/ProjectPicker';
+import { Row } from '../ui/Row';
+
+/** One next action, already formatted on the server. */
+export interface NextRow {
+  id: string;
+  text: string;
+  context: string;
+  priority?: Priority;
+  priorityNo?: number;
+  project?: { id: string; title: string };
+  time?: string; // `30m`
+  energy?: string;
+  due?: string; // `03.10`
+  dueSoon: boolean; // ≤ 7 days
+  focused: boolean;
+}
+
+export interface NextGroup {
+  context: string;
+  count: number;
+  total: string; // `2 h 45`
+  rows: NextRow[];
+}
+
+export interface FocusEntry {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+interface NextBoardProps {
+  groups: NextGroup[];
+  hiddenByFilter: number;
+  focus: FocusEntry[];
+  contexts: string[];
+  projects: PickerProject[];
+  /** Server-rendered cards for the right column. */
+  today: ReactNode;
+  health: ReactNode;
+}
+
+type Editing = { id: string; field: 'text' | 'context' | 'project' };
+
+const COLS = '24px 24px 36px minmax(0,1fr) 220px 52px 60px 76px';
+const FADE_MS = 400;
+const UNDO_MS = 5000;
+const STAR = 'M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z';
+const mono = 'font-mono text-meta text-muted';
+
+export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, today, health }: NextBoardProps) {
+  const [, startTransition] = useTransition();
+  const [cursorId, setCursorId] = useState<string | null>(null);
+  // Done rows fade for 400 ms, then hide until the server's list no longer has them.
+  const [fading, setFading] = useState<ReadonlySet<string>>(new Set());
+  const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
+  const [undo, setUndo] = useState<{ done: Completed; text: string } | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null);
+  // A completion still fading out; `u` cancels it before it reaches the server.
+  const pending = useRef<{ id: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const [starred, toggleStarred] = useOptimistic(
+    new Set(groups.flatMap((g) => g.rows).filter((r) => r.focused).map((r) => r.id)) as ReadonlySet<string>,
+    (cur, id: string) => {
+      const next = new Set(cur);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    },
+  );
+
+  const visible = groups
+    .map((g) => ({ ...g, rows: g.rows.filter((r) => !gone.has(r.id)) }))
+    .filter((g) => g.rows.length > 0);
+  const rows = visible.flatMap((g) => g.rows);
+  const cursorIdx = rows.findIndex((r) => r.id === cursorId);
+  const cursor = rows[cursorIdx];
+
+  function complete(id: string) {
+    const row = rows.find((r) => r.id === id);
+    const text = row?.text ?? focus.find((f) => f.id === id)?.text ?? '';
+    if (fading.has(id) || gone.has(id)) return;
+    if (id === cursorId) setCursorId((rows[cursorIdx + 1] ?? rows[cursorIdx - 1])?.id ?? null);
+    setFading((prev) => new Set([...prev, id]));
+    const timer = setTimeout(() => {
+      if (pending.current?.id === id) pending.current = null;
+      setGone((prev) => new Set([...prev, id]));
+      startTransition(async () => setUndo({ done: await completeAction(id), text }));
+    }, FADE_MS);
+    pending.current = { id, timer };
+  }
+
+  function undoComplete() {
+    if (pending.current) {
+      const { id, timer } = pending.current;
+      pending.current = null;
+      clearTimeout(timer);
+      setCursorId(id);
+      setFading((prev) => new Set([...prev].filter((x) => x !== id)));
+      return;
+    }
+    if (!undo) return;
+    const { done } = undo;
+    setUndo(null);
+    const without = (prev: ReadonlySet<string>) => new Set([...prev].filter((x) => x !== done.id));
+    setGone(without);
+    setFading(without);
+    setCursorId(done.id);
+    startTransition(() => uncompleteAction(done));
+  }
+
+  function toggleFocus(id: string) {
+    startTransition(async () => {
+      toggleStarred(id);
+      await toggleFocusAction(id);
+    });
+  }
+
+  function save(id: string, edit: NextEdit) {
+    setEditing(null);
+    startTransition(() => editNextAction(id, edit));
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (isTyping(e) || editing) return;
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === 'z' && (undo || pending.current)) {
+          e.preventDefault();
+          undoComplete();
+        }
+        return;
+      }
+      // `@` needs Alt on some layouts (Swiss: ⌥G / AltGr+2), so it is checked before the Alt guard.
+      if (e.key === '@') {
+        if (cursor) setEditing({ id: cursor.id, field: 'context' });
+        e.preventDefault();
+        return;
+      }
+      if (e.altKey) return;
+      switch (e.key) {
+        case 'j':
+        case 'k': {
+          const step = e.key === 'j' ? 1 : -1;
+          const next = cursorIdx < 0 ? rows[step > 0 ? 0 : rows.length - 1] : rows[Math.min(rows.length - 1, Math.max(0, cursorIdx + step))];
+          if (next) setCursorId(next.id);
+          break;
+        }
+        case 'x':
+          if (cursor) complete(cursor.id);
+          break;
+        case 'f':
+          if (cursor) toggleFocus(cursor.id);
+          break;
+        case 'e':
+          if (cursor) setEditing({ id: cursor.id, field: 'text' });
+          break;
+        case 'p':
+          if (cursor) setEditing({ id: cursor.id, field: 'project' });
+          break;
+        case 'u':
+          undoComplete();
+          break;
+        case 'Escape':
+          setCursorId(null);
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  useEffect(() => {
+    if (!undo) return;
+    const t = setTimeout(() => setUndo(null), UNDO_MS);
+    return () => clearTimeout(t);
+  }, [undo]);
+
+  useEffect(() => {
+    if (cursorId) document.getElementById(`next-row-${cursorId}`)?.scrollIntoView({ block: 'nearest' });
+  }, [cursorId]);
+
+  // Focus card: the server's list, with stars and ticks applied at once.
+  const focusList: FocusEntry[] = [
+    ...focus.filter((f) => f.done || starred.has(f.id)),
+    ...rows.filter((r) => starred.has(r.id) && !focus.some((f) => f.id === r.id)).map((r) => ({ id: r.id, text: r.text, done: false })),
+  ].map((f) => ({ ...f, done: f.done || fading.has(f.id) || gone.has(f.id) }));
+  const doneCount = focusList.filter((f) => f.done).length;
+
+  return (
+    <div className="grid min-h-full gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <section aria-label="Actions grouped by context" className="flex min-w-0 flex-col gap-3">
+        {visible.map((g, gi) => (
+          <Card key={g.context} aria-label={g.context || 'No context'}>
+            <div className="flex items-center gap-2.5 border-b border-line px-3 py-2">
+              <h2 className="m-0 font-mono text-body font-medium">{g.context || 'no context'}</h2>
+              <span className={mono}>
+                {g.count} · {g.total} total
+              </span>
+              {gi === 0 && (
+                <span aria-hidden="true" className="ml-auto hidden font-mono text-label tracking-[0.1em] text-muted lg:inline">
+                  PRIO · ACTION · PROJECT · TIME · ENERGY · DUE
+                </span>
+              )}
+            </div>
+            {g.rows.map((r) => (
+              <ActionRow
+                key={r.id}
+                row={r}
+                isCursor={r.id === cursorId}
+                fading={fading.has(r.id)}
+                starred={starred.has(r.id)}
+                editing={editing?.id === r.id ? editing.field : null}
+                contexts={contexts}
+                projects={projects}
+                onCursor={() => setCursorId(r.id)}
+                onComplete={() => complete(r.id)}
+                onFocus={() => toggleFocus(r.id)}
+                onEdit={(field) => {
+                  setCursorId(r.id);
+                  setEditing({ id: r.id, field });
+                }}
+                onSave={(edit) => save(r.id, edit)}
+                onCancel={() => setEditing(null)}
+              />
+            ))}
+          </Card>
+        ))}
+        {visible.length === 0 && (
+          <p className={cx(mono, 'm-0 py-8 text-center')}>
+            {hiddenByFilter ? 'Nothing matches this filter.' : 'No next actions — clarify the inbox or promote a later step.'}
+          </p>
+        )}
+        <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-meta text-muted">
+          {hiddenByFilter > 0 && (
+            <>
+              <span>{hiddenByFilter} hidden by filter</span>
+              <span aria-hidden="true">·</span>
+            </>
+          )}
+          <span className="hidden gap-4 lg:flex">
+            <span><Kbd>x</Kbd> done</span>
+            <span><Kbd>f</Kbd> focus today</span>
+            <span><Kbd>e</Kbd> edit</span>
+            <span><Kbd>p</Kbd> project</span>
+            <span><Kbd>@</Kbd> change context</span>
+          </span>
+          <span role="status" className="flex items-center gap-2">
+            {undo && (
+              <>
+                <span className="max-w-72 truncate text-ink">Done: {undo.text}</span>
+                <button
+                  type="button"
+                  onClick={undoComplete}
+                  className="rounded border border-control bg-panel px-1.5 text-accent hover:text-accent-hover"
+                >
+                  Undo <Kbd>u</Kbd>
+                </button>
+              </>
+            )}
+          </span>
+        </div>
+      </section>
+
+      <aside aria-label="Today" className="flex min-w-0 flex-col gap-3">
+        {today}
+        <Card aria-labelledby="focus-head" className="flex flex-col">
+          <div className="flex items-baseline gap-2 border-b border-line px-3 py-2.5">
+            <h2 id="focus-head" className="m-0 text-body font-semibold">Focus for today</h2>
+            <span className={mono}>
+              {focusList.length} picked · {doneCount} done
+            </span>
+          </div>
+          <div className="flex flex-col gap-1.5 px-3 pt-1.5 pb-2">
+            {focusList.map((f) => (
+              <label key={f.id} className="flex min-h-7 items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={f.done}
+                  disabled={f.done}
+                  onChange={() => complete(f.id)}
+                  className="m-0 size-4 shrink-0"
+                />
+                <span className={cx(f.done && 'text-muted line-through')}>{f.text}</span>
+              </label>
+            ))}
+            {focusList.length === 0 && (
+              <p className={cx(mono, 'm-0 py-1')}>
+                Star an action with <Kbd>f</Kbd> to pick it for today.
+              </p>
+            )}
+          </div>
+        </Card>
+        {health}
+      </aside>
+    </div>
+  );
+}
+
+interface ActionRowProps {
+  row: NextRow;
+  isCursor: boolean;
+  fading: boolean;
+  starred: boolean;
+  editing: Editing['field'] | null;
+  contexts: string[];
+  projects: PickerProject[];
+  onCursor(): void;
+  onComplete(): void;
+  onFocus(): void;
+  onEdit(field: Editing['field']): void;
+  onSave(edit: NextEdit): void;
+  onCancel(): void;
+}
+
+function ActionRow({ row: r, isCursor, fading, starred, editing, contexts, projects, onCursor, onComplete, onFocus, onEdit, onSave, onCancel }: ActionRowProps) {
+  return (
+    <Row
+      id={`next-row-${r.id}`}
+      cols={COLS}
+      onClick={onCursor}
+      className={cx(
+        'gap-2.5! transition-opacity duration-400 last:border-b-0',
+        isCursor && 'bg-accent-tint',
+        fading && 'opacity-0',
+      )}
+    >
+      <input
+        type="checkbox"
+        aria-label={`Done: ${r.text}`}
+        checked={fading}
+        onChange={onComplete}
+        className="m-0 size-4"
+      />
+      <button
+        type="button"
+        aria-label="Focus today"
+        aria-pressed={starred}
+        onClick={onFocus}
+        className={cx('inline-flex size-6 items-center justify-center', starred ? 'text-accent' : 'text-control hover:text-muted')}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill={starred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true">
+          <path d={STAR} />
+        </svg>
+      </button>
+      {r.priority ? <PrioChip priority={r.priority} no={r.priorityNo} /> : <span />}
+      <span className="flex min-w-0 items-center gap-2" onDoubleClick={() => onEdit('text')}>
+        {editing === 'text' ? (
+          <TextEdit text={r.text} onSave={(text) => (text.trim() && text.trim() !== r.text ? onSave({ text }) : onCancel())} onCancel={onCancel} />
+        ) : (
+          <span className="min-w-0">{r.text}</span>
+        )}
+        {editing === 'context' && (
+          <ContextEdit
+            context={r.context}
+            contexts={contexts}
+            onSave={(context) => (context !== r.context ? onSave({ context }) : onCancel())}
+            onCancel={onCancel}
+          />
+        )}
+      </span>
+      {editing === 'project' ? (
+        <ProjectEdit
+          projects={projects}
+          current={r.project}
+          onSave={(project) => onSave({ project })}
+          onCancel={onCancel}
+        />
+      ) : r.project ? (
+        <Link href={`/projects?p=${encodeURIComponent(r.project.id)}`} className="truncate text-xs text-muted no-underline hover:text-ink">
+          {r.project.title}
+        </Link>
+      ) : (
+        <span className="text-xs text-muted">— (single action)</span>
+      )}
+      <span className={mono}>{r.time ?? '—'}</span>
+      <span className={mono}>{r.energy ?? '—'}</span>
+      <span className={cx('font-mono text-meta', r.dueSoon ? 'text-warn' : 'text-muted')}>{r.due ?? '—'}</span>
+    </Row>
+  );
+}
+
+const editCls = 'h-7 min-w-0 rounded border border-accent bg-panel px-2 text-ink shadow-ring outline-none';
+
+/** Enter saves, Esc cancels; leaving the field saves too. */
+function TextEdit({ text, onSave, onCancel }: { text: string; onSave(text: string): void; onCancel(): void }) {
+  const cancelled = useRef(false);
+  return (
+    <input
+      type="text"
+      aria-label="Action text"
+      defaultValue={text}
+      autoFocus
+      onFocus={(e) => e.currentTarget.select()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        else if (e.key === 'Escape') {
+          cancelled.current = true;
+          onCancel();
+        }
+      }}
+      onBlur={(e) => !cancelled.current && onSave(e.currentTarget.value)}
+      className={cx(editCls, 'grow')}
+    />
+  );
+}
+
+/** Picking a context saves it; Esc or leaving cancels. */
+function ContextEdit({ context, contexts, onSave, onCancel }: { context: string; contexts: string[]; onSave(context: string): void; onCancel(): void }) {
+  return (
+    <select
+      aria-label="Context"
+      defaultValue={context}
+      autoFocus
+      onChange={(e) => onSave(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onSave(e.currentTarget.value);
+        else if (e.key === 'Escape') onCancel();
+      }}
+      onBlur={onCancel}
+      className={cx(editCls, 'shrink-0 font-mono text-meta')}
+    >
+      {contexts.map((c) => (
+        <option key={c} value={c}>{c}</option>
+      ))}
+    </select>
+  );
+}
+
+/** Clarify's project picker in place: pick saves, Enter on an empty field makes it a single action. */
+function ProjectEdit({
+  projects,
+  current,
+  onSave,
+  onCancel,
+}: {
+  projects: PickerProject[];
+  current?: { id: string; title: string };
+  onSave(project: NextEdit['project']): void;
+  onCancel(): void;
+}) {
+  const [query, setQuery] = useState(current?.title ?? '');
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    input.current?.focus();
+    input.current?.select();
+  }, []);
+  return (
+    <div
+      className="relative z-10 min-w-0 self-start"
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) onCancel();
+      }}
+      // Esc cancels the edit outright (the picker alone would first clear its text).
+      onKeyDownCapture={(e) => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          onCancel();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !query.trim()) {
+          e.preventDefault();
+          onSave(null);
+        }
+      }}
+    >
+      <ProjectPicker
+        projects={projects}
+        query={query}
+        picked={null}
+        onQuery={setQuery}
+        onPick={(p) => {
+          if (!p) return;
+          if ('newTitle' in p) onSave({ newTitle: p.newTitle });
+          else if (p.id !== current?.id) onSave({ id: p.id });
+          else onCancel();
+        }}
+        inputRef={input}
+      />
+    </div>
+  );
+}

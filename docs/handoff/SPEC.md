@@ -68,7 +68,15 @@ from Next and Inbox respectively.
   clarify" summary (what will be created — Clarify only ever adds), keys.
 
 ### 3.3 Next Actions
-- Grouped by context; filters for context (multi), time bucket, energy; "Clear".
+- Grouped by context; filters for context (multi), time bucket, energy; "Clear". Filters
+  live in the URL (`?ctx=@computer,@calls&time=60&energy=low`); a time filter means
+  "time ≤ bucket".
+- Priority numbers run within a priority across the whole list and are recomputed by the
+  api on every change: gaps close, C carries none, undoing a done puts the action back
+  under its old number.
+- Done fades the row out (400 ms); undo within 5 s (`u` or `⌘Z`, also during the fade).
+- Inline edit: text (`e` or double-click), context (`@`), project (`p`, the Clarify picker;
+  Enter on an empty field = single action). Enter saves, Esc cancels.
 - Row: done checkbox · focus star · priority chip (A1, B3, C) · text · project link ·
   time · energy · due. "Single action" rows show no project.
 - **Focus star = today's pick.** Set only here (or by time-blocking on the calendar).
@@ -200,7 +208,8 @@ Derived, never stored: project stalled flag, inbox age, review counters, health 
 
 Global: `⌘K` command palette (later), `›`-field on every screen captures to inbox.
 Inbox: `j k x c ⌫`, `u` (or `⌘Z`) undo trash within 5 s, `/` focus the rapid log, `esc` leave it. Clarify: `y t m r` (step 1), `p` project picker, `a` toggle next
-action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Actions: `x f e p @`.
+action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Actions: `j k` move,
+`x f e p @`, `u` (or `⌘Z`) undo done within 5 s, `esc` cancel an edit / drop the cursor.
 Waiting: `f x`. Review: `space` tick current step.
 
 ## 7. Visual system

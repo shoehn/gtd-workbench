@@ -37,3 +37,21 @@ export function fmtTime(minutes: number): string {
   if (minutes >= 120) return '2 h+';
   return minutes >= 60 ? `${minutes / 60} h` : `${minutes} min`;
 }
+
+/** Row time: `15m`, `1h`, `2h+`. */
+export function fmtMins(minutes: number): string {
+  if (minutes >= 120) return '2h+';
+  return minutes >= 60 ? `${minutes / 60}h` : `${minutes}m`;
+}
+
+/** Sum of times: `35 min`, `2 h`, `2 h 45`. */
+export function fmtTotal(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`;
+  const rest = minutes % 60;
+  return `${Math.floor(minutes / 60)} h${rest ? ` ${rest}` : ''}`;
+}
+
+/** Whole days from `from` to `to`, both ISO dates (negative when `to` is earlier). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((parts(to).date.getTime() - parts(from).date.getTime()) / 86_400_000);
+}

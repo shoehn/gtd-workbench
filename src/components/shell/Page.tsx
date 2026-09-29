@@ -10,11 +10,13 @@ interface PageProps {
   /** Top-bar right slot; defaults to the capture field. */
   actions?: ReactNode;
   back?: { href: string; label: string };
+  /** Full-width strip under the top bar, e.g. a filter bar. */
+  toolbar?: ReactNode;
   children?: ReactNode;
 }
 
 /** App shell: sidebar + top bar from 1024 px, phone tab bar below that. */
-export async function Page({ title, meta, actions, back, children }: PageProps) {
+export async function Page({ title, meta, actions, back, toolbar, children }: PageProps) {
   await connection(); // the store is live state; never prerender it
   return (
     <div className="flex h-dvh">
@@ -23,6 +25,7 @@ export async function Page({ title, meta, actions, back, children }: PageProps) 
       </div>
       <main className="flex min-w-0 grow flex-col">
         <TopBar title={title} meta={meta} right={actions} back={back} />
+        {toolbar}
         <div className="min-h-0 grow overflow-auto p-(--wb-page-pad) pb-(--wb-tabbar-h) lg:pb-4">{children}</div>
       </main>
       <div className="lg:hidden">
