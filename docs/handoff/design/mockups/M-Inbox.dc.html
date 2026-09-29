@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone inbox and rapid log</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#eef0f3;color:#171a1f;-webkit-font-smoothing:antialiased}
+a{color:#2456c4}a:hover{color:#1a44a0}
+input,button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #eef0f3; font-size: 15px; line-height: 1.4">
+
+  <header style="padding: 58px 16px 10px; background: #ffffff; border-bottom: 1px solid #d5dae1; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Inbox</h1>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5a6370">14 · oldest 3 d</span>
+      <div style="flex-grow: 1"></div>
+      <a href="M-Clarify.dc.html" style="display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 3px; background: #2456c4; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500">Clarify</a>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; height: 48px; box-sizing: border-box; padding: 0 12px; background: #ffffff; border: 1px solid #2456c4; border-radius: 3px; box-shadow: 0 0 0 3px rgba(36,86,196,0.12)">
+      <span style="font-family: 'IBM Plex Mono', monospace; color: #2456c4">›</span>
+      <input type="text" aria-label="Rapid log" placeholder="Rapid log…" style="flex-grow: 1; border: 0; outline: 0; font-size: 16px; background: transparent; color: #171a1f; min-width: 0">
+      <button type="button" aria-label="Voice capture" style="width: 36px; height: 36px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; display: inline-flex; align-items: center; justify-content: center; padding: 0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#171a1f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <section aria-label="Unprocessed items" style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; background: #ffffff">
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px 6px; border-bottom: 1px solid #eef0f3; min-height: 52px; box-sizing: border-box; justify-content: center; background: #eef3fc">
+      <span>Call the dentist about the invoice</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed · sat 09:12 · 2 h</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Idea: run the module retrospective as a silent brainstorm</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">voice · sat 08:40 · 3 h</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Fwd: Offer for the new workshop bench — decide by Oct 3</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">email · fri 17:02 · 18 h</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Replace the kitchen tap cartridge</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed · fri 12:31 · 22 h</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Read: "Deep Work" chapter 3 notes from Anna</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">share · thu 21:15 · 1 d</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Book train for the Zurich conference</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed · thu 16:48 · 1 d</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Warranty card for the printer — where to file?</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">scan · thu 10:03 · 2 d</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Ask Marc whether the grant report needs the annex</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">voice · wed 19:20 · 2 d</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span>Maybe learn to solder SMD by hand</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">typed · wed 08:55 · 3 d</span>
+    </div>
+    <div style="padding: 10px 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">swipe → clarify · swipe ← trash</div>
+  </section>
+
+  <nav aria-label="Lists" style="height: 84px; box-sizing: border-box; padding: 8px 8px 24px; background: #e6e9ee; border-top: 1px solid #d5dae1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px">
+    <a href="M-Inbox.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; background: #ffffff; color: #171a1f; text-decoration: none; font-size: 11px; font-weight: 600">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-8h14l2 8v6H3z"></path><path d="M3 13h5l2 3h4l2-3h5"></path></svg>Inbox
+    </a>
+    <a href="M-Next.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01"></path></svg>Next
+    </a>
+    <a href="M-Projects.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Projects
+    </a>
+    <a href="M-Waiting.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Waiting
+    </a>
+    <a href="M-Review.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>Review
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

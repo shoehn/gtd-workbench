@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phone calendar agenda</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#eef0f3;color:#171a1f;-webkit-font-smoothing:antialiased}
+a{color:#2456c4}a:hover{color:#1a44a0}
+input,button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #eef0f3; font-size: 15px; line-height: 1.4">
+
+  <header style="padding: 58px 16px 10px; background: #ffffff; border-bottom: 1px solid #d5dae1; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="M-Next.dc.html" aria-label="Back to next actions" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; border: 1px solid #c3c9d2; color: #171a1f; text-decoration: none; font-size: 18px">←</a>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 600">Calendar</h1>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5a6370">agenda · wk 39</span>
+      <div style="flex-grow: 1"></div>
+      <a href="M-Inbox.dc.html" aria-label="Capture to inbox" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; border: 1px solid #c3c9d2; color: #171a1f; text-decoration: none; font-family: 'IBM Plex Mono', monospace; font-size: 18px">›</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px">
+      <button type="button" style="height: 44px; border-radius: 3px; border: 1px solid transparent; background: transparent; color: #171a1f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">MO</span><span style="font-size: 14px">21</span></button>
+      <button type="button" style="height: 44px; border-radius: 3px; border: 1px solid transparent; background: transparent; color: #171a1f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">TU</span><span style="font-size: 14px">22</span></button>
+      <button type="button" style="height: 44px; border-radius: 3px; border: 1px solid transparent; background: transparent; color: #171a1f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">WE</span><span style="font-size: 14px">23</span></button>
+      <button type="button" style="height: 44px; border-radius: 3px; border: 1px solid transparent; background: transparent; color: #171a1f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">TH</span><span style="font-size: 14px">24</span></button>
+      <button type="button" style="height: 44px; border-radius: 3px; border: 1px solid transparent; background: transparent; color: #171a1f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">FR</span><span style="font-size: 14px">25</span></button>
+      <button type="button" aria-pressed="true" style="height: 44px; border-radius: 3px; border: 1px solid #2456c4; background: #eef3fc; color: #2456c4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px">SA</span><span style="font-size: 14px; font-weight: 600">26</span></button>
+      <button type="button" style="height: 44px; border-radius: 3px; border: 1px solid transparent; background: transparent; color: #171a1f; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 0"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">SU</span><span style="font-size: 14px">27</span></button>
+    </div>
+  </header>
+
+  <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; background: #ffffff">
+    <div style="display: flex; align-items: baseline; gap: 8px; padding: 10px 16px 6px; background: #eef0f3; border-bottom: 1px solid #d5dae1">
+      <span style="font-weight: 600; font-size: 13px">Saturday 26.09 · today</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">2 appointments · 1 deadline</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 3px">all day</span>
+      <label style="display: flex; align-items: start; gap: 8px; padding: 8px 10px; border-radius: 2px; border: 1px solid #b8560f; min-height: 44px; box-sizing: border-box"><input type="checkbox" style="width: 20px; height: 20px; margin: 0"><span style="display: flex; flex-direction: column; gap: 2px"><span>Submit conference abstract</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">DEADLINE · from Next Actions</span></span></label>
+    </div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 3px">10:00</span>
+      <div style="padding: 8px 10px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; display: flex; flex-direction: column; gap: 2px"><span>Dentist</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">45 min · Private calendar</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; padding: 0 16px"><span></span><div style="height: 0; border-top: 2px solid #b8560f"></div></div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 3px">14:00</span>
+      <div style="padding: 8px 10px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; display: flex; flex-direction: column; gap: 2px"><span>Call with Marc — grant report</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">30 min · Work calendar</span></div>
+    </div>
+
+    <div style="display: flex; align-items: baseline; gap: 8px; padding: 10px 16px 6px; background: #eef0f3; border-bottom: 1px solid #d5dae1; border-top: 1px solid #d5dae1">
+      <span style="font-weight: 600; font-size: 13px">Sunday 27.09</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 3px">all day</span>
+      <div style="padding: 8px 10px; border-radius: 2px; background: #eef0f3; border: 1px dashed #c3c9d2; color: #5a6370">Bins out · paper</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 16px; border-bottom: 1px solid #eef0f3">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 3px">17:00</span>
+      <a href="M-Review.dc.html" style="padding: 8px 10px; border-radius: 2px; background: #ffffff; border: 1px solid #2456c4; border-left: 3px solid #2456c4; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #171a1f"><span>Weekly review ↻</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">time block · repeats weekly</span></a>
+    </div>
+
+    <div style="display: flex; align-items: baseline; gap: 8px; padding: 10px 16px 6px; background: #eef0f3; border-bottom: 1px solid #d5dae1; border-top: 1px solid #d5dae1">
+      <span style="font-weight: 600; font-size: 13px">Friday 03.10</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 16px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 3px">all day</span>
+      <a href="M-Projects.dc.html" style="padding: 8px 10px; border-radius: 2px; border: 1px solid #b8560f; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: #171a1f"><span>Holzwerk bench offer expires</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">DEADLINE · from project</span></a>
+    </div>
+  </div>
+
+  <nav aria-label="Lists" style="height: 84px; box-sizing: border-box; padding: 8px 8px 24px; background: #e6e9ee; border-top: 1px solid #d5dae1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px">
+    <a href="M-Inbox.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l2-8h14l2 8v6H3z"></path><path d="M3 13h5l2 3h4l2-3h5"></path></svg>Inbox
+    </a>
+    <a href="M-Next.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; background: #ffffff; color: #171a1f; text-decoration: none; font-size: 11px; font-weight: 600">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01"></path></svg>Next
+    </a>
+    <a href="M-Projects.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>Projects
+    </a>
+    <a href="M-Waiting.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Waiting
+    </a>
+    <a href="M-Review.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 3px; color: #5a6370; text-decoration: none; font-size: 11px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l3 3 5-6"></path></svg>Review
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

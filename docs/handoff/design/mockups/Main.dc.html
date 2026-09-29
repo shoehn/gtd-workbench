@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inbox and rapid log</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#eef0f3;color:#171a1f;-webkit-font-smoothing:antialiased}
+a{color:#2456c4}a:hover{color:#1a44a0}
+input,button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1280px; height: 860px; box-sizing: border-box; display: flex; background: #eef0f3; font-size: 13px; line-height: 1.4">
+
+  <nav aria-label="Lists" style="width: 224px; box-sizing: border-box; border-right: 1px solid #d5dae1; background: #e6e9ee; display: flex; flex-direction: column; padding: 14px 10px; gap: 4px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 2px 10px 12px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; letter-spacing: 0.08em">GTD/WB</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">sat 26.09</span>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 6px 10px 2px">COLLECT</div>
+    <a href="Main.dc.html" aria-current="page" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; background: #ffffff; color: #171a1f; text-decoration: none; font-weight: 600">Inbox<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">14</span></a>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 10px 10px 2px">DO</div>
+    <a href="Next.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Next Actions<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">23</span></a>
+    <a href="Calendar.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Calendar<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">3</span></a>
+    <a href="Waiting.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Waiting For<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">7</span></a>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 10px 10px 2px">HORIZONS</div>
+    <a href="Projects.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Projects<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">11</span></a>
+    <a href="Waiting.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Someday / Maybe<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">31</span></a>
+    <a href="Projects.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Reference<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span></a>
+    <div style="flex-grow: 1"></div>
+    <a href="Review.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 3px; border: 1px solid #c3c9d2; color: #171a1f; text-decoration: none">Weekly Review<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">due</span></a>
+  </nav>
+
+  <main style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0">
+    <header style="height: 48px; box-sizing: border-box; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid #d5dae1; background: #ffffff">
+      <h1 style="margin: 0; font-size: 14px; font-weight: 600">Inbox</h1>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">14 open · oldest 3 d</span>
+      <div style="flex-grow: 1"></div>
+      <a href="Clarify.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 3px; background: #2456c4; color: #ffffff; text-decoration: none; font-weight: 500">Clarify inbox<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: 0.8">c</span></a>
+      <button type="button" style="height: 30px; padding: 0 12px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-size: 13px">Sort ▾</button>
+    </header>
+
+    <section aria-label="Rapid log" style="padding: 16px 20px 0; display: flex; flex-direction: column; gap: 6px">
+      <label for="capture" style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">RAPID LOG — ONE THOUGHT PER LINE, ENTER TO CAPTURE</label>
+      <div style="display: flex; align-items: center; gap: 10px; height: 44px; box-sizing: border-box; padding: 0 12px; background: #ffffff; border: 1px solid #2456c4; border-radius: 3px; box-shadow: 0 0 0 3px rgba(36,86,196,0.12)">
+        <span style="font-family: 'IBM Plex Mono', monospace; color: #2456c4">›</span>
+        <input id="capture" type="text" placeholder="Call the dentist about the invoice…" style="flex-grow: 1; border: 0; outline: 0; font-size: 14px; background: transparent; color: #171a1f">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">#tag  @context  !prio  ^date</span>
+      </div>
+      <div style="display: flex; gap: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding: 2px 0 0 2px">
+        <span>capture never asks questions</span>
+      </div>
+    </section>
+
+    <section aria-label="Unprocessed items" style="margin: 16px 20px 0; background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; flex-grow: 1; display: flex; flex-direction: column; min-height: 0">
+      <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #d5dae1; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">
+        <span></span><span>ITEM</span><span>SOURCE</span><span>CAPTURED</span><span style="text-align: right">AGE</span>
+      </div>
+      <div style="display: flex; flex-direction: column; overflow: hidden">
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3; background: #eef3fc">
+          <input type="checkbox" aria-label="Select item" checked style="width: 16px; height: 16px; margin: 0">
+          <span>Call the dentist about the invoice</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">sat 09:12</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">2 h</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Idea: run the module retrospective as a silent brainstorm</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">voice</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">sat 08:40</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">3 h</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Fwd: Offer for the new workshop bench — decide by Oct 3</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">email</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">fri 17:02</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">18 h</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Replace the kitchen tap cartridge</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">fri 12:31</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">22 h</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Read: "Deep Work" chapter 3 notes from Anna</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">share</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">thu 21:15</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">1 d</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Book train for the Zurich conference</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">thu 16:48</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">1 d</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Warranty card for the printer — where to file?</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">scan</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">thu 10:03</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">2 d</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Ask Marc whether the grant report needs the annex</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">voice</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">wed 19:20</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; text-align: right">2 d</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 32px minmax(0, 1fr) 96px 90px 72px; gap: 12px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef0f3">
+          <input type="checkbox" aria-label="Select item" style="width: 16px; height: 16px; margin: 0">
+          <span>Maybe learn to solder SMD by hand</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">typed</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">wed 08:55</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f; text-align: right">3 d</span>
+        </div>
+      </div>
+      <div style="flex-grow: 1"></div>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 8px 12px; border-top: 1px solid #d5dae1; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">
+        <span>1 selected</span>
+        <span>j/k move</span><span>c clarify</span><span>x select</span><span>⌫ trash</span>
+        <div style="flex-grow: 1"></div>
+        <span>5 more below</span>
+      </div>
+    </section>
+
+    <footer style="display: flex; align-items: center; gap: 16px; height: 36px; padding: 0 20px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">
+      <span>synced 09:14</span><span>·</span><span>offline capture on</span>
+      <div style="flex-grow: 1"></div>
+      <span>⌘K command</span>
+    </footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

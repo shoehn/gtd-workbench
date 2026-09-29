@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Next actions by context</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#eef0f3;color:#171a1f;-webkit-font-smoothing:antialiased}
+a{color:#2456c4}a:hover{color:#1a44a0}
+input,button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1280px; height: 860px; box-sizing: border-box; display: flex; background: #eef0f3; font-size: 13px; line-height: 1.4">
+
+  <nav aria-label="Lists" style="width: 224px; box-sizing: border-box; border-right: 1px solid #d5dae1; background: #e6e9ee; display: flex; flex-direction: column; padding: 14px 10px; gap: 4px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 2px 10px 12px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; letter-spacing: 0.08em">GTD/WB</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">sat 26.09</span>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 6px 10px 2px">COLLECT</div>
+    <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Inbox<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">14</span></a>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 10px 10px 2px">DO</div>
+    <a href="Next.dc.html" aria-current="page" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; background: #ffffff; color: #171a1f; text-decoration: none; font-weight: 600">Next Actions<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">23</span></a>
+    <a href="Calendar.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Calendar<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">3</span></a>
+    <a href="Waiting.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Waiting For<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">7</span></a>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 10px 10px 2px">HORIZONS</div>
+    <a href="Projects.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Projects<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">11</span></a>
+    <a href="Waiting.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Someday / Maybe<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">31</span></a>
+    <a href="Projects.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Reference<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span></a>
+    <div style="flex-grow: 1"></div>
+    <a href="Review.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 3px; border: 1px solid #c3c9d2; color: #171a1f; text-decoration: none">Weekly Review<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">due</span></a>
+  </nav>
+
+  <main style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0">
+    <header style="height: 48px; box-sizing: border-box; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid #d5dae1; background: #ffffff">
+      <h1 style="margin: 0; font-size: 14px; font-weight: 600">Next Actions</h1>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">23 · 9 match filter</span>
+      <div style="flex-grow: 1"></div>
+      <div style="display: flex; align-items: center; gap: 8px; height: 30px; box-sizing: border-box; padding: 0 10px; border: 1px solid #c3c9d2; border-radius: 3px; background: #ffffff; width: 260px">
+        <span style="font-family: 'IBM Plex Mono', monospace; color: #5a6370">›</span>
+        <input type="text" aria-label="Quick capture" placeholder="Capture to inbox" style="flex-grow: 1; border: 0; outline: 0; font-size: 13px; background: transparent; color: #171a1f">
+      </div>
+      <button type="button" style="height: 30px; padding: 0 12px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-size: 13px">Group: context ▾</button>
+    </header>
+
+    <div aria-label="Filters" style="display: flex; align-items: center; gap: 6px; padding: 10px 20px; border-bottom: 1px solid #d5dae1; background: #ffffff">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; margin-right: 6px">CONTEXT</span>
+      <button type="button" aria-pressed="true" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #171a1f; background: #171a1f; color: #ffffff; font-family: 'IBM Plex Mono', monospace; font-size: 12px">@computer</button>
+      <button type="button" aria-pressed="true" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #171a1f; background: #171a1f; color: #ffffff; font-family: 'IBM Plex Mono', monospace; font-size: 12px">@calls</button>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">@office</button>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">@home</button>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">@errands</button>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">@workshop</button>
+      <span style="width: 1px; height: 18px; background: #d5dae1; margin: 0 6px"></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; margin-right: 6px">TIME</span>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">≤15m</button>
+      <button type="button" aria-pressed="true" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #171a1f; background: #171a1f; color: #ffffff; font-family: 'IBM Plex Mono', monospace; font-size: 12px">≤1h</button>
+      <span style="width: 1px; height: 18px; background: #d5dae1; margin: 0 6px"></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; margin-right: 6px">ENERGY</span>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">focus</button>
+      <button type="button" style="height: 26px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-family: 'IBM Plex Mono', monospace; font-size: 12px">low</button>
+      <div style="flex-grow: 1"></div>
+      <button type="button" style="height: 26px; padding: 0 8px; border-radius: 3px; border: 0; background: transparent; color: #2456c4; font-size: 12px">Clear</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; padding: 16px 20px; flex-grow: 1; min-height: 0">
+      <section aria-label="Actions grouped by context" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #d5dae1">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">@computer</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">6 · 2 h 45 total</span>
+            <div style="flex-grow: 1"></div>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">PRIO · ACTION · PROJECT · TIME · ENERGY · DUE</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="true" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #2456c4; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #ffffff; background: #b8560f; border-radius: 2px; text-align: center; padding: 1px 0">A1</span>
+            <span>Compare the Holzwerk offer with the two quotes in Reference</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Workshop bench decided and ordered</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">30m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">focus</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">03.10</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="true" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #2456c4; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #ffffff; background: #b8560f; border-radius: 2px; text-align: center; padding: 1px 0">A2</span>
+            <span>Draft grading rubric for the case-study assignment</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Module HS26 ready to teach</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">1h</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">focus</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #171a1f; background: #e2e6ec; border-radius: 2px; text-align: center; padding: 1px 0">B1</span>
+            <span>Reply to Marc re: annex for the grant report</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Grant report submitted</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">10m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">low</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #171a1f; background: #e2e6ec; border-radius: 2px; text-align: center; padding: 1px 0">B2</span>
+            <span>Book train Bern → Zurich for the conference, 14.10</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Conference trip organised</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">15m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">low</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #171a1f; background: #e2e6ec; border-radius: 2px; text-align: center; padding: 1px 0">B3</span>
+            <span>Export BOM for the delay pedal and check stock</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Delay pedal built</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">30m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">normal</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; border: 1px solid #d5dae1; border-radius: 2px; text-align: center; padding: 0 0">C</span>
+            <span>Clean up the shared drive folder for last semester</span>
+            <span style="font-size: 12px; color: #5a6370">— (single action)</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">20m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">low</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #d5dae1">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">@calls</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">3 · 35 min total</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #ffffff; background: #b8560f; border-radius: 2px; text-align: center; padding: 1px 0">A3</span>
+            <span>Call dentist: ask for the corrected invoice</span>
+            <span style="font-size: 12px; color: #5a6370">— (single action)</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">10m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">low</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eef0f3">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; color: #171a1f; background: #e2e6ec; border-radius: 2px; text-align: center; padding: 1px 0">B4</span>
+            <span>Call Lena (Holzwerk): ask about delivery lead time</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Workshop bench decided and ordered</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">10m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">normal</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 24px 24px 36px minmax(0, 1fr) 220px 52px 60px 76px; gap: 10px; align-items: center; padding: 8px 12px">
+            <input type="checkbox" aria-label="Done" style="width: 16px; height: 16px; margin: 0">
+            <button type="button" aria-label="Focus today" aria-pressed="false" style="width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: #c3c9d2; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z"></path></svg></button>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; border: 1px solid #d5dae1; border-radius: 2px; text-align: center">C</span>
+            <span>Call plumber for a quote on the tap cartridge</span>
+            <a href="Projects.dc.html" style="font-size: 12px; color: #5a6370; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Home maintenance 2026</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">15m</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">low</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; margin-top: auto">
+          <span>14 hidden by filter</span><span>·</span><span>x done</span><span>f focus today</span><span>e edit</span><span>p project</span><span>@ change context</span>
+        </div>
+      </section>
+
+      <aside aria-label="Today" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; display: flex; flex-direction: column">
+          <div style="display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #d5dae1">
+            <span style="font-weight: 600">Today</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">sat 26.09 · hard landscape</span>
+            <div style="flex-grow: 1"></div>
+            <a href="Calendar.dc.html" style="font-size: 12px; text-decoration: none">Week →</a>
+          </div>
+          <div style="display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 4px 10px; padding: 10px 12px; font-size: 13px">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 2px">10:00</span><span>Dentist appointment</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 2px">14:00</span><span>Call with Marc — grant report</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; padding-top: 2px">all day</span><span>Submit conference abstract <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">deadline</span></span>
+          </div>
+          <div style="border-top: 1px solid #eef0f3; padding: 8px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">Calendar holds only what must happen today. Everything else lives on the lists.</div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; display: flex; flex-direction: column">
+          <div style="display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #d5dae1">
+            <span style="font-weight: 600">Focus for today</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">3 picked · 1 done</span>
+          </div>
+          <div style="display: flex; flex-direction: column; padding: 6px 12px 8px; gap: 6px">
+            <label style="display: flex; align-items: center; gap: 8px; min-height: 28px"><input type="checkbox" checked style="width: 16px; height: 16px; margin: 0"><span style="text-decoration: line-through; color: #5a6370">Measure bench alcove width</span></label>
+            <label style="display: flex; align-items: center; gap: 8px; min-height: 28px"><input type="checkbox" style="width: 16px; height: 16px; margin: 0"><span>Compare the Holzwerk offer with the two quotes</span></label>
+            <label style="display: flex; align-items: center; gap: 8px; min-height: 28px"><input type="checkbox" style="width: 16px; height: 16px; margin: 0"><span>Draft grading rubric for the case-study</span></label>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; margin-top: auto">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">HEALTH</div>
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: 12px">
+            <span>Projects without a next action</span><a href="Projects.dc.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f; text-decoration: none">2</a>
+            <span>Waiting-for overdue</span><a href="Waiting.dc.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f; text-decoration: none">1</a>
+            <span>Actions older than 30 d</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">4</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

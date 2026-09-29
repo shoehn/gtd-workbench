@@ -1,0 +1,162 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Calendar.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Calendar · hard landscape",
+      "w": 1280,
+      "x": 8160,
+      "y": 0
+    },
+    "Clarify.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Clarify",
+      "w": 1280,
+      "x": 1360,
+      "y": 0
+    },
+    "M-Calendar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Calendar",
+      "w": 390,
+      "x": 2820,
+      "y": 1300
+    },
+    "M-Clarify.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Clarify",
+      "w": 390,
+      "x": 470,
+      "y": 1300
+    },
+    "M-Inbox.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Inbox",
+      "w": 390,
+      "x": 0,
+      "y": 1300
+    },
+    "M-Next.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Next Actions",
+      "w": 390,
+      "x": 940,
+      "y": 1300
+    },
+    "M-Projects.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Projects",
+      "w": 390,
+      "x": 1410,
+      "y": 1300
+    },
+    "M-Review.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Weekly Review",
+      "w": 390,
+      "x": 2350,
+      "y": 1300
+    },
+    "M-Waiting.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Phone · Waiting / Someday",
+      "w": 390,
+      "x": 1880,
+      "y": 1300
+    },
+    "Main.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Inbox · Rapid log",
+      "w": 1280,
+      "x": 0,
+      "y": 0
+    },
+    "Next.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Next Actions",
+      "w": 1280,
+      "x": 2720,
+      "y": 0
+    },
+    "Projects.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Projects",
+      "w": 1280,
+      "x": 4080,
+      "y": 0
+    },
+    "Review.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Weekly Review",
+      "w": 1280,
+      "x": 6800,
+      "y": 0
+    },
+    "Waiting.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Waiting For · Someday/Maybe",
+      "w": 1280,
+      "x": 5440,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-26T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t-desktop": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Desktop · 1280 — Capture → Clarify → Organize → Review",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-phone": {
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "Phone · 390 — same lists, one-hand capture",
+      "w": 240,
+      "x": 0,
+      "y": 1000
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Clarify.dc.html",
+    "Next.dc.html",
+    "Projects.dc.html",
+    "Waiting.dc.html",
+    "Review.dc.html",
+    "Calendar.dc.html",
+    "M-Inbox.dc.html",
+    "M-Clarify.dc.html",
+    "M-Next.dc.html",
+    "M-Projects.dc.html",
+    "M-Waiting.dc.html",
+    "M-Review.dc.html",
+    "M-Calendar.dc.html"
+  ],
+  "pages": [],
+  "title": "GTD Workbench"
+}

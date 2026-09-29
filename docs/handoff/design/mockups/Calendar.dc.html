@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calendar hard landscape</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#eef0f3;color:#171a1f;-webkit-font-smoothing:antialiased}
+a{color:#2456c4}a:hover{color:#1a44a0}
+input,button{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1280px; height: 860px; box-sizing: border-box; display: flex; background: #eef0f3; font-size: 13px; line-height: 1.4">
+
+  <nav aria-label="Lists" style="width: 224px; box-sizing: border-box; border-right: 1px solid #d5dae1; background: #e6e9ee; display: flex; flex-direction: column; padding: 14px 10px; gap: 4px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 2px 10px 12px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 13px; letter-spacing: 0.08em">GTD/WB</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">sat 26.09</span>
+    </div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 6px 10px 2px">COLLECT</div>
+    <a href="Main.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Inbox<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">14</span></a>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 10px 10px 2px">DO</div>
+    <a href="Next.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Next Actions<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">23</span></a>
+    <a href="Calendar.dc.html" aria-current="page" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; background: #ffffff; color: #171a1f; text-decoration: none; font-weight: 600">Calendar<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">3</span></a>
+    <a href="Waiting.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Waiting For<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">7</span></a>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; padding: 10px 10px 2px">HORIZONS</div>
+    <a href="Projects.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Projects<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">11</span></a>
+    <a href="Waiting.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Someday / Maybe<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">31</span></a>
+    <a href="Projects.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 3px; color: #171a1f; text-decoration: none">Reference<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">—</span></a>
+    <div style="flex-grow: 1"></div>
+    <a href="Review.dc.html" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 3px; border: 1px solid #c3c9d2; color: #171a1f; text-decoration: none">Weekly Review<span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">due</span></a>
+  </nav>
+
+  <main style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0">
+    <header style="height: 48px; box-sizing: border-box; display: flex; align-items: center; gap: 16px; padding: 0 20px; border-bottom: 1px solid #d5dae1; background: #ffffff">
+      <h1 style="margin: 0; font-size: 14px; font-weight: 600">Calendar</h1>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">week 39 · 21.09 – 27.09</span>
+      <div style="display: flex; gap: 2px; margin-left: 4px">
+        <button type="button" aria-label="Previous week" style="width: 28px; height: 28px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-size: 13px; padding: 0">‹</button>
+        <button type="button" style="height: 28px; padding: 0 10px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-size: 12px">Today</button>
+        <button type="button" aria-label="Next week" style="width: 28px; height: 28px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-size: 13px; padding: 0">›</button>
+      </div>
+      <div style="flex-grow: 1"></div>
+      <div style="display: flex; align-items: center; gap: 8px; height: 30px; box-sizing: border-box; padding: 0 10px; border: 1px solid #c3c9d2; border-radius: 3px; background: #ffffff; width: 260px">
+        <span style="font-family: 'IBM Plex Mono', monospace; color: #5a6370">›</span>
+        <input type="text" aria-label="Quick capture" placeholder="Capture to inbox" style="flex-grow: 1; border: 0; outline: 0; font-size: 13px; background: transparent; color: #171a1f">
+      </div>
+      <button type="button" style="height: 30px; padding: 0 12px; border-radius: 3px; border: 1px solid #c3c9d2; background: #ffffff; color: #171a1f; font-size: 13px">Week ▾</button>
+    </header>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; padding: 16px 20px; flex-grow: 1; min-height: 0">
+
+      <section aria-label="Week view" style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; display: grid; grid-template-columns: 48px repeat(7, minmax(0, 1fr)); grid-template-rows: 40px 96px minmax(0, 1fr); min-height: 0">
+
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3"></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 8px 8px; display: flex; flex-direction: column"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">MON</span><span style="font-weight: 500">21</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 8px 8px; display: flex; flex-direction: column"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">TUE</span><span style="font-weight: 500">22</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 8px 8px; display: flex; flex-direction: column"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">WED</span><span style="font-weight: 500">23</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 8px 8px; display: flex; flex-direction: column"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">THU</span><span style="font-weight: 500">24</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 8px 8px; display: flex; flex-direction: column"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">FRI</span><span style="font-weight: 500">25</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 8px 8px; display: flex; flex-direction: column; background: #eef3fc"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #2456c4">SAT · TODAY</span><span style="font-weight: 600; color: #2456c4">26</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; padding: 8px 8px; display: flex; flex-direction: column"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">SUN</span><span style="font-weight: 500">27</span></div>
+
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370; display: flex; flex-direction: column; gap: 2px"><span>DAY</span><span>ONLY</span></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px; display: flex; flex-direction: column; gap: 4px"></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: start; gap: 6px; padding: 4px 6px; border-radius: 2px; background: #ffffff; border: 1px solid #171a1f; font-size: 12px; line-height: 1.3"><input type="checkbox" checked aria-label="Done" style="width: 14px; height: 14px; margin: 1px 0 0"><span style="text-decoration: line-through; color: #5a6370">Hand in the module description</span></div>
+        </div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px; display: flex; flex-direction: column; gap: 4px">
+          <div style="display: flex; align-items: start; gap: 6px; padding: 4px 6px; border-radius: 2px; background: #ffffff; border: 1px solid #171a1f; font-size: 12px; line-height: 1.3"><input type="checkbox" checked aria-label="Done" style="width: 14px; height: 14px; margin: 1px 0 0"><span style="text-decoration: line-through; color: #5a6370">Pay the printer invoice</span></div>
+        </div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px; display: flex; flex-direction: column; gap: 4px"></div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px; display: flex; flex-direction: column; gap: 4px">
+          <div style="padding: 4px 6px; border-radius: 2px; background: #eef0f3; border: 1px dashed #c3c9d2; font-size: 12px; line-height: 1.3; color: #5a6370">Holzwerk offer arrives · decide by 03.10</div>
+        </div>
+        <div style="border-bottom: 1px solid #d5dae1; border-right: 1px solid #eef0f3; padding: 6px; display: flex; flex-direction: column; gap: 4px; background: #eef3fc">
+          <div style="display: flex; align-items: start; gap: 6px; padding: 4px 6px; border-radius: 2px; background: #ffffff; border: 1px solid #b8560f; font-size: 12px; line-height: 1.3"><input type="checkbox" aria-label="Done" style="width: 14px; height: 14px; margin: 1px 0 0"><span>Submit conference abstract <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #b8560f">DEADLINE</span></span></div>
+        </div>
+        <div style="border-bottom: 1px solid #d5dae1; padding: 6px; display: flex; flex-direction: column; gap: 4px">
+          <div style="padding: 4px 6px; border-radius: 2px; background: #eef0f3; border: 1px dashed #c3c9d2; font-size: 12px; line-height: 1.3; color: #5a6370">Bins out · paper</div>
+        </div>
+
+        <div style="border-right: 1px solid #eef0f3; position: relative; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">
+          <span style="position: absolute; top: 0; right: 6px">08</span><span style="position: absolute; top: 48px; right: 6px">09</span><span style="position: absolute; top: 96px; right: 6px">10</span><span style="position: absolute; top: 144px; right: 6px">11</span><span style="position: absolute; top: 192px; right: 6px">12</span><span style="position: absolute; top: 240px; right: 6px">13</span><span style="position: absolute; top: 288px; right: 6px">14</span><span style="position: absolute; top: 336px; right: 6px">15</span><span style="position: absolute; top: 384px; right: 6px">16</span><span style="position: absolute; top: 432px; right: 6px">17</span><span style="position: absolute; top: 480px; right: 6px">18</span>
+        </div>
+        <div style="border-right: 1px solid #eef0f3; position: relative; background-image: repeating-linear-gradient(to bottom, #eef0f3 0, #eef0f3 1px, transparent 1px, transparent 48px)">
+          <div style="position: absolute; left: 4px; right: 4px; top: 48px; height: 140px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">09:00–12:00</span><br>Lecture block</div>
+        </div>
+        <div style="border-right: 1px solid #eef0f3; position: relative; background-image: repeating-linear-gradient(to bottom, #eef0f3 0, #eef0f3 1px, transparent 1px, transparent 48px)">
+          <div style="position: absolute; left: 4px; right: 4px; top: 240px; height: 44px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">13:00</span> Institute meeting</div>
+        </div>
+        <div style="border-right: 1px solid #eef0f3; position: relative; background-image: repeating-linear-gradient(to bottom, #eef0f3 0, #eef0f3 1px, transparent 1px, transparent 48px)"></div>
+        <div style="border-right: 1px solid #eef0f3; position: relative; background-image: repeating-linear-gradient(to bottom, #eef0f3 0, #eef0f3 1px, transparent 1px, transparent 48px)">
+          <div style="position: absolute; left: 4px; right: 4px; top: 384px; height: 92px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">16:00–18:00</span><br>Office hours</div>
+        </div>
+        <div style="border-right: 1px solid #eef0f3; position: relative; background-image: repeating-linear-gradient(to bottom, #eef0f3 0, #eef0f3 1px, transparent 1px, transparent 48px)">
+          <div style="position: absolute; left: 4px; right: 4px; top: 96px; height: 44px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #ffffff; border: 1px solid #2456c4; border-left: 3px solid #2456c4; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #2456c4">10:00</span> Deep work: grading rubric</div>
+        </div>
+        <div style="border-right: 1px solid #eef0f3; position: relative; background: #f6f8fd; background-image: repeating-linear-gradient(to bottom, #e2e6ec 0, #e2e6ec 1px, transparent 1px, transparent 48px)">
+          <div style="position: absolute; left: 4px; right: 4px; top: 96px; height: 44px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">10:00</span> Dentist</div>
+          <div style="position: absolute; left: 4px; right: 4px; top: 288px; height: 44px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #5a6370">14:00</span> Call with Marc</div>
+          <div style="position: absolute; left: 0; right: 0; top: 172px; height: 0; border-top: 2px solid #b8560f"></div>
+        </div>
+        <div style="position: relative; background-image: repeating-linear-gradient(to bottom, #eef0f3 0, #eef0f3 1px, transparent 1px, transparent 48px)">
+          <div style="position: absolute; left: 4px; right: 4px; top: 432px; height: 44px; box-sizing: border-box; padding: 4px 6px; border-radius: 2px; background: #ffffff; border: 1px solid #2456c4; border-left: 3px solid #2456c4; font-size: 12px; line-height: 1.3; overflow: hidden"><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #2456c4">17:00</span> Weekly review ↻</div>
+        </div>
+      </section>
+
+      <aside aria-label="Calendar sources" style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">WHAT LIVES HERE</div>
+          <div style="display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 6px 8px; font-size: 12px; align-items: start">
+            <span style="width: 14px; height: 14px; border-radius: 2px; background: #e2e6ec; border-left: 3px solid #5a6370; box-sizing: border-box; margin-top: 2px"></span><span>Appointments — synced from your external calendars, read-only</span>
+            <span style="width: 14px; height: 14px; border-radius: 2px; background: #ffffff; border: 1px solid #2456c4; border-left: 3px solid #2456c4; box-sizing: border-box; margin-top: 2px"></span><span>Time blocks you set here — a next action given a slot</span>
+            <span style="width: 14px; height: 14px; border-radius: 2px; background: #ffffff; border: 1px solid #171a1f; box-sizing: border-box; margin-top: 2px"></span><span>Day-specific actions — must happen that day, any time</span>
+            <span style="width: 14px; height: 14px; border-radius: 2px; background: #eef0f3; border: 1px dashed #c3c9d2; box-sizing: border-box; margin-top: 2px"></span><span>Day-specific information — tickler notes, nothing to do</span>
+            <span style="width: 14px; height: 14px; border-radius: 2px; background: #ffffff; border: 1px solid #b8560f; box-sizing: border-box; margin-top: 2px"></span><span>Hard deadlines — mirrored from actions and projects</span>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">HOW ITEMS GET HERE</div>
+          <div style="display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 6px 8px; font-size: 12px; align-items: start">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">1</span><a href="Clarify.dc.html" style="text-decoration: none; color: #171a1f">Clarify → Defer → Calendar, with a day or a day + time</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">2</span><a href="Next.dc.html" style="text-decoration: none; color: #171a1f">A next action with a deadline shows on its day automatically</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">3</span><a href="Next.dc.html" style="text-decoration: none; color: #171a1f">Drag an action from Next Actions onto a slot to time-block it</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">4</span><span>External calendars sync in; nothing is written back to them</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">5</span><span>Recurring checklists (weekly review, bins) repeat here</span>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #d5dae1; border-radius: 3px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: #5a6370">UPCOMING HARD DEADLINES</div>
+          <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 8px; font-size: 12px">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #b8560f">03.10</span><a href="Projects.dc.html" style="text-decoration: none; color: #171a1f">Holzwerk bench offer expires</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">12.10</span><a href="Waiting.dc.html" style="text-decoration: none; color: #171a1f">Reviewer comments due back</a>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370">14.10</span><a href="Projects.dc.html" style="text-decoration: none; color: #171a1f">Conference, Zurich</a>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5a6370; line-height: 1.5">synced 09:14 · 2 calendars<br>Work (Exchange) · Private (CalDAV)</div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
