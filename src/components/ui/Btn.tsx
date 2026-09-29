@@ -8,8 +8,9 @@ const variants = {
   ghost: 'border border-transparent bg-transparent text-accent hover:text-accent-hover',
 };
 const sizes = {
-  sm: 'h-(--wb-hit-desktop) px-2.5 text-xs',
-  md: 'h-(--wb-hit-input) px-3',
+  // Below lg every button is a 44 px touch target (SPEC §7).
+  sm: 'h-(--wb-hit-phone) px-2.5 text-xs lg:h-(--wb-hit-desktop)',
+  md: 'h-(--wb-hit-phone) px-3 lg:h-(--wb-hit-input)',
   lg: 'h-(--wb-hit-phone) px-4 text-(length:--wb-text-body-phone)',
 };
 

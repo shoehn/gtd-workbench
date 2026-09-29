@@ -50,10 +50,14 @@ export interface DetailData {
 
 type Drag = { kind: 'next' | 'later'; id: string } | null;
 
-const NEXT_COLS = '36px minmax(0,1fr) 84px 44px 44px 64px';
+// Phone keeps chip · text · button; context, time and "today" move under the text.
+const NEXT_COLS = 'var(--next-cols)';
+const NEXT_COLS_VAR = '[--next-cols:36px_minmax(0,1fr)_auto] lg:[--next-cols:36px_minmax(0,1fr)_84px_44px_44px_64px]';
+/** Phone: small buttons keep their look and get a 44 px touch area. */
+const TOUCH = 'relative max-lg:after:absolute max-lg:after:-inset-x-1 max-lg:after:-inset-y-3';
 const mono = 'font-mono text-meta text-muted';
-const smallBtn = 'h-5.5 shrink-0 whitespace-nowrap rounded border border-control bg-panel px-1.5 font-mono text-meta text-muted hover:border-muted hover:text-ink';
-const addBtn = 'h-6 rounded px-2 text-xs text-accent hover:text-accent-hover';
+const smallBtn = TOUCH + ' h-5.5 shrink-0 whitespace-nowrap rounded border border-control bg-panel px-1.5 font-mono text-meta text-muted hover:border-muted hover:text-ink';
+const addBtn = TOUCH + ' h-6 rounded px-2 text-xs text-accent hover:text-accent-hover';
 const inputCls = 'h-(--wb-hit-phone) min-w-0 rounded border border-control bg-panel px-2 text-ink outline-none focus:border-accent focus:shadow-ring lg:h-7';
 
 export function ProjectDetail({ project: p, contexts }: { project: DetailData; contexts: string[] }) {
@@ -165,14 +169,20 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
           action={active && <button type="button" className={addBtn} onClick={() => setAdding('action')}>+ action</button>}
         />
         {p.next.map((n) => (
-          <Row key={n.id} cols={NEXT_COLS} className="gap-2.5! last:border-b-0" {...dragHandlers('next', n.id)}>
+          <Row key={n.id} cols={NEXT_COLS} className={cx('gap-2.5! last:border-b-0', NEXT_COLS_VAR)} {...dragHandlers('next', n.id)}>
             {n.priority ? <PrioChip priority={n.priority} no={n.priorityNo} /> : <span />}
-            <Link href={`/next?highlight=${encodeURIComponent(n.id)}`} className="min-w-0 text-ink no-underline hover:text-accent">
-              {n.text}
-            </Link>
-            <span className={cx(mono, 'truncate')}>{n.context}</span>
-            <span className={mono}>{n.time}</span>
-            <span className="font-mono text-meta text-accent">{n.today && 'today'}</span>
+            <span className="flex min-w-0 flex-col gap-0.5 lg:contents">
+              <Link href={`/next?highlight=${encodeURIComponent(n.id)}`} className="min-w-0 text-ink no-underline hover:text-accent">
+                {n.text}
+              </Link>
+              <span className={cx(mono, 'lg:hidden')}>
+                {[n.context, n.time].filter(Boolean).join(' · ')}
+                {n.today && <span className="text-accent"> · today</span>}
+              </span>
+            </span>
+            <span className={cx(mono, 'truncate max-lg:hidden')}>{n.context}</span>
+            <span className={cx(mono, 'max-lg:hidden')}>{n.time}</span>
+            <span className="font-mono text-meta text-accent max-lg:hidden">{n.today && 'today'}</span>
             <button type="button" className={smallBtn} aria-label={`Make “${n.text}” a later step`} onClick={() => run(() => demoteAction(n.id))}>
               ↓ later
             </button>

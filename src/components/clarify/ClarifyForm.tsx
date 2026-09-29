@@ -39,11 +39,11 @@ const NOT_ACTIONABLE: { value: Exclude<Answer, 'yes'>; label: string; key: strin
   { value: 'someday', label: 'No → Someday / Maybe', key: 'm', file: 'Move to Someday' },
   { value: 'reference', label: 'No → Reference', key: 'r', file: 'File as reference' },
 ];
-const ROUTES: { value: RouteTo; label: string; key: string }[] = [
-  { value: 'done', label: 'Do it now (< 2 min)', key: '2' },
-  { value: 'waiting', label: 'Delegate → Waiting For', key: 'w' },
-  { value: 'next', label: 'Defer → Next Actions', key: 'n' },
-  { value: 'calendar', label: 'Defer → Calendar', key: 'k' },
+const ROUTES: { value: RouteTo; label: string; short: string; key: string }[] = [
+  { value: 'done', label: 'Do it now (< 2 min)', short: 'Do now < 2 min', key: '2' },
+  { value: 'waiting', label: 'Delegate → Waiting For', short: 'Delegate', key: 'w' },
+  { value: 'next', label: 'Defer → Next Actions', short: 'Next Actions', key: 'n' },
+  { value: 'calendar', label: 'Defer → Calendar', short: 'Calendar', key: 'k' },
 ];
 const SIMILAR_HREF: Partial<Record<string, string>> = {
   next: '/next',
@@ -62,16 +62,41 @@ function Hot({ k, on }: { k: string; on?: boolean }) {
   return on ? <span className="font-mono text-meta opacity-80">{k}</span> : <Kbd>{k}</Kbd>;
 }
 
-function Toggle({ pressed, label, k, onClick }: { pressed: boolean; label: string; k: string; onClick(): void }) {
+function Toggle(props: { pressed: boolean; label: string; short?: string; k: string; onClick(): void; className?: string }) {
+  const { pressed, label, short, k, onClick, className } = props;
   return (
-    <Btn variant={pressed ? 'primary' : 'outline'} aria-pressed={pressed} onClick={onClick} className="lg:h-8 lg:px-3.5">
-      {label} <Hot k={k} on={pressed} />
+    <Btn variant={pressed ? 'primary' : 'outline'} aria-pressed={pressed} onClick={onClick} className={cx('max-lg:h-11 lg:h-8 lg:px-3.5', className)}>
+      {short ? (
+        <>
+          <span className="lg:hidden">{short}</span>
+          <span className="max-lg:hidden lg:contents">
+            {label} <Hot k={k} on={pressed} />
+          </span>
+        </>
+      ) : (
+        <>
+          {label} <span className="max-lg:hidden lg:contents"><Hot k={k} on={pressed} /></span>
+        </>
+      )}
     </Btn>
   );
 }
 
+/** Phone: a finished step folded to one line, with a check and "Edit". */
+function Folded({ text, onEdit }: { text: string; onEdit(): void }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-line-soft px-3.5 py-1.5 text-muted lg:hidden">
+      <span aria-hidden="true" className="inline-flex size-5 shrink-0 items-center justify-center rounded-chip bg-ok font-mono text-meta text-panel">✓</span>
+      <span className="min-w-0 grow truncate text-sm">{text}</span>
+      <button type="button" onClick={onEdit} className="h-11 shrink-0 px-2 text-accent">
+        Edit
+      </button>
+    </div>
+  );
+}
+
 /** One of the four steps. Dimmed steps keep their height and disable their controls. */
-function Step(props: { n: number; title: string; hint?: string; dim?: boolean; top?: boolean; last?: boolean; children: ReactNode }) {
+function Step(props: { n: number; title: string; hint?: string; dim?: boolean; top?: boolean; last?: boolean; className?: string; children: ReactNode }) {
   const id = `step-${props.n}`;
   return (
     <fieldset
@@ -82,6 +107,7 @@ function Step(props: { n: number; title: string; hint?: string; dim?: boolean; t
         props.top ? 'items-start' : 'items-center',
         !props.last && 'border-b border-line-soft',
         props.dim && 'opacity-40',
+        props.className,
       )}
     >
       <span className="hidden size-5.5 items-center justify-center rounded-chip bg-ink font-mono text-meta text-panel lg:inline-flex">
@@ -89,7 +115,9 @@ function Step(props: { n: number; title: string; hint?: string; dim?: boolean; t
       </span>
       <div className="flex flex-col gap-0.5">
         <span id={id} className="font-semibold">
-          <span className="font-mono lg:hidden">{props.n} · </span>
+          <span className="mr-2 inline-flex size-5 items-center justify-center rounded-chip bg-ink align-[2px] font-mono text-meta font-normal text-panel lg:hidden">
+            {props.n}
+          </span>
           {props.title}
         </span>
         {props.hint && <span className="text-meta text-muted">{props.hint}</span>}
@@ -144,6 +172,9 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   const [followUp, setFollowUp] = useState('');
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Phone: steps 1–2 fold once answered; "Edit" opens them again. Time / energy / deadline fold too.
+  const [unfold, setUnfold] = useState<{ 1?: boolean; 2?: boolean }>({});
+  const [moreFields, setMoreFields] = useState(false);
 
   const pickerRef = useRef<HTMLInputElement>(null);
   const whoRef = useRef<HTMLInputElement>(null);
@@ -337,6 +368,9 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
     file();
   }
 
+  const fold1 = answer !== null && !unfold[1];
+  const fold2 = answer === 'yes' && !unfold[2];
+  const step1Summary = answer === 'yes' ? (picked ? 'Actionable · project' : 'Actionable') : NOT_ACTIONABLE.find((n) => n.value === answer)?.label ?? '';
   const primaryLabel = notActionable ? `${NOT_ACTIONABLE.find((n) => n.value === answer)!.file} and next` : 'File it and next';
   const nextNote = !picked
     ? ''
@@ -347,13 +381,14 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
         : 'no next action — this becomes it';
 
   return (
-    <div className="grid min-h-full gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <form onSubmit={onSubmit} aria-label="Decision flow" className="flex min-w-0 flex-col gap-3">
-        <Card aria-label="Inbox item" className="flex flex-col gap-1.5 px-4 py-3.5">
+    <div className="grid min-h-full gap-4 max-lg:px-4 max-lg:pt-3 max-lg:pb-28 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <form onSubmit={onSubmit} aria-label="Decision flow" className="flex min-w-0 flex-col gap-3 max-lg:gap-2.5">
+        <Card aria-label="Inbox item" className="flex flex-col gap-1.5 px-4 py-3.5 max-lg:gap-1 max-lg:px-3.5 max-lg:py-3">
           <SectionHead className="m-0">
-            Inbox item · {item.source} · {item.when}
+            <span className="max-lg:hidden">Inbox item · </span>
+            {item.source} · {item.when}
           </SectionHead>
-          <div className="text-[16px] font-medium">{item.text}</div>
+          <div className="font-medium lg:text-[16px]">{item.text}</div>
           {(item.context || item.priority || item.day || item.tags.length > 0) && (
             <div className="flex flex-wrap items-center gap-1.5">
               {item.context && <Tag>{item.context}</Tag>}
@@ -367,7 +402,8 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
         </Card>
 
         <Card aria-label="The four steps" className="flex flex-col">
-          <Step n={1} title="Is it actionable?">
+          {fold1 && <Folded text={step1Summary} onEdit={() => setUnfold((u) => ({ ...u, 1: true }))} />}
+          <Step n={1} title="Is it actionable?" className={cx(fold1 && 'max-lg:hidden')}>
             <div className="flex flex-wrap gap-2">
               <Toggle pressed={answer === 'yes'} label="Yes" k="y" onClick={() => setAnswer('yes')} />
               {NOT_ACTIONABLE.map((n) => (
@@ -376,7 +412,14 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
             </div>
           </Step>
 
-          <Step n={2} title="What is it?" hint="Prefilled with your capture. Rewrite only if the words don't say what it really is." dim={notActionable}>
+          {fold2 && <Folded text={text || '—'} onEdit={() => setUnfold((u) => ({ ...u, 2: true }))} />}
+          <Step
+            n={2}
+            title="What is it?"
+            hint="Prefilled with your capture. Rewrite only if the words don't say what it really is."
+            dim={notActionable}
+            className={cx((fold2 || notActionable) && 'max-lg:hidden')}
+          >
             <div className="flex items-center gap-2">
               <label htmlFor="outcome" className="font-mono text-meta text-muted">outcome</label>
               <input
@@ -394,7 +437,7 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
             </span>
           </Step>
 
-          <Step n={3} title="Project" hint="Leave empty for a single action." dim={notActionable} top>
+          <Step n={3} title="Project" hint="Leave empty for a single action." dim={notActionable} top className={cx(notActionable && 'max-lg:hidden')}>
             <ProjectPicker projects={projects} query={query} picked={picked} onQuery={setQuery} onPick={pick} inputRef={pickerRef} />
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
               <input
@@ -410,10 +453,18 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
             </div>
           </Step>
 
-          <Step n={4} title="Do, delegate or defer?" hint="Only for a next action or a single action. Later steps skip this." dim={step4Dim} top last>
-            <div className="flex flex-wrap gap-2">
+          <Step
+            n={4}
+            title="Do, delegate or defer?"
+            hint="Only for a next action or a single action. Later steps skip this."
+            dim={step4Dim}
+            top
+            last
+            className={cx(step4Dim && 'max-lg:hidden')}
+          >
+            <div className="flex flex-wrap gap-2 max-lg:grid max-lg:grid-cols-2">
               {ROUTES.map((r) => (
-                <Toggle key={r.value} pressed={routeTo === r.value} label={r.label} k={r.key} onClick={() => chooseRoute(r.value)} />
+                <Toggle key={r.value} pressed={routeTo === r.value} label={r.label} short={r.short} k={r.key} onClick={() => chooseRoute(r.value)} />
               ))}
             </div>
 
@@ -422,10 +473,24 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
                 <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
                   <Select label="Context" value={context} options={contexts.map((c) => ({ value: c, label: c }))} onChange={setContext} />
                   <Select label="Priority" value={priority} options={PRIORITIES} onChange={(v) => setPriority(v as Priority)} />
-                  <Select label="Time" value={String(time)} options={TIMES.map((t) => ({ value: String(t), label: fmtTime(t) }))} onChange={(v) => setTime(Number(v) as TimeBucket)} />
-                  <Select label="Energy" value={energy} options={ENERGIES.map((v) => ({ value: v, label: v }))} onChange={(v) => setEnergy(v as Energy)} />
+                  <div className={cx('lg:contents', !moreFields && 'max-lg:hidden')}>
+                    <Select label="Time" value={String(time)} options={TIMES.map((t) => ({ value: String(t), label: fmtTime(t) }))} onChange={(v) => setTime(Number(v) as TimeBucket)} />
+                  </div>
+                  <div className={cx('lg:contents', !moreFields && 'max-lg:hidden')}>
+                    <Select label="Energy" value={energy} options={ENERGIES.map((v) => ({ value: v, label: v }))} onChange={(v) => setEnergy(v as Energy)} />
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2.5">
+                {!moreFields && (
+                  <button
+                    type="button"
+                    onClick={() => setMoreFields(true)}
+                    className="min-h-11 text-left font-mono text-meta text-muted lg:hidden"
+                  >
+                    time {fmtTime(time)} · energy {energy}
+                    {deadline && deadlineOk ? ` · deadline ${fmtDate(deadline)}` : ''} — tap to change
+                  </button>
+                )}
+                <div className={cx('flex flex-wrap items-center gap-2.5', !moreFields && 'max-lg:hidden')}>
                   <label htmlFor="due" className={labelCls}>Deadline</label>
                   <input
                     id="due"
@@ -487,7 +552,29 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
           </Step>
         </Card>
 
-        <div className="mt-auto flex flex-wrap items-center gap-2.5">
+        <p
+          role="status"
+          className={cx('m-0 px-0.5 font-mono text-meta lg:hidden', error || (tried && !ready) ? 'text-warn' : 'text-muted')}
+        >
+          {error ?? summary()}
+        </p>
+        <div className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-[56px_minmax(0,1fr)] gap-2 border-t border-line bg-panel px-4 pt-2.5 pb-[34px] lg:hidden">
+          <button
+            type="button"
+            aria-label="Trash"
+            disabled={pending || answer === 'trash'}
+            onClick={() => commit({ kind: 'trash' })}
+            className="inline-flex h-12 items-center justify-center rounded border border-control bg-panel text-ink disabled:opacity-50"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+            </svg>
+          </button>
+          <button type="submit" disabled={pending} className="h-12 rounded bg-accent font-medium text-panel disabled:opacity-50">
+            {primaryLabel}
+          </button>
+        </div>
+        <div className="mt-auto flex flex-wrap items-center gap-2.5 max-lg:hidden">
           <Btn type="submit" variant="primary" disabled={pending} className="lg:h-9 lg:px-4">
             {primaryLabel} <Hot k="⏎" on />
           </Btn>
@@ -506,7 +593,7 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
         </div>
       </form>
 
-      <aside aria-label="Context while clarifying" className="flex min-w-0 flex-col gap-3">
+      <aside aria-label="Context while clarifying" className="flex min-w-0 flex-col gap-3 max-lg:hidden">
         <Card className="flex flex-col gap-2 px-3.5 py-3">
           <SectionHead className="m-0">Similar already on your lists</SectionHead>
           {similar.length ? (

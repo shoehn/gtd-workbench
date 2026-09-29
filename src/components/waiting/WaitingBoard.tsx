@@ -23,6 +23,8 @@ import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
 import { Kbd } from '../ui/Kbd';
 import { NextFields, defaultFields } from '../ui/NextFields';
+import { PhoneToast } from '../ui/PhoneToast';
+import { SwipeRow } from '../ui/SwipeRow';
 import { useMoreBelow } from '../ui/useMoreBelow';
 
 /** One waiting-for row, already formatted on the server. */
@@ -58,7 +60,7 @@ interface WaitingBoardProps {
   somedayTotal: number;
   buckets: string[];
   contexts: string[];
-  /** `?tab=someday` starts with the cursor pane on Someday/Maybe. */
+  /** `?tab=someday` starts with the cursor pane on Someday/Maybe; on the phone it picks the tab. */
   initialPane: Pane;
 }
 
@@ -69,7 +71,9 @@ const UNDO_MS = 5000;
 const COLS = 'grid grid-cols-[minmax(0,1fr)_90px_60px_76px] gap-2.5';
 const mono = 'font-mono text-meta text-muted';
 const label = 'font-mono text-label tracking-[0.1em] text-muted';
-const rowBtn = 'h-6 shrink-0 rounded border border-control bg-panel text-xs hover:border-muted';
+// Phone: the same small buttons, with a 44 px touch area.
+const rowBtn =
+  'relative h-6 shrink-0 rounded border border-control bg-panel text-xs hover:border-muted max-lg:after:absolute max-lg:after:-inset-y-2.5 max-lg:after:-inset-x-0.5';
 
 export function WaitingBoard(props: WaitingBoardProps) {
   const { waiting, onHold, someday, buckets, contexts } = props;
@@ -240,9 +244,64 @@ export function WaitingBoard(props: WaitingBoardProps) {
     </span>
   );
 
+  const phoneSomeday = props.initialPane === 'someday';
+
   return (
     <div className="grid gap-4 lg:h-full lg:grid-cols-2">
-      <Card aria-labelledby="waiting-head" className={cx('flex min-h-0 flex-col', pane === 'waiting' && cursor.waiting && 'border-muted')}>
+      {!phoneSomeday && (
+        <section aria-label="Waiting For" className="flex min-h-full flex-col bg-panel lg:hidden">
+          {askNext && (
+            <AskNext
+              {...askNext}
+              contexts={contexts}
+              onFile={(text, fields) => {
+                const { projectId } = askNext;
+                setAskNext(null);
+                startTransition(() => addActionAction(projectId, text, fields));
+              }}
+              onSkip={() => setAskNext(null)}
+            />
+          )}
+          <ul className="m-0 list-none p-0">
+            {waitingRows.map((w) => (
+              <li key={w.id} className="border-b border-line-soft">
+                <SwipeRow onRight={() => received(w)} onLeft={() => followUp(w.id)} rightLabel="received →" leftLabel="← follow up">
+                  <div className={cx('grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2.5 px-4 py-3', w.overdue ? 'bg-warn-tint' : 'bg-panel')}>
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span>{w.text}</span>
+                      <span className="text-sm text-muted">{[w.who, w.project?.title, `since ${w.since}`].filter(Boolean).join(' · ')}</span>
+                    </span>
+                    <span className="flex flex-col items-end gap-1.5">
+                      <span className={cx('font-mono text-meta', w.overdue ? 'text-warn' : 'text-muted')}>{w.followUp}</span>
+                      {w.overdue && (
+                        <button
+                          type="button"
+                          onClick={() => followUp(w.id)}
+                          className="relative h-8 rounded border border-warn bg-panel px-2.5 text-sm text-warn after:absolute after:-inset-1.5"
+                        >
+                          Follow up
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                </SwipeRow>
+              </li>
+            ))}
+          </ul>
+          {waitingRows.length === 0 ? (
+            <p className={cx(mono, 'm-0 py-8 text-center')}>{props.overdueOnly ? 'Nothing overdue.' : 'Nothing delegated.'}</p>
+          ) : (
+            <p className={cx(mono, 'm-0 px-4 py-2.5')}>swipe → received · swipe ← follow up</p>
+          )}
+          {props.overdueOnly && (
+            <Link href="/waiting" className="mx-4 flex min-h-11 items-center font-mono text-meta no-underline">
+              Show all {props.waitingTotal}
+            </Link>
+          )}
+          {undo?.pane === 'waiting' && <PhoneToast text={undo.label} onUndo={undoLast} />}
+        </section>
+      )}
+      <Card aria-labelledby="waiting-head" className={cx('flex min-h-0 flex-col max-lg:hidden', pane === 'waiting' && cursor.waiting && 'border-muted')}>
         <div className="flex items-center gap-2.5 border-b border-line px-3 py-2.5">
           <h2 id="waiting-head" className="m-0 text-body font-semibold">Waiting For</h2>
           <span className={mono}>
@@ -335,8 +394,16 @@ export function WaitingBoard(props: WaitingBoardProps) {
         </Footer>
       </Card>
 
-      <Card ref={somedayPane} aria-labelledby="someday-head" className={cx('flex min-h-0 flex-col', pane === 'someday' && cursor.someday && 'border-muted')}>
-        <div className="flex items-center gap-2.5 border-b border-line px-3 py-2.5">
+      <Card
+        ref={somedayPane}
+        aria-labelledby="someday-head"
+        className={cx(
+          'flex min-h-0 flex-col',
+          phoneSomeday ? 'max-lg:min-h-full max-lg:rounded-none max-lg:border-0' : 'max-lg:hidden',
+          pane === 'someday' && cursor.someday && 'border-muted',
+        )}
+      >
+        <div className="flex items-center gap-2.5 border-b border-line px-3 py-2.5 max-lg:sr-only">
           <h2 id="someday-head" className="m-0 text-body font-semibold">Someday / Maybe</h2>
           <span className={mono}>{props.somedayTotal} · reviewed weekly, activated rarely</span>
           <span className={cx(mono, 'ml-auto hidden xl:inline')}>by bucket</span>
@@ -380,7 +447,7 @@ export function WaitingBoard(props: WaitingBoardProps) {
                       aria-label={`Bucket for “${i.text}”`}
                       value={g.bucket}
                       onChange={(e) => startTransition(() => setBucketAction(i.id, e.target.value))}
-                      className="h-6 max-w-36 rounded border border-control bg-panel px-1 font-mono text-meta text-muted opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      className="h-6 max-w-36 rounded border border-control bg-panel px-1 font-mono text-meta text-muted max-lg:h-11 max-lg:max-w-none max-lg:grow lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100"
                     >
                       {buckets.map((b) => (
                         <option key={b} value={b}>{b}</option>
@@ -417,7 +484,7 @@ function Footer({ more, children }: { more: number; children: ReactNode }) {
 
 function SectionTitle({ title, count }: { title: string; count: number }) {
   return (
-    <h3 className={cx(label, 'm-0 px-3 pt-2.5 pb-1 font-normal')}>
+    <h3 className={cx(label, 'm-0 px-3 pt-2.5 pb-1 font-normal max-lg:px-4')}>
       {title} · {count}
     </h3>
   );
@@ -446,15 +513,18 @@ function SomedayRow({
     <div
       id={`wb-row-${id}`}
       onClick={onPick}
-      className={cx('group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 border-b border-line-soft px-3 py-1.75', cursor && 'bg-accent-tint')}
+      className={cx(
+        'group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 border-b border-line-soft px-3 py-1.75 max-lg:grid-cols-1 max-lg:gap-2 max-lg:px-4 max-lg:py-3',
+        cursor && 'bg-accent-tint',
+      )}
     >
       {children}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 max-lg:gap-2.5">
         {bucket}
-        <button type="button" className={cx(rowBtn, 'px-2 text-ink')} onClick={onActivate}>
+        <button type="button" className={cx(rowBtn, 'px-2 text-ink max-lg:h-11 max-lg:px-4')} onClick={onActivate}>
           Activate
         </button>
-        <button type="button" aria-label={`Drop “${text}”`} className={cx(rowBtn, 'w-7 text-muted')} onClick={onDrop}>
+        <button type="button" aria-label={`Drop “${text}”`} className={cx(rowBtn, 'w-7 text-muted max-lg:h-11 max-lg:w-11')} onClick={onDrop}>
           ×
         </button>
       </div>

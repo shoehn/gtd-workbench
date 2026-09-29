@@ -13,9 +13,8 @@ function clock(ms: number): string {
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
 }
 
-/** Timer, Pause / Resume and Finish in the top bar. The timer counts on from the server's figure. */
-export function ReviewControls({ elapsedMs, paused }: { elapsedMs: number; paused: boolean }) {
-  const [, startTransition] = useTransition();
+/** The review clock: counts on each second from the server's figure while running. */
+export function ReviewTimer({ elapsedMs, paused }: { elapsedMs: number; paused: boolean }) {
   const [shown, setShown] = useState(elapsedMs);
   // A new figure from the server (after pause, resume or any change) restarts the count.
   const [base, setBase] = useState(elapsedMs);
@@ -32,17 +31,34 @@ export function ReviewControls({ elapsedMs, paused }: { elapsedMs: number; pause
   }, [elapsedMs, paused]);
 
   return (
-    <div className="flex items-center gap-2 lg:gap-3">
-      <span className="inline-flex items-center gap-2 font-mono text-xs" role="timer" aria-label={paused ? 'Review paused' : 'Review time'}>
-        <span aria-hidden="true" className={cx('size-2 rounded-full', paused ? 'bg-control' : 'bg-warn')} />
-        {clock(shown)}
-      </span>
-      <Btn onClick={() => startTransition(() => (paused ? resumeReviewAction() : pauseReviewAction()))}>
+    <span className="inline-flex items-center gap-2 font-mono text-xs max-lg:text-sm" role="timer" aria-label={paused ? 'Review paused' : 'Review time'}>
+      <span aria-hidden="true" className={cx('size-2 rounded-full', paused ? 'bg-control' : 'bg-warn')} />
+      {clock(shown)}
+    </span>
+  );
+}
+
+/** Pause / Resume and Finish review. */
+export function ReviewButtons({ paused, className }: { paused: boolean; className?: string }) {
+  const [, startTransition] = useTransition();
+  return (
+    <>
+      <Btn className={className} onClick={() => startTransition(() => (paused ? resumeReviewAction() : pauseReviewAction()))}>
         {paused ? 'Resume' : 'Pause'}
       </Btn>
-      <Btn variant="primary" onClick={() => startTransition(() => finishReviewAction())}>
+      <Btn variant="primary" className={className} onClick={() => startTransition(() => finishReviewAction())}>
         Finish review
       </Btn>
+    </>
+  );
+}
+
+/** Timer, Pause / Resume and Finish in the desktop top bar. */
+export function ReviewControls({ elapsedMs, paused }: { elapsedMs: number; paused: boolean }) {
+  return (
+    <div className="flex items-center gap-2 lg:gap-3">
+      <ReviewTimer elapsedMs={elapsedMs} paused={paused} />
+      <ReviewButtons paused={paused} />
     </div>
   );
 }

@@ -46,7 +46,7 @@ export function ProjectList({
 
 
   return (
-    <section aria-label="Project list" className="flex min-h-0 flex-col border-line bg-panel lg:border-r">
+    <section aria-label="Project list" className="flex min-h-0 flex-col border-line bg-panel max-lg:hidden lg:border-r">
       <div role="group" aria-label="Filter projects" className="flex flex-wrap items-center gap-1 border-b border-line px-3 py-2.5">
         {PROJECT_FILTERS.map((f) => (
           <ContextChip key={f} pressed={filter === f} onClick={() => go(f)} className="px-1.5!">

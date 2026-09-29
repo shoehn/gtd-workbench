@@ -1,4 +1,4 @@
-import { FilterBar } from '@/components/next/FilterBar';
+import { FilterBar, PhoneFilters } from '@/components/next/FilterBar';
 import { HealthCard } from '@/components/next/HealthCard';
 import { NextBoard, type NextGroup } from '@/components/next/NextBoard';
 import { TodayCard } from '@/components/next/TodayCard';
@@ -40,11 +40,17 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
     }),
   }));
 
+  const landscape = api.todayLandscape();
+
   return (
     <Page
       title="Next Actions"
       meta={isFiltered(filter) ? `${all.length} · ${shown.length} match filter` : `${all.length}`}
       toolbar={<FilterBar contexts={contexts} filter={filter} />}
+      phone={{
+        meta: isFiltered(filter) ? `${shown.length} of ${all.length}` : `${all.length}`,
+        header: <PhoneFilters contexts={contexts} filter={filter} />,
+      }}
     >
       <NextBoard
         groups={groups}
@@ -53,7 +59,10 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
         contexts={contexts}
         projects={api.listPickerProjects()}
         highlight={typeof params.highlight === 'string' ? params.highlight : undefined}
-        today={<TodayCard day={fmtDay(today)} entries={api.todayLandscape()} />}
+        today={<TodayCard day={fmtDay(today)} entries={landscape} />}
+        todayLine={landscape
+          .map((e) => (e.kind === 'deadline' || e.deadline ? `${e.text} deadline` : [e.time, e.text].filter(Boolean).join(' ')))
+          .join(' · ')}
         health={<HealthCard health={api.health()} />}
       />
     </Page>

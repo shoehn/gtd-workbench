@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { ClarifyForm } from '@/components/clarify/ClarifyForm';
+import { PHONE_ICON_BTN } from '@/components/shell/PhoneHeader';
 import { Page } from '@/components/shell/Page';
 import { Btn } from '@/components/ui/Btn';
 import { Kbd } from '@/components/ui/Kbd';
@@ -17,7 +19,7 @@ export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'
   if (!item) {
     const gone = requested && api.getItem(requested);
     return (
-      <Page title="Clarify" back={BACK} actions={null}>
+      <Page title="Clarify" back={BACK} actions={null} phone={{ actions: null }}>
         <div className="flex h-full flex-col items-center justify-center gap-3">
           <Meta>
             {gone ? 'This item is no longer in the inbox.' : queue.length ? 'No such inbox item.' : 'Inbox is empty — nice.'}
@@ -51,6 +53,22 @@ export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'
       title="Clarify"
       meta={meta}
       back={BACK}
+      phone={{
+        meta: `${pos + 1} / ${queue.length}`,
+        actions: after.length ? (
+          <Link href={`/clarify?item=${encodeURIComponent(after[0])}`} className={`${PHONE_ICON_BTN} w-auto px-3 text-sm`}>
+            Skip
+          </Link>
+        ) : null,
+        header: (
+          <div className="flex gap-0.75" aria-hidden="true">
+            {queue.map((q, i) => (
+              <span key={q.id} className={`h-1 grow rounded-sm ${i <= pos ? 'bg-accent' : 'bg-line'}`} />
+            ))}
+          </div>
+        ),
+        tabBar: false,
+      }}
       actions={
         after.length ? (
           <Btn href={`/clarify?item=${encodeURIComponent(after[0])}`}>Skip for now <Kbd>s</Kbd></Btn>

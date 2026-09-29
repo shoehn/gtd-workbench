@@ -5,6 +5,7 @@ import { fmtMins } from '@/lib/format';
 import type { Energy, TimeBucket } from '@/lib/model';
 import { ENERGY_FILTERS, TIME_FILTERS, filterQuery, isFiltered, type NextFilter } from '@/lib/next-filter';
 import { ContextChip } from '../ui/ContextChip';
+import { PhoneChip } from '../ui/PhoneChip';
 
 const label = 'mr-1.5 font-mono text-label tracking-[0.1em] text-muted';
 const divider = <span aria-hidden="true" className="mx-1.5 h-4.5 w-px bg-line" />;
@@ -55,5 +56,40 @@ export function FilterBar({ contexts, filter }: { contexts: string[]; filter: Ne
         Clear
       </button>
     </div>
+  );
+}
+
+/** The same filters on the phone: contexts scroll sideways, time and energy under them. */
+export function PhoneFilters({ contexts, filter }: { contexts: string[]; filter: NextFilter }) {
+  const router = useRouter();
+  const go = (f: NextFilter) => router.replace(`/next${filterQuery(f)}`, { scroll: false });
+  return (
+    <>
+      <div role="group" aria-label="Contexts" className="-mx-4 -my-1.5 flex gap-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none]">
+        {contexts.map((c) => (
+          <PhoneChip
+            key={c}
+            pressed={filter.contexts.includes(c)}
+            onClick={() =>
+              go({ ...filter, contexts: filter.contexts.includes(c) ? filter.contexts.filter((x) => x !== c) : [...filter.contexts, c] })
+            }
+          >
+            {c}
+          </PhoneChip>
+        ))}
+      </div>
+      <div role="group" aria-label="Time and energy" className="flex flex-wrap gap-1.5">
+        {TIME_FILTERS.map((t) => (
+          <PhoneChip key={t} small pressed={filter.time === t} onClick={() => go({ ...filter, time: filter.time === t ? undefined : t })}>
+            ≤{fmtMins(t)}
+          </PhoneChip>
+        ))}
+        {ENERGY_FILTERS.map((e) => (
+          <PhoneChip key={e} small pressed={filter.energy === e} onClick={() => go({ ...filter, energy: filter.energy === e ? undefined : e })}>
+            {e} energy
+          </PhoneChip>
+        ))}
+      </div>
+    </>
   );
 }

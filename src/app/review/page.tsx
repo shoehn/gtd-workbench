@@ -1,5 +1,5 @@
 import { ReviewBoard, type ReviewPhase } from '@/components/review/ReviewBoard';
-import { ReviewControls } from '@/components/review/ReviewControls';
+import { ReviewButtons, ReviewControls, ReviewTimer } from '@/components/review/ReviewControls';
 import { StartCard } from '@/components/review/StartCard';
 import { Page } from '@/components/shell/Page';
 import * as api from '@/lib/api';
@@ -76,6 +76,33 @@ export default async function WeeklyReviewPage() {
       title="Weekly Review"
       meta={`${lastLine} · ${api.ticked(run)} of ${steps.length} steps done`}
       actions={<ReviewControls elapsedMs={api.reviewElapsedMs(run)} paused={!!run.pausedAt} />}
+      phone={{
+        meta: null,
+        actions: <ReviewTimer elapsedMs={api.reviewElapsedMs(run)} paused={!!run.pausedAt} />,
+        header: (
+          <div className="flex items-center gap-2.5">
+            <div
+              role="progressbar"
+              aria-label="Steps done"
+              aria-valuemin={0}
+              aria-valuemax={steps.length}
+              aria-valuenow={api.ticked(run)}
+              className="h-1.5 grow overflow-hidden rounded-[3px] bg-muted-bg"
+            >
+              <div className="h-full rounded-[3px] bg-accent" style={{ width: `${(api.ticked(run) / steps.length) * 100}%` }} />
+            </div>
+            <span className="font-mono text-meta text-muted">
+              {api.ticked(run)} / {steps.length}
+              {last?.finishedAt && ` · last ${when(last.finishedAt, today, false)}`}
+            </span>
+          </div>
+        ),
+        footer: (
+          <div className="grid grow grid-cols-2 gap-2">
+            <ReviewButtons paused={!!run.pausedAt} />
+          </div>
+        ),
+      }}
     >
       <ReviewBoard
         phases={phases}

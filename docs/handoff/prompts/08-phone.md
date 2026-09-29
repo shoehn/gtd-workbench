@@ -43,6 +43,7 @@ on the desktop.
 
 - Every route at 390×844 matches its M-board in structure; no horizontal scroll; the
   tab bar's active tab is right on every route (Clarify highlights Inbox, Calendar
-  highlights Next).
+  highlights Next). Clarify itself shows no tab bar, as `M-Clarify` draws it (SPEC §3.8);
+  its empty state does, with Inbox lit.
 - Lighthouse mobile accessibility ≥ 95 on /inbox and /next.
 - Desktop layouts are pixel-unchanged (compare before/after screenshots at 1280).

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Page } from '@/components/shell/Page';
 import { WaitingBoard, type WaitingRow } from '@/components/waiting/WaitingBoard';
 import * as api from '@/lib/api';
@@ -42,7 +43,40 @@ export default async function WaitingPage({ searchParams }: PageProps<'/waiting'
   }));
 
   return (
-    <Page title="Waiting For & Someday / Maybe" meta="the two lists that keep the others honest">
+    <Page
+      title="Waiting For & Someday / Maybe"
+      meta="the two lists that keep the others honest"
+      phone={{
+        title: params.tab === 'someday' ? 'Someday / Maybe' : 'Waiting For',
+        meta:
+          params.tab === 'someday' ? (
+            `${someday.reduce((n, g) => n + g.items.length, 0)}`
+          ) : (
+            <>
+              {all.length}
+              {overdue.length > 0 && <span className="text-warn"> · {overdue.length} overdue</span>}
+            </>
+          ),
+        header: (
+          <nav aria-label="Waiting For or Someday / Maybe" className="-mb-2.5 grid grid-cols-2">
+            {[
+              { href: '/waiting', label: 'Waiting For', on: params.tab !== 'someday' },
+              { href: '/waiting?tab=someday', label: 'Someday / Maybe', on: params.tab === 'someday', count: someday.reduce((n, g) => n + g.items.length, 0) },
+            ].map((t) => (
+              <Link
+                key={t.href}
+                href={t.href}
+                aria-current={t.on ? 'page' : undefined}
+                className={`flex h-11 items-center justify-center gap-1.5 border-b-2 text-sm no-underline ${t.on ? 'border-ink font-semibold text-ink' : 'border-transparent text-muted'}`}
+              >
+                {t.label}
+                {t.count !== undefined && <span className="font-mono text-meta">{t.count}</span>}
+              </Link>
+            ))}
+          </nav>
+        ),
+      }}
+    >
       <WaitingBoard
         waiting={waiting}
         waitingTotal={all.length}

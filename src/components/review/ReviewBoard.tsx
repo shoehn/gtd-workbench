@@ -119,8 +119,52 @@ export function ReviewBoard({ phases, current, notes, paused, stats }: ReviewBoa
 
   return (
     <div className="grid min-h-full gap-4 lg:grid-cols-3">
+      <div className="flex min-h-full flex-col bg-panel lg:hidden">
+        {phases.map((ph) => (
+          <section key={ph.id} aria-label={ph.name}>
+            <h2 className="m-0 flex items-center gap-2 px-4 pt-3 pb-1 font-mono text-meta font-normal tracking-[0.1em] text-muted">
+              {ph.no} · {ph.name.toUpperCase()}
+              <span className={ph.state === 'ok' ? 'text-ok' : ph.state === 'warn' ? 'text-warn' : undefined}>
+                {ph.done}/{ph.total}
+              </span>
+            </h2>
+            {ph.steps.map((s) => {
+              const ticked = done.has(s.id);
+              const here = s.id === cursor && !ticked;
+              return (
+                <label
+                  key={s.id}
+                  className={cx(
+                    'grid min-h-11 grid-cols-[20px_minmax(0,1fr)] items-start gap-3 border-b border-line-soft px-4 py-2.5',
+                    here && 'bg-accent-tint',
+                    ticked && 'text-muted',
+                  )}
+                >
+                  <input type="checkbox" checked={ticked} onChange={() => toggle(s.id)} className="m-0 size-5" />
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className={cx(ticked ? 'line-through' : here && 'font-medium')}>{s.text}</span>
+                    {!ticked &&
+                      s.live &&
+                      (s.live.href ? (
+                        <Link
+                          href={s.live.href}
+                          onClick={() => startTransition(() => openStepAction(s.id))}
+                          className={cx('self-start text-sm no-underline', s.live.warn ? 'text-warn' : 'text-accent')}
+                        >
+                          {s.live.text}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-muted">{s.live.text}</span>
+                      ))}
+                  </span>
+                </label>
+              );
+            })}
+          </section>
+        ))}
+      </div>
       {phases.map((ph, n) => (
-        <div key={ph.id} className="flex min-w-0 flex-col gap-3">
+        <div key={ph.id} className="flex min-w-0 flex-col gap-3 max-lg:hidden">
           <Card aria-label={ph.name} className="flex flex-col">
             <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
               <span className="rounded-chip bg-ink px-1.5 font-mono text-meta text-panel">{ph.no}</span>

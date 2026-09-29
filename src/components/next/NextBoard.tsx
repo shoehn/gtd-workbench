@@ -10,9 +10,11 @@ import { isTyping } from '../inbox/keys';
 import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
 import { Kbd } from '../ui/Kbd';
+import { PhoneToast } from '../ui/PhoneToast';
 import { PrioChip } from '../ui/PrioChip';
 import { ProjectPicker, type PickerProject } from '../ui/ProjectPicker';
 import { Row } from '../ui/Row';
+import { SwipeRow } from '../ui/SwipeRow';
 
 /** One next action, already formatted on the server. */
 export interface NextRow {
@@ -53,6 +55,8 @@ interface NextBoardProps {
   /** Server-rendered cards for the right column. */
   today: ReactNode;
   health: ReactNode;
+  /** Phone: the one-line Today strip, `10:00 Dentist · 14:00 Marc · abstract deadline`. */
+  todayLine: string;
 }
 
 type Editing = { id: string; field: 'text' | 'context' | 'project' };
@@ -63,7 +67,7 @@ const UNDO_MS = 5000;
 const STAR = 'M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z';
 const mono = 'font-mono text-meta text-muted';
 
-export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, highlight, today, health }: NextBoardProps) {
+export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, highlight, today, health, todayLine }: NextBoardProps) {
   const [, startTransition] = useTransition();
   const [cursorId, setCursorId] = useState<string | null>(highlight ?? null);
   // Done rows fade for 400 ms, then hide until the server's list no longer has them.
@@ -214,7 +218,53 @@ export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, h
 
   return (
     <div className="grid min-h-full gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-      <section aria-label="Actions grouped by context" className="flex min-w-0 flex-col gap-3">
+      <section aria-label="Actions by context" className="flex min-w-0 flex-col bg-panel lg:hidden">
+        <Link href="/calendar" className="flex min-h-11 items-baseline gap-2 border-b border-line bg-ground px-4 pt-2.5 pb-1.5 text-ink no-underline">
+          <span className="text-sm font-semibold">Today</span>
+          <span className="min-w-0 truncate font-mono text-meta text-muted">{todayLine || 'nothing fixed today'}</span>
+          <span aria-hidden="true" className="ml-auto text-muted">›</span>
+        </Link>
+        {visible.map((g) => (
+          <div key={g.context}>
+            <h2 className="m-0 flex items-center gap-2 px-4 pt-2.5 pb-1 font-mono text-xs font-medium">
+              {g.context || 'no context'} <span className="font-normal text-muted">{g.count}</span>
+            </h2>
+            <ul className="m-0 list-none p-0">
+              {g.rows.map((r) => (
+                <li key={r.id} className="border-b border-line-soft">
+                  <SwipeRow onRight={() => toggleFocus(r.id)} rightLabel={starred.has(r.id) ? '☆ unstar' : '★ focus today'}>
+                    <label
+                      className={cx(
+                        'grid min-h-11 grid-cols-[20px_32px_minmax(0,1fr)] items-start gap-2.5 bg-panel px-4 py-2.5 transition-opacity duration-400',
+                        fading.has(r.id) && 'opacity-0',
+                      )}
+                    >
+                      <input type="checkbox" checked={fading.has(r.id)} onChange={() => complete(r.id)} className="m-0 size-5" />
+                      <span className="pt-px">{r.priority ? <PrioChip priority={r.priority} no={r.priorityNo} /> : null}</span>
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span>{r.text}</span>
+                        <span className="font-mono text-meta text-muted">
+                          {starred.has(r.id) && <span className="text-accent">★ today · </span>}
+                          {[r.project?.title ?? 'single action', r.time, r.energy].filter(Boolean).join(' · ')}
+                          {r.due && <span className={r.dueSoon ? 'text-warn' : undefined}> · {r.due}</span>}
+                        </span>
+                      </span>
+                    </label>
+                  </SwipeRow>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        {visible.length === 0 && (
+          <p className={cx(mono, 'm-0 px-4 py-8 text-center')}>
+            {hiddenByFilter ? 'Nothing matches this filter.' : 'No next actions — clarify the inbox or promote a later step.'}
+          </p>
+        )}
+        <p className={cx(mono, 'm-0 px-4 py-2.5')}>tap to tick · swipe → focus today</p>
+        {undo && <PhoneToast text={`Done: ${undo.text}`} onUndo={undoComplete} />}
+      </section>
+      <section aria-label="Actions grouped by context" className="flex min-w-0 flex-col gap-3 max-lg:hidden">
         {visible.map((g, gi) => (
           <Card key={g.context} aria-label={g.context || 'No context'}>
             <div className="flex items-center gap-2.5 border-b border-line px-3 py-2">
@@ -287,7 +337,7 @@ export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, h
         </div>
       </section>
 
-      <aside aria-label="Today" className="flex min-w-0 flex-col gap-3">
+      <aside aria-label="Today" className="flex min-w-0 flex-col gap-3 max-lg:hidden">
         {today}
         <Card aria-labelledby="focus-head" className="flex flex-col">
           <div className="flex items-baseline gap-2 border-b border-line px-3 py-2.5">

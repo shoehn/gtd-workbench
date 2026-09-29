@@ -17,7 +17,7 @@ interface StartCardProps {
 export function StartCard({ summary, abandoned, phases }: StartCardProps) {
   const [pending, startTransition] = useTransition();
   return (
-    <Card aria-labelledby="start-head" className="mx-auto flex max-w-xl flex-col gap-3 px-4 py-4">
+    <Card aria-labelledby="start-head" className="mx-auto flex max-w-xl flex-col gap-3 px-4 py-4 max-lg:m-4">
       <h2 id="start-head" className="m-0 text-body font-semibold">Weekly Review</h2>
       <p className="m-0 font-mono text-meta text-muted">{summary}</p>
       {abandoned && <p className="m-0 font-mono text-meta text-warn">{abandoned}</p>}

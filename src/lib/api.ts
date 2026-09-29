@@ -1042,6 +1042,11 @@ function landscape(from: string, to: string): CalendarEntry[] {
   return out;
 }
 
+/** The hard landscape between two days (ISO dates, inclusive): the phone agenda. */
+export function landscapeBetween(from: string, to: string): CalendarEntry[] {
+  return landscape(from, to);
+}
+
 /** The hard landscape of an ISO week (`2026-W39`), Monday to Sunday. */
 export function weekLandscape(week: string): CalendarEntry[] {
   const days = weekDays(week);

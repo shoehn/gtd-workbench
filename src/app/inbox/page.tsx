@@ -1,11 +1,14 @@
 import { InboxList, type InboxRow } from '@/components/inbox/InboxList';
+import { PhoneInbox, PhoneRapidLog } from '@/components/inbox/PhoneInbox';
 import { RapidLog } from '@/components/inbox/RapidLog';
+import Link from 'next/link';
 import { Page } from '@/components/shell/Page';
 import { Btn } from '@/components/ui/Btn';
 import * as api from '@/lib/api';
 import { fmtAge, fmtDay, fmtWeekdayTime } from '@/lib/format';
 
-export default async function InboxPage() {
+export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
+  const params = await searchParams;
   const items = api.listInbox();
   const rows: InboxRow[] = items.map((i) => ({
     id: i.id,
@@ -22,6 +25,8 @@ export default async function InboxPage() {
   const oldest = items.at(-1);
   const meta = oldest ? `${items.length} open · oldest ${fmtAge(api.ageHours(oldest))}` : '0 open';
   const hotkey = <span className="font-mono text-meta opacity-80">c</span>;
+  const clarifyCls =
+    'relative inline-flex h-9 items-center rounded bg-accent px-3 text-sm font-medium text-panel no-underline after:absolute after:-inset-1';
 
   return (
     <Page
@@ -34,8 +39,18 @@ export default async function InboxPage() {
           <Btn variant="primary" disabled>Clarify inbox{hotkey}</Btn>
         )
       }
+      phone={{
+        meta: oldest ? `${items.length} · oldest ${fmtAge(api.ageHours(oldest))}` : '0',
+        actions: items.length ? (
+          <Link href="/clarify" className={clarifyCls}>
+            Clarify
+          </Link>
+        ) : null,
+        header: <PhoneRapidLog focus={params.capture === '1'} />,
+      }}
     >
-      <div className="flex h-full flex-col gap-4">
+      <PhoneInbox rows={rows} />
+      <div className="flex h-full flex-col gap-4 max-lg:hidden">
         <RapidLog />
         <InboxList rows={rows} />
       </div>

@@ -1,11 +1,14 @@
+import Link from 'next/link';
 import { ProjectDetail, type DetailData } from '@/components/projects/ProjectDetail';
 import { ProjectList, type ProjectRow } from '@/components/projects/ProjectList';
 import { Page } from '@/components/shell/Page';
+import { PhoneChipLinks } from '@/components/ui/PhoneChip';
+import { cx } from '@/components/ui/cx';
 import * as api from '@/lib/api';
 import { daysBetween, fmtDate, fmtDay, fmtDaysAgo, fmtMins, fmtNear } from '@/lib/format';
 import type { Project } from '@/lib/model';
 import { byPriority } from '@/lib/next-filter';
-import { parseProjectFilter, projectsHref, type ProjectFilter } from '@/lib/project-filter';
+import { PROJECT_FILTERS, parseProjectFilter, projectsHref, type ProjectFilter } from '@/lib/project-filter';
 
 const REVIEW_WARN_DAYS = 14;
 
@@ -61,6 +64,15 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
       reviewWarn: reviewedDays === undefined || reviewedDays > REVIEW_WARN_DAYS,
     };
   });
+  // Phone rows add what the desktop columns show: waiting-for count and deadline.
+  const phoneMeta = (id: string) => {
+    const p = api.getProject(id)!;
+    const n = api.nextActionCount(id);
+    const waiting = api.projectItems(id).filter((i) => i.status === 'waiting').length;
+    return [`${n} action${n === 1 ? '' : 's'}`, waiting && `${waiting} waiting`, p.deadline && `due ${fmtDate(p.deadline)}`]
+      .filter(Boolean)
+      .join(' · ');
+  };
 
   const active = api.listProjects('active');
   const stalledCount = active.filter(api.projectStalled).length;
@@ -76,8 +88,52 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
     </>
   );
 
+  const dot = { ok: 'bg-ok', stalled: 'bg-warn', someday: 'bg-control', completed: 'bg-control' } as const;
+  // Phone: the list without `?p=`, the detail with it (SPEC §2).
+  const phoneDetail = !!pParam && !!selected;
+
   return (
-    <Page title="Projects" meta={meta} flush>
+    <Page
+      title="Projects"
+      meta={meta}
+      flush
+      phone={{
+        meta: phoneDetail ? null : (
+          <>
+            {active.length}
+            {stalledCount > 0 && <span className="text-warn"> · {stalledCount} stalled</span>}
+          </>
+        ),
+        back: phoneDetail ? { href: projectsHref(filter), label: 'projects' } : undefined,
+        header: phoneDetail ? undefined : (
+          <PhoneChipLinks
+            label="Filter projects"
+            chips={[...PROJECT_FILTERS, 'completed' as const].map((f) => ({ label: f, href: projectsHref(f), pressed: filter === f }))}
+          />
+        ),
+      }}
+    >
+      {!phoneDetail && (
+        <ul className="m-0 list-none bg-panel p-0 lg:hidden">
+          {rows.map((r) => (
+            <li key={r.id} className="border-b border-line-soft">
+              <Link
+                href={r.href}
+                className="grid grid-cols-[10px_minmax(0,1fr)_24px] items-start gap-2.5 px-4 py-3 text-ink no-underline"
+              >
+                <span aria-hidden="true" className={cx('mt-1.75 size-2 rounded-full', dot[r.state])} />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="font-medium">{r.title}</span>
+                  {r.line && <span className={cx('text-sm', r.state === 'stalled' ? 'text-warn' : 'text-muted')}>{r.line}</span>}
+                  <span className="font-mono text-meta text-muted">{phoneMeta(r.id)}</span>
+                </span>
+                <span aria-hidden="true" className="mt-0.5 text-muted">›</span>
+              </Link>
+            </li>
+          ))}
+          {rows.length === 0 && <li className="px-4 py-8 text-center font-mono text-meta text-muted">No projects here.</li>}
+        </ul>
+      )}
       <div className="flex flex-col lg:grid lg:h-full lg:grid-cols-[420px_minmax(0,1fr)]">
         <ProjectList
           rows={rows}
@@ -86,9 +142,11 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
           completed={api.listProjects('completed').length}
         />
         {selected ? (
-          <ProjectDetail key={selected.id} project={detail(selected, today)} contexts={api.listContexts()} />
+          <div className={cx('lg:contents', !phoneDetail && 'max-lg:hidden')}>
+            <ProjectDetail key={selected.id} project={detail(selected, today)} contexts={api.listContexts()} />
+          </div>
         ) : (
-          <p className="m-0 p-8 text-center font-mono text-meta text-muted">No project selected.</p>
+          <p className="m-0 p-8 text-center font-mono text-meta text-muted max-lg:hidden">No project selected.</p>
         )}
       </div>
     </Page>

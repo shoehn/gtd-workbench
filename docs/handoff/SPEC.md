@@ -26,7 +26,7 @@ Reference is a sidebar entry but not a screen in v1 (link goes to Projects). Des
 224 px sidebar (Collect / Do / Horizons groups + Weekly Review at the bottom), 48 px top bar
 with a "Capture to inbox" field on every screen except Inbox and Clarify. Phone shell:
 five-tab bar (Inbox, Next, Projects, Waiting, Review); Calendar and Clarify are reached
-from Next and Inbox respectively.
+from Next and Inbox respectively. Phone rules: §3.8.
 
 ## 3. Workflow rules
 
@@ -196,6 +196,29 @@ review, bins) repeat here. Everything else stays on the lists.
   the last 7 days (dropped ones not counted), projects stalled now.
 - Parked ideas (not v1): pinned step strip on other screens, auto-tick when a linked list
   reaches its target state, inline rapid log on the mind-sweep step.
+
+### 3.8 Phone (below 1024 px)
+Same routes and api, composed for capture, ticking and reading; planning stays on desktop.
+- Header: 58 px left empty for the status bar (never drawn), title 20 px, meta, 36 px
+  actions. Every screen but Inbox and Clarify has "›", which opens `/inbox?capture=1` with
+  the rapid log focused. Tab bar: Clarify and Calendar light up Inbox and Next.
+- Clarify is a focused flow: no tab bar (as drawn in `M-Clarify`), its own bottom bar
+  (trash + "File it and next"). Steps 1–2 fold to one line with a check and "Edit" once
+  answered; step 4 shows context and priority, time / energy / deadline fold into "… — tap
+  to change". The empty state keeps the tab bar.
+- Gestures (pointer events, 80 px): Inbox → clarify, ← trash (5 s undo); Next Actions →
+  toggles the focus star (the row tick is the tap); Waiting For → received (5 s undo),
+  ← follow up. Every row also has a tap path: Inbox rows open Clarify, overdue waiting-for
+  rows have "Follow up".
+- Next Actions: context chips scroll sideways, time / energy chips under them; a "Today"
+  strip links to Calendar. Projects: the list without `?p=`, the detail (single column)
+  with it. Waiting: two tabs (`?tab=someday`). Calendar: an agenda from the chosen day
+  (strip of the week's days, default today) over 14 days, days without entries left out.
+  Weekly Review: one step list with phase labels, progress bar, Pause / Finish above the
+  tab bar; notes and "this week" stay on desktop.
+- Touch targets ≥ 44 px: controls drawn smaller in the mockups (chips, small buttons) get a
+  44 px hit area around them. No hover-only control: what appears on hover on desktop is
+  always visible on phone (the bucket select).
 
 ## 4. The "one control per decision" rule
 

@@ -14,15 +14,19 @@ const TABS: { href: string; label: string; icon: ReactNode }[] = [
   { href: '/review', label: 'Review', icon: <><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></> },
 ];
 
+/** Screens without a tab of their own light up the tab they are reached from. */
+const PARENT: Record<string, string> = { '/clarify': '/inbox', '/calendar': '/next' };
+
 export function PhoneTabBar() {
   const pathname = usePathname();
+  const tab = PARENT[pathname] ?? pathname;
   return (
     <nav
       aria-label="Lists"
       className="fixed inset-x-0 bottom-0 grid h-(--wb-tabbar-h) grid-cols-5 gap-1 border-t border-line bg-rail px-2 pt-2 pb-6"
     >
       {TABS.map(({ href, label, icon }) => {
-        const current = pathname === href;
+        const current = tab === href;
         return (
           <Link
             key={href}

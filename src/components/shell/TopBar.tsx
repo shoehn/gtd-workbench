@@ -15,7 +15,7 @@ interface TopBarProps {
 
 export function TopBar({ title, meta, tools, right = <CaptureField />, back }: TopBarProps) {
   return (
-    <header className="flex h-(--wb-topbar-h) shrink-0 items-center gap-4 border-b border-line bg-panel px-4 lg:px-5">
+    <header className="flex h-(--wb-topbar-h) shrink-0 items-center gap-4 border-b border-line bg-panel px-4 max-lg:hidden lg:px-5">
       {back && (
         <Link href={back.href} className="shrink-0 font-mono text-meta text-muted no-underline hover:text-ink">
           ← {back.label}
