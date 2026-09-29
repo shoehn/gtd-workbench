@@ -8,6 +8,8 @@ export interface State {
   today?: string;
   contexts: string[];
   buckets: string[];
+  /** Areas counted as "work" or "home" by the Projects filter chips; others count as neither. */
+  areaKinds: Record<string, 'work' | 'home'>;
   projects: Project[];
   items: Item[];
   tickler: TicklerEntry[];

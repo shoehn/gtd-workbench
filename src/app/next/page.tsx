@@ -11,7 +11,8 @@ const DUE_SOON_DAYS = 7;
 
 export default async function NextActionsPage({ searchParams }: PageProps<'/next'>) {
   const contexts = api.listContexts();
-  const filter = parseFilter(await searchParams, contexts);
+  const params = await searchParams;
+  const filter = parseFilter(params, contexts);
   const today = api.today();
   const projects = new Map(api.listProjects('active').concat(api.listProjects('someday')).map((p) => [p.id, p]));
   const all = api.listNext();
@@ -51,6 +52,7 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
         focus={api.focusToday().map((i) => ({ id: i.id, text: i.text, done: i.status === 'done' }))}
         contexts={contexts}
         projects={api.listPickerProjects()}
+        highlight={typeof params.highlight === 'string' ? params.highlight : undefined}
         today={<TodayCard day={fmtDay(today)} entries={api.todayLandscape()} />}
         health={<HealthCard health={api.health()} />}
       />

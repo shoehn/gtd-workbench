@@ -91,7 +91,9 @@ from Next and Inbox respectively.
 ### 3.4 Projects
 - List: state dot (green = has next action, orange = stalled), title, first next action,
   count of next actions, last reviewed. Filters active / work / home / stalled; completed
-  count at the right.
+  count at the right. The filter lives in the URL (`/projects?filter=stalled&p=<id>`).
+  work / home come from the store's `areaKinds` map (area → kind); an unmapped area counts
+  as neither.
 - Detail: outcome ("successful when"), deadline; **Next actions** (read-only rows linking to
   Next Actions, with `↓ later`); **Later steps** (`↑ next`, `+ step`, done steps struck
   through); Waiting for / Reference / Horizon in a row below; Support notes.
@@ -100,9 +102,18 @@ from Next and Inbox respectively.
 - Demoting a next action to later is allowed at any time; it drops context/priority/time
   (re-asked on promotion). Demoting the last next action marks the project stalled at once.
 - Stalled = active project with zero next actions (waiting-for alone does not count).
+- Complete is refused while the project has open next actions or later steps ("n open —
+  finish, demote or drop them first"); nothing is closed on the user's behalf.
+- → Someday demotes the project's next actions to later steps, so nothing of a parked
+  project stays on Next Actions. → Active brings it back, stalled until a step is promoted.
+- Detail header: area · created ddd dd.mm · from inbox (parts left out when unknown).
+- Waiting-for card links to `/waiting?filter=overdue` when one of the project's items is
+  overdue ("Overdue waiting-for →"), else to `/waiting` ("All waiting-for →").
+- Next-action rows link to `/next?highlight=<id>`, which puts the Next Actions cursor there.
 
 ### 3.5 Waiting For and Someday/Maybe
 - Waiting For row: what, from whom, project, since, follow-up date. Overdue rows tinted.
+  `/waiting?filter=overdue` shows only overdue rows (linked from Health and project detail).
   `f` follow up creates a @calls/@computer action; `x` received (closes, optionally
   creates the next action).
 - Someday/Maybe: grouped by bucket (user-defined). Activate → goes through Clarify;
@@ -191,8 +202,14 @@ interface Project {
   status: 'active' | 'someday' | 'completed';
   notes: string;
   lastReviewedAt?: string;
+  createdAt?: string;         // ISO
+  createdFrom?: 'inbox' | 'projects';  // Clarify step 3, or "+ Project" (later)
   // derived: nextActions = items(status='next', projectId), stalled = active && nextActions.length===0
 }
+
+// Store-level: which areas count as "work" or "home" for the Projects filter chips.
+// An area missing here shows under neither chip.
+type AreaKinds = Record<string, 'work' | 'home'>;
 
 interface ReviewTemplate { phases: { id: string; name: string; steps: { id: string; text: string; link?: string }[] }[] }
 interface ReviewRun {

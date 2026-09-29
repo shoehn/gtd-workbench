@@ -47,6 +47,8 @@ interface NextBoardProps {
   focus: FocusEntry[];
   contexts: string[];
   projects: PickerProject[];
+  /** Row to put the cursor on at first, from `?highlight=<id>` (links from Projects). */
+  highlight?: string;
   /** Server-rendered cards for the right column. */
   today: ReactNode;
   health: ReactNode;
@@ -60,9 +62,9 @@ const UNDO_MS = 5000;
 const STAR = 'M12 3l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4 6.3 20.5l1.2-6.4L2.8 9.7l6.4-.8z';
 const mono = 'font-mono text-meta text-muted';
 
-export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, today, health }: NextBoardProps) {
+export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, highlight, today, health }: NextBoardProps) {
   const [, startTransition] = useTransition();
-  const [cursorId, setCursorId] = useState<string | null>(null);
+  const [cursorId, setCursorId] = useState<string | null>(highlight ?? null);
   // Done rows fade for 400 ms, then hide until the server's list no longer has them.
   const [fading, setFading] = useState<ReadonlySet<string>>(new Set());
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());

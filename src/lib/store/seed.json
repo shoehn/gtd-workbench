@@ -2,8 +2,9 @@
   "today": "2026-09-26",
   "contexts": ["@computer", "@office", "@home", "@calls", "@errands", "@workshop"],
   "buckets": ["Workshop & electronics", "Teaching & research", "Home & travel"],
+  "areaKinds": { "Teaching": "work", "Research": "work", "Home": "home", "Home & workshop": "home", "Workshop": "home" },
   "projects": [
-    { "id": "p-bench", "title": "Workshop bench decided and ordered", "successfulWhen": "A bench that fits the 180 cm alcove is ordered, delivery date known, old bench listed for sale.", "area": "Home & workshop", "goal": "Workshop usable for pedal builds by winter", "deadline": "2026-10-03", "status": "active", "notes": "Alcove: 180 × 62 cm, socket on the left wall. Holzwerk offer includes delivery to the door only — stairs are our problem. Quote A is cheaper but 190 cm wide.", "lastReviewedAt": "2026-09-23" },
+    { "id": "p-bench", "title": "Workshop bench decided and ordered", "successfulWhen": "A bench that fits the 180 cm alcove is ordered, delivery date known, old bench listed for sale.", "area": "Home & workshop", "goal": "Workshop usable for pedal builds by winter", "deadline": "2026-10-03", "status": "active", "createdAt": "2026-09-26T08:20:00+02:00", "createdFrom": "inbox", "notes": "Alcove: 180 × 62 cm, socket on the left wall. Holzwerk offer includes delivery to the door only — stairs are our problem. Quote A is cheaper but 190 cm wide.", "lastReviewedAt": "2026-09-23" },
     { "id": "p-module", "title": "Module HS26 ready to teach", "area": "Teaching", "status": "active", "notes": "", "lastReviewedAt": "2026-09-25" },
     { "id": "p-grant", "title": "Grant report submitted", "area": "Research", "status": "active", "notes": "", "lastReviewedAt": "2026-09-17" },
     { "id": "p-conf", "title": "Conference trip organised", "area": "Research", "status": "active", "notes": "", "lastReviewedAt": "2026-09-24" },

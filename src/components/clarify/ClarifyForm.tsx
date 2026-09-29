@@ -15,6 +15,7 @@ import { Kbd } from '../ui/Kbd';
 import { PrioChip } from '../ui/PrioChip';
 import { SectionHead } from '../ui/SectionHead';
 import { Tag } from '../ui/Tag';
+import { ENERGIES, PRIORITIES, TIMES } from '../ui/NextFields';
 import { ProjectPicker, type Picked, type PickerProject } from '../ui/ProjectPicker';
 
 export interface ClarifyItem {
@@ -33,13 +34,6 @@ type Answer = 'yes' | 'trash' | 'someday' | 'reference';
 type RouteTo = Route['to'];
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const TIMES: TimeBucket[] = [15, 30, 60, 120];
-const ENERGIES: Energy[] = ['focus', 'normal', 'low'];
-const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: 'A', label: 'A — must this week' },
-  { value: 'B', label: 'B — should' },
-  { value: 'C', label: 'C — could' },
-];
 const NOT_ACTIONABLE: { value: Exclude<Answer, 'yes'>; label: string; key: string; file: string }[] = [
   { value: 'trash', label: 'No → Trash', key: 't', file: 'Trash' },
   { value: 'someday', label: 'No → Someday / Maybe', key: 'm', file: 'Move to Someday' },

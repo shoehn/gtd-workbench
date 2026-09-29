@@ -52,3 +52,43 @@ export async function editNextAction(id: string, edit: api.NextEdit): Promise<vo
   api.editNext(id, edit);
   revalidatePath('/', 'layout');
 }
+
+export async function demoteAction(id: string): Promise<void> {
+  api.demote(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function promoteAction(id: string, fields: api.NextFields): Promise<void> {
+  api.promote(id, fields);
+  revalidatePath('/', 'layout');
+}
+
+export async function addActionAction(projectId: string, text: string, fields: api.NextFields): Promise<void> {
+  api.addAction(projectId, text, fields);
+  revalidatePath('/', 'layout');
+}
+
+export async function addStepAction(projectId: string, text: string): Promise<void> {
+  api.addStep(projectId, text);
+  revalidatePath('/', 'layout');
+}
+
+export async function completeProjectAction(id: string): Promise<void> {
+  api.completeProject(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function moveProjectToSomedayAction(id: string): Promise<void> {
+  api.moveProjectToSomeday(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function activateProjectAction(id: string): Promise<void> {
+  api.activateProject(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function updateProjectAction(id: string, patch: api.ProjectPatch): Promise<void> {
+  api.updateProject(id, patch);
+  revalidatePath('/', 'layout');
+}

@@ -251,9 +251,9 @@ function checkNewTitle(state: Readonly<{ projects: Project[] }>, title: string, 
 }
 
 /** Create an active project in `s` and return its id. */
-function addProject(s: { projects: Project[] }, title: string): string {
+function addProject(s: { projects: Project[] }, title: string, from?: Project['createdFrom']): string {
   const id = `p-${crypto.randomUUID()}`;
-  s.projects.push({ id, title: title.trim(), status: 'active', notes: '' });
+  s.projects.push({ id, title: title.trim(), status: 'active', notes: '', createdAt: now().toISOString(), ...(from && { createdFrom: from }) });
   return id;
 }
 
@@ -302,7 +302,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   store.update((s) => {
     let projectId: string | undefined;
     if (choice && 'newTitle' in choice) {
-      projectId = addProject(s, choice.newTitle);
+      projectId = addProject(s, choice.newTitle, 'inbox');
       result.projectCreated = true;
     } else if (choice) {
       projectId = choice.id;
@@ -611,4 +611,148 @@ export function health(): Health {
     waitingOverdue: items.filter((i) => i.status === 'waiting' && i.waiting?.followUp && i.waiting.followUp < day).length,
     oldActions: listNext().filter((i) => ageDays(i) > 30).length,
   };
+}
+
+// ── Projects ───────────────────────────────────────────────────────────────
+
+export function getProject(id: string): Project | undefined {
+  return store.getState().projects.find((p) => p.id === id);
+}
+
+/** "work" / "home" from the store's area map; `undefined` when the area is not mapped. */
+export function projectKind(project: Project): 'work' | 'home' | undefined {
+  return project.area ? store.getState().areaKinds[project.area] : undefined;
+}
+
+/** All items of a project, any status. */
+export function projectItems(projectId: string): Item[] {
+  return store.getState().items.filter((i) => i.projectId === projectId);
+}
+
+/** Next actions and later steps still open in a project: what blocks completing it. */
+export function openInProject(projectId: string): number {
+  return projectItems(projectId).filter((i) => i.status === 'next' || i.status === 'later').length;
+}
+
+/** Step-4 fields a next action carries (SPEC §3.2, Defer → Next Actions). */
+export interface NextFields {
+  context: string;
+  priority: Priority;
+  time: TimeBucket;
+  energy: Energy;
+}
+
+function checkFields(fields: NextFields, scope: string) {
+  check(store.getState().contexts.includes(fields.context), `unknown context ${fields.context}`, scope);
+  check(['A', 'B', 'C'].includes(fields.priority), `unknown priority ${fields.priority}`, scope);
+  check([15, 30, 60, 120].includes(fields.time), `unknown time ${fields.time}`, scope);
+  check(['focus', 'normal', 'low'].includes(fields.energy), `unknown energy ${fields.energy}`, scope);
+}
+
+function applyFields(items: Item[], item: Item, fields: NextFields) {
+  item.status = 'next';
+  item.context = fields.context;
+  item.priority = fields.priority;
+  item.time = fields.time;
+  item.energy = fields.energy;
+  const no = nextPriorityNo(items, fields.priority);
+  if (no === undefined) delete item.priorityNo;
+  else item.priorityNo = no;
+}
+
+/** Next action → later step. Drops context/priority/time/energy/focus; may stall the project. */
+export function demote(id: string): void {
+  check(getItem(id)?.status === 'next', `item ${id} is not a next action`, 'demote');
+  store.update((s) => {
+    toLater(s.items.find((i) => i.id === id)!);
+    renumberIn(s.items);
+  });
+}
+
+/** Later step → next action, with the step-4 fields asked again. Numbered last in its priority. */
+export function promote(id: string, fields: NextFields): void {
+  check(getItem(id)?.status === 'later', `item ${id} is not a later step`, 'promote');
+  checkFields(fields, 'promote');
+  store.update((s) => {
+    applyFields(s.items, s.items.find((i) => i.id === id)!, fields);
+    renumberIn(s.items);
+  });
+}
+
+function newProjectItem(projectId: string, text: string, scope: string): Item {
+  check(getProject(projectId), `unknown project ${projectId}`, scope);
+  check(text.trim(), 'text is empty', scope);
+  return { id: crypto.randomUUID(), text: text.trim(), captured: text.trim(), source: 'typed', capturedAt: now().toISOString(), status: 'later', projectId, tags: [] };
+}
+
+/** "+ action" on a project: a new next action of it. */
+export function addAction(projectId: string, text: string, fields: NextFields): Item {
+  const item = newProjectItem(projectId, text, 'addAction');
+  checkFields(fields, 'addAction');
+  store.update((s) => {
+    s.items.push(item);
+    applyFields(s.items, item, fields);
+    renumberIn(s.items);
+  });
+  return item;
+}
+
+/** "+ step" on a project: a new later step of it. */
+export function addStep(projectId: string, text: string): Item {
+  const item = newProjectItem(projectId, text, 'addStep');
+  store.update((s) => {
+    s.items.push(item);
+  });
+  return item;
+}
+
+/** Complete a project. Refused while it has open next actions or later steps (never auto-fixed). */
+export function completeProject(id: string): void {
+  check(getProject(id)?.status === 'active', `project ${id} is not active`, 'completeProject');
+  const open = openInProject(id);
+  check(open === 0, `${open} open — finish, demote or drop them first`, 'completeProject');
+  store.update((s) => {
+    s.projects.find((p) => p.id === id)!.status = 'completed';
+  });
+}
+
+/** Park a project: its next actions become later steps, so nothing of it stays on Next Actions. */
+export function moveProjectToSomeday(id: string): void {
+  check(getProject(id)?.status === 'active', `project ${id} is not active`, 'moveProjectToSomeday');
+  store.update((s) => {
+    s.projects.find((p) => p.id === id)!.status = 'someday';
+    for (const i of s.items) if (i.projectId === id && i.status === 'next') toLater(i);
+    renumberIn(s.items);
+  });
+}
+
+/** Back from someday: active again, and stalled until a step is promoted. */
+export function activateProject(id: string): void {
+  check(getProject(id)?.status === 'someday', `project ${id} is not someday`, 'activateProject');
+  store.update((s) => {
+    s.projects.find((p) => p.id === id)!.status = 'active';
+  });
+}
+
+export type ProjectPatch = Partial<Pick<Project, 'title' | 'successfulWhen' | 'deadline' | 'area' | 'goal' | 'notes'>>;
+
+/** Edit a project's own fields. Empty optional fields are removed; the title must stay unique. */
+export function updateProject(id: string, patch: ProjectPatch): void {
+  const state = store.getState();
+  check(state.projects.some((p) => p.id === id), `unknown project ${id}`, 'updateProject');
+  if (patch.title !== undefined) {
+    check(patch.title.trim(), 'title is empty', 'updateProject');
+    const twin = state.projects.find((p) => p.id !== id && p.status !== 'completed' && sameTitle(p.title, patch.title!));
+    check(!twin, `project "${twin?.title}" already exists`, 'updateProject');
+  }
+  if (patch.deadline) check(ISO_DATE.test(patch.deadline), 'deadline is not an ISO date', 'updateProject');
+  store.update((s) => {
+    const p = s.projects.find((x) => x.id === id)!;
+    for (const [key, value] of Object.entries(patch) as [keyof ProjectPatch, string | undefined][]) {
+      if (value === undefined) continue;
+      const v = key === 'notes' ? value : value.trim();
+      if (v || key === 'notes' || key === 'title') p[key] = v;
+      else delete p[key];
+    }
+  });
 }

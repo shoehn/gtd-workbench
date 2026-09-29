@@ -39,6 +39,8 @@ export interface Project {
   status: 'active' | 'someday' | 'completed';
   notes: string;
   lastReviewedAt?: string;
+  createdAt?: string;         // ISO
+  createdFrom?: 'inbox' | 'projects';  // Clarify step 3, or "+ Project" (later)
   // derived: nextActions = items(status='next', projectId), stalled = active && nextActions.length===0
 }
 

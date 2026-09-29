@@ -32,7 +32,8 @@ This is a planning view: **no done checkboxes, no focus stars**.
    Drag-and-drop between the two cards is optional; if you add it, use native HTML5 DnD,
    no library.
 6. **Three-up row** under it: Waiting for (items of this project with status waiting,
-   "since … · follow up …", link "All waiting-for →"), Reference (placeholder list of
+   "since … · follow up …", link "All waiting-for →" to `/waiting`, or "Overdue
+   waiting-for →" to `/waiting?filter=overdue` when the project has an overdue item), Reference (placeholder list of
    attachments — render `project.references` if present, else "no files yet"), Horizon
    (area / goal, editable).
 7. **Support notes**: textarea bound to `project.notes`, autosaves on blur; header right

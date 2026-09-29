@@ -55,3 +55,14 @@ export function fmtTotal(minutes: number): string {
 export function daysBetween(from: string, to: string): number {
   return Math.round((parts(to).date.getTime() - parts(from).date.getTime()) / 86_400_000);
 }
+
+/** A date near `today` (within 6 days either way) as its weekday, `fri`; otherwise `03.10`. */
+export function fmtNear(iso: string, today: string): string {
+  const d = daysBetween(today, iso);
+  return Math.abs(d) <= 6 ? WEEKDAYS[parts(iso).date.getDay()] : fmtDate(iso);
+}
+
+/** `today`, `1 d ago`, `21 d ago`. */
+export function fmtDaysAgo(days: number): string {
+  return days <= 0 ? 'today' : `${days} d ago`;
+}
