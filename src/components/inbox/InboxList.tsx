@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { trashAction, untrashAction } from '@/lib/actions';
 import type { Item, Priority } from '@/lib/model';
 import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
+import { useMoreBelow } from '../ui/useMoreBelow';
 import { Kbd } from '../ui/Kbd';
 import { PrioChip } from '../ui/PrioChip';
 import { Row } from '../ui/Row';
@@ -39,9 +40,7 @@ export function InboxList({ rows: allRows }: { rows: InboxRow[] }) {
   // Hidden right away on ⌫, before the server round trip removes them from `rows`.
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
   const [undo, setUndo] = useState<Trashed | null>(null);
-  const [moreBelow, setMoreBelow] = useState(0);
-  const scroller = useRef<HTMLDivElement>(null);
-  const list = useRef<HTMLDivElement>(null);
+  const { scroller, list, moreBelow } = useMoreBelow();
 
   const rows = allRows.filter((r) => !gone.has(r.id));
   const cursorIdx = Math.max(0, rows.findIndex((r) => r.id === cursorId));
@@ -131,25 +130,6 @@ export function InboxList({ rows: allRows }: { rows: InboxRow[] }) {
     if (cursor) document.getElementById(`inbox-row-${cursor}`)?.scrollIntoView({ block: 'nearest' });
   }, [cursor]);
 
-  // "n more below": rows not fully visible under the scroll viewport.
-  useEffect(() => {
-    const box = scroller.current;
-    const inner = list.current;
-    if (!box || !inner) return;
-    const measure = () => {
-      const bottom = box.scrollTop + box.clientHeight + 1;
-      const kids = Array.from(inner.children) as HTMLElement[];
-      setMoreBelow(kids.filter((el) => el.offsetTop + el.offsetHeight > bottom).length);
-    };
-    const ro = new ResizeObserver(measure);
-    ro.observe(box);
-    ro.observe(inner);
-    box.addEventListener('scroll', measure, { passive: true });
-    return () => {
-      ro.disconnect();
-      box.removeEventListener('scroll', measure);
-    };
-  }, []);
 
   return (
     <Card aria-label="Unprocessed items" className="flex min-h-0 grow flex-col">

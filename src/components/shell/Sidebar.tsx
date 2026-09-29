@@ -30,7 +30,7 @@ export function Sidebar() {
       <NavLink href="/waiting" badge={c.waiting}>Waiting For</NavLink>
       <Group label="HORIZONS" />
       <NavLink href="/projects" badge={c.projects}>Projects</NavLink>
-      <NavLink href="/waiting" badge={c.someday} noCurrent>Someday / Maybe</NavLink>
+      <NavLink href="/waiting?tab=someday" badge={c.someday} noCurrent>Someday / Maybe</NavLink>
       <NavLink href="/projects" badge="—" noCurrent>Reference</NavLink>
       <div className="grow" />
       <NavLink href="/review" badge={review} badgeWarn boxed>Weekly Review</NavLink>

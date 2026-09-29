@@ -608,7 +608,7 @@ export function health(): Health {
   const { items } = store.getState();
   return {
     stalled: listProjects().filter(projectStalled).length,
-    waitingOverdue: items.filter((i) => i.status === 'waiting' && i.waiting?.followUp && i.waiting.followUp < day).length,
+    waitingOverdue: items.filter((i) => isOverdue(i, day)).length,
     oldActions: listNext().filter((i) => ageDays(i) > 30).length,
   };
 }
@@ -754,5 +754,134 @@ export function updateProject(id: string, patch: ProjectPatch): void {
       if (v || key === 'notes' || key === 'title') p[key] = v;
       else delete p[key];
     }
+  });
+}
+
+// ── Waiting For and Someday/Maybe ──────────────────────────────────────────
+
+/** Past its follow-up date (a waiting-for without one is never overdue). */
+export function isOverdue(item: Item, day = today()): boolean {
+  return item.status === 'waiting' && !!item.waiting?.followUp && item.waiting.followUp < day;
+}
+
+/** Fixed order (SPEC §3.5): follow-up date ascending, undated last; ties by oldest `since`. */
+export function listWaiting(): Item[] {
+  const key = (i: Item) => i.waiting?.followUp ?? '9999-99-99';
+  return store
+    .getState()
+    .items.filter((i) => i.status === 'waiting')
+    .sort((a, b) => key(a).localeCompare(key(b)) || (a.waiting?.since ?? '').localeCompare(b.waiting?.since ?? ''));
+}
+
+/** `day` plus `n` days, as an ISO date. */
+function addDays(day: string, n: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  const date = new Date(y, m - 1, d + n);
+  const pad = (x: number) => String(x).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Whoever answers by mail or ticket rather than by phone. */
+const WRITES_BACK = /desk|support|committee/i;
+
+/**
+ * `f` on a waiting-for: a next action to chase it ("Follow up with <who>: <text>", @calls, or
+ * @computer for desks and committees; B, 15 min, low), in the same project. The follow-up date
+ * moves to a week from today.
+ */
+export function followUp(id: string): Item {
+  const w = getItem(id);
+  check(w?.status === 'waiting' && w.waiting, `item ${id} is not a waiting-for`, 'followUp');
+  const who = w.waiting.who;
+  const text = `Follow up with ${who}: ${w.text}`;
+  const action: Item = {
+    id: crypto.randomUUID(),
+    text,
+    captured: text,
+    source: 'typed',
+    capturedAt: now().toISOString(),
+    status: 'next',
+    tags: [],
+    ...(w.projectId && { projectId: w.projectId }),
+  };
+  store.update((s) => {
+    s.items.push(action);
+    applyFields(s.items, action, { context: WRITES_BACK.test(who) ? '@computer' : '@calls', priority: 'B', time: 15, energy: 'low' });
+    s.items.find((i) => i.id === id)!.waiting!.followUp = addDays(today(), 7);
+    renumberIn(s.items);
+  });
+  return action;
+}
+
+/**
+ * `x` on a waiting-for: it arrived, so it is done. Returns the undo token, and whether its
+ * project is now active without a next action (the screen then asks for one).
+ */
+export function received(id: string): Completed & { askNextFor?: string } {
+  const w = getItem(id);
+  check(w?.status === 'waiting', `item ${id} is not a waiting-for`, 'received');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    it.status = 'done';
+    it.doneAt = now().toISOString();
+  });
+  const project = w.projectId ? getProject(w.projectId) : undefined;
+  return { id, status: 'waiting', ...(project && projectStalled(project) && { askNextFor: project.id }) };
+}
+
+/** Someday/Maybe in bucket order: the store's buckets first, unknown ones after, then none (""). */
+export function listSomeday(): { bucket: string; items: Item[] }[] {
+  const items = store.getState().items.filter((i) => i.status === 'someday');
+  const order = [...store.getState().buckets];
+  for (const i of items) if (!order.includes(i.bucket ?? '')) order.push(i.bucket ?? '');
+  return order.map((bucket) => ({ bucket, items: items.filter((i) => (i.bucket ?? '') === bucket) })).filter((g) => g.items.length > 0);
+}
+
+export function listBuckets(): string[] {
+  return store.getState().buckets;
+}
+
+/** Activate a someday item: back into the inbox (text and capture kept) to go through Clarify. */
+export function activate(id: string): void {
+  check(getItem(id)?.status === 'someday', `item ${id} is not someday`, 'activate');
+  store.update((s) => {
+    s.items.find((i) => i.id === id)!.status = 'inbox';
+  });
+}
+
+/** Drop a someday item: to the trash, restorable with `untrash` like any trashed item. */
+export function drop(id: string): { id: string; status: Item['status'] }[] {
+  check(getItem(id)?.status === 'someday', `item ${id} is not someday`, 'drop');
+  return trash([id]);
+}
+
+/** Move a someday item to another bucket ("" = none). */
+export function setBucket(id: string, bucket: string): void {
+  check(getItem(id)?.status === 'someday', `item ${id} is not someday`, 'setBucket');
+  check(!bucket || store.getState().buckets.includes(bucket), `unknown bucket ${bucket}`, 'setBucket');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    if (bucket) it.bucket = bucket;
+    else delete it.bucket;
+  });
+}
+
+/** Drop a project on hold: completed, flagged as dropped; its later steps stay with it. */
+export function dropProject(id: string): void {
+  check(getProject(id)?.status === 'someday', `project ${id} is not someday`, 'dropProject');
+  store.update((s) => {
+    const p = s.projects.find((x) => x.id === id)!;
+    p.status = 'completed';
+    p.dropped = true;
+  });
+}
+
+/** Undo for `dropProject`. */
+export function undropProject(id: string): void {
+  store.update((s) => {
+    const p = s.projects.find((x) => x.id === id);
+    if (p?.status !== 'completed' || !p.dropped) return;
+    p.status = 'someday';
+    delete p.dropped;
   });
 }

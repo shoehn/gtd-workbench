@@ -114,11 +114,17 @@ from Next and Inbox respectively.
 
 ### 3.5 Waiting For and Someday/Maybe
 - Waiting For row: what, from whom, project, since, follow-up date. Overdue rows tinted.
+  Fixed order: follow-up date ascending, undated last, ties by oldest since (no sort menu in
+  v1). `f` creates "Follow up with <who>: <what>" — @computer when who is a desk, support
+  or committee, else @calls; B, 15 min, low; same project — and moves the follow-up date
+  to a week from today. `x` received offers undo for 5 s; if the project is left without a
+  next action, an inline "Next action for <project>?" asks for one (skip allowed).
   `/waiting?filter=overdue` shows only overdue rows (linked from Health and project detail).
   `f` follow up creates a @calls/@computer action; `x` received (closes, optionally
   creates the next action).
-- Someday/Maybe: grouped by bucket (user-defined). Activate → goes through Clarify;
-  Drop → gone.
+- Someday/Maybe: grouped by bucket (user-defined), in the store's bucket order, "No bucket"
+  last. Activate → back to the inbox and straight into Clarify; Drop → trash (5 s undo).
+  A row's bucket changes via a small select shown on hover/focus.
 - **Projects on hold**: a section above the buckets listing someday projects (title, later
   step count). Activate → the project is active again (stalled until a step is promoted)
   and `/projects?p=<id>` opens. Drop → status completed with `dropped: true`; it shows
@@ -236,7 +242,10 @@ Global: `⌘K` command palette (later), `›`-field on every screen captures to 
 Inbox: `j k x c ⌫`, `u` (or `⌘Z`) undo trash within 5 s, `/` focus the rapid log, `esc` leave it. Clarify: `y t m r` (step 1), `p` project picker, `a` toggle next
 action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Actions: `j k` move,
 `x f e p @`, `u` (or `⌘Z`) undo done within 5 s, `esc` cancel an edit / drop the cursor.
-Waiting: `f x`. Review: `space` tick current step.
+Waiting: `j k` move in the current pane, `Tab` switch pane (only while a row cursor is
+active, `esc` drops it and Tab moves focus again), `f` follow up and `x` received (Waiting
+For), `x` activate and `⌫` drop (Someday/Maybe), `u` (or `⌘Z`) undo within 5 s.
+Review: `space` tick current step.
 
 ## 7. Visual system
 

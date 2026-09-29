@@ -29,6 +29,7 @@ export interface DetailData {
   id: string;
   title: string;
   status: Project['status'];
+  dropped?: boolean;
   /** `HOME & WORKSHOP · CREATED SAT 26.09 · FROM INBOX` */
   headline: string;
   successfulWhen?: string;
@@ -135,7 +136,9 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
               <Btn size="sm" onClick={() => move(activateProjectAction, 'active')}>→ Active</Btn>
             </>
           )}
-          {p.status === 'completed' && <span className="font-mono text-meta text-ok">completed</span>}
+          {p.status === 'completed' && (
+            <span className={cx('font-mono text-meta', p.dropped ? 'text-muted' : 'text-ok')}>{p.dropped ? 'dropped' : 'completed'}</span>
+          )}
         </div>
         <h2 className="m-0 text-(length:--wb-text-detail-h2) leading-tight font-semibold">
           <InlineText key={p.id} value={p.title} label="Project title" required onSave={(title) => update({ title })} />
@@ -181,7 +184,7 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
               ? 'No next action — the project is stalled. Promote a later step or add one.'
               : p.status === 'someday'
                 ? 'On hold — nothing of it is on Next Actions. → Active to resume.'
-                : 'Completed.'}
+                : p.dropped ? 'Dropped from Someday / Maybe.' : 'Completed.'}
           </p>
         )}
         {adding === 'action' && (

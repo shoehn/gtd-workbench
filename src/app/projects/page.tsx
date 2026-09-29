@@ -49,6 +49,7 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
       title: p.title,
       href: projectsHref(filter, p.id),
       state,
+      dropped: p.dropped,
       line:
         p.status === 'someday'
           ? laterCount(p.id)
@@ -111,6 +112,7 @@ function detail(p: Project, today: string): DetailData {
     id: p.id,
     title: p.title,
     status: p.status,
+    dropped: p.dropped,
     headline,
     successfulWhen: p.successfulWhen,
     deadline: p.deadline && fmtDate(p.deadline),

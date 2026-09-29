@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
 import { PROJECT_FILTERS, projectsHref, type ProjectFilter } from '@/lib/project-filter';
 import { ContextChip } from '../ui/ContextChip';
 import { cx } from '../ui/cx';
+import { useMoreBelow } from '../ui/useMoreBelow';
 import { Tag } from '../ui/Tag';
 
 const DOT = { ok: 'bg-ok', stalled: 'bg-warn', someday: 'bg-control', completed: 'bg-control' };
@@ -18,6 +18,8 @@ export interface ProjectRow {
   href: string;
   /** ok = has next action; someday / completed projects are not judged. */
   state: 'ok' | 'stalled' | 'someday' | 'completed';
+  /** Completed by Drop on Someday/Maybe rather than finished. */
+  dropped?: boolean;
   /** `→ first next action`, or the reason it is stalled. */
   line?: string;
   nextActions: number;
@@ -39,30 +41,9 @@ export function ProjectList({
   completed: number;
 }) {
   const router = useRouter();
-  const scroller = useRef<HTMLDivElement>(null);
-  const list = useRef<HTMLDivElement>(null);
-  const [moreBelow, setMoreBelow] = useState(0);
+  const { scroller, list, moreBelow } = useMoreBelow();
   const go = (f: ProjectFilter) => router.replace(projectsHref(f), { scroll: false });
 
-  // "n more": rows not fully visible under the scroll viewport.
-  useEffect(() => {
-    const box = scroller.current;
-    const inner = list.current;
-    if (!box || !inner) return;
-    const measure = () => {
-      const bottom = box.scrollTop + box.clientHeight + 1;
-      const kids = Array.from(inner.children) as HTMLElement[];
-      setMoreBelow(kids.filter((el) => el.offsetTop + el.offsetHeight > bottom).length);
-    };
-    const ro = new ResizeObserver(measure);
-    ro.observe(box);
-    ro.observe(inner);
-    box.addEventListener('scroll', measure, { passive: true });
-    return () => {
-      ro.disconnect();
-      box.removeEventListener('scroll', measure);
-    };
-  }, []);
 
   return (
     <section aria-label="Project list" className="flex min-h-0 flex-col border-line bg-panel lg:border-r">
@@ -109,7 +90,9 @@ export function ProjectList({
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className={selected ? 'font-semibold' : 'font-medium'}>
                     {r.title}
-                    {(r.state === 'someday' || r.state === 'completed') && <Tag className="ml-1.5 align-[1px]">{r.state}</Tag>}
+                    {(r.state === 'someday' || r.state === 'completed') && (
+                      <Tag className="ml-1.5 align-[1px]">{r.dropped ? 'dropped' : r.state}</Tag>
+                    )}
                   </span>
                   {r.line && <span className={cx('truncate text-xs', r.state === 'stalled' ? 'text-warn' : 'text-muted')}>{r.line}</span>}
                 </span>

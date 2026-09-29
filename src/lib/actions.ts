@@ -92,3 +92,40 @@ export async function updateProjectAction(id: string, patch: api.ProjectPatch): 
   api.updateProject(id, patch);
   revalidatePath('/', 'layout');
 }
+
+export async function followUpAction(id: string): Promise<void> {
+  api.followUp(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function receivedAction(id: string): Promise<ReturnType<typeof api.received>> {
+  const done = api.received(id);
+  revalidatePath('/', 'layout');
+  return done;
+}
+
+export async function activateAction(id: string): Promise<void> {
+  api.activate(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function dropAction(id: string): Promise<{ id: string; status: Item['status'] }[]> {
+  const moved = api.drop(id);
+  revalidatePath('/', 'layout');
+  return moved;
+}
+
+export async function setBucketAction(id: string, bucket: string): Promise<void> {
+  api.setBucket(id, bucket);
+  revalidatePath('/', 'layout');
+}
+
+export async function dropProjectAction(id: string): Promise<void> {
+  api.dropProject(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function undropProjectAction(id: string): Promise<void> {
+  api.undropProject(id);
+  revalidatePath('/', 'layout');
+}
