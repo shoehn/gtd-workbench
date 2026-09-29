@@ -49,10 +49,14 @@ from Next and Inbox respectively.
    words don't say what it is. The original capture text stays attached to the item.
    Label of the field: *outcome* (kept on purpose — every item is goal-oriented).
 3. **Project.** A picker: typing searches existing projects; the first result is
-   "+ New project: …". Empty = single action. **The item is always the thing in step 2,
+   "+ New project: …", except when the typed text already is a project's title (ignoring
+   case and spacing): then that project leads and no "+ New" is offered — no two open
+   projects share a title. Empty = single action. **The item is always the thing in step 2,
    the project always the thing in step 3** — there is no "this item is the project" mode.
-   Below it: checkbox "Make this the project's next action" (default on when the project
-   has no next action, off otherwise). Unticked → the item becomes a *later step*.
+   Below it: checkbox "Make this the project's next action" (default on only when the
+   project has no next action). Ticking never demotes anything: it adds a next action
+   beside the existing ones (note: "project has n next actions — this adds another").
+   Unticked → the item becomes a *later step*. Next ↔ later changes only on Projects.
 4. **Do, delegate or defer?** Only shown for a next action or single action; later steps
    skip it. Do now (< 2 min) / Delegate → Waiting For (asks who) / Defer → Next Actions
    (context, priority, time, energy) / Defer → Calendar (day, optional time).
@@ -61,7 +65,7 @@ from Next and Inbox respectively.
    `deadline`), and when present step 4 preselects Defer → Calendar with that day.
 - "File it and next" (Enter) commits and loads the next inbox item. "Skip" leaves it.
 - Right rail: similar items already on the lists (search by words), "Result of this
-  clarify" summary (what will be created), keys.
+  clarify" summary (what will be created — Clarify only ever adds), keys.
 
 ### 3.3 Next Actions
 - Grouped by context; filters for context (multi), time bucket, energy; "Clear".
@@ -196,7 +200,7 @@ Derived, never stored: project stalled flag, inbox age, review counters, health 
 
 Global: `⌘K` command palette (later), `›`-field on every screen captures to inbox.
 Inbox: `j k x c ⌫`, `u` (or `⌘Z`) undo trash within 5 s, `/` focus the rapid log, `esc` leave it. Clarify: `y t m r` (step 1), `p` project picker, `a` toggle next
-action, `2 w n k` (step 4), `⏎` file and next, `s` skip. Next Actions: `x f e p @`.
+action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Actions: `x f e p @`.
 Waiting: `f x`. Review: `space` tick current step.
 
 ## 7. Visual system

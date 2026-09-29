@@ -15,7 +15,6 @@
   "items": [
     { "id": "i1", "text": "Call the dentist about the invoice", "captured": "Call the dentist about the invoice", "source": "typed", "capturedAt": "2026-09-26T09:12:00+02:00", "status": "inbox", "tags": [] },
     { "id": "i2", "text": "Idea: run the module retrospective as a silent brainstorm", "captured": "Idea: run the module retrospective as a silent brainstorm", "source": "voice", "capturedAt": "2026-09-26T08:40:00+02:00", "status": "inbox", "tags": [] },
-    { "id": "i3", "text": "Fwd: Offer for the new workshop bench — decide by Oct 3", "captured": "Fwd: Offer for the new workshop bench — decide by Oct 3", "source": "email", "capturedAt": "2026-09-25T17:02:00+02:00", "status": "inbox", "tags": [] },
     { "id": "i4", "text": "Replace the kitchen tap cartridge", "captured": "Replace the kitchen tap cartridge", "source": "typed", "capturedAt": "2026-09-25T12:31:00+02:00", "status": "inbox", "tags": [] },
     { "id": "i5", "text": "Read: \"Deep Work\" chapter 3 notes from Anna", "captured": "Read: \"Deep Work\" chapter 3 notes from Anna", "source": "share", "capturedAt": "2026-09-24T21:15:00+02:00", "status": "inbox", "tags": [] },
     { "id": "i6", "text": "Book train for the Zurich conference", "captured": "Book train for the Zurich conference", "source": "typed", "capturedAt": "2026-09-24T16:48:00+02:00", "status": "inbox", "tags": [] },

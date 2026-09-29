@@ -31,3 +31,9 @@ export function fmtWeekdayTime(iso: string): string {
 export function fmtAge(hours: number): string {
   return hours < 24 ? `${hours} h` : `${Math.floor(hours / 24)} d`;
 }
+
+/** Time bucket in minutes → `15 min`, `1 h`, `2 h+`. */
+export function fmtTime(minutes: number): string {
+  if (minutes >= 120) return '2 h+';
+  return minutes >= 60 ? `${minutes / 60} h` : `${minutes} min`;
+}

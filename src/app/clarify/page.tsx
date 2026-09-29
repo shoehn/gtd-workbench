@@ -1,10 +1,91 @@
+import { ClarifyForm } from '@/components/clarify/ClarifyForm';
+import type { PickerProject } from '@/components/clarify/ProjectPicker';
 import { Page } from '@/components/shell/Page';
+import { Btn } from '@/components/ui/Btn';
+import { Kbd } from '@/components/ui/Kbd';
 import { Meta } from '@/components/ui/Meta';
+import * as api from '@/lib/api';
+import { fmtWeekdayTime } from '@/lib/format';
 
-export default function ClarifyPage() {
+const BACK = { href: '/inbox', label: 'Inbox' };
+
+export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'>) {
+  const { item: param } = await searchParams;
+  const queue = api.listInboxQueue();
+  const requested = typeof param === 'string' ? param : undefined;
+  const item = requested ? queue.find((i) => i.id === requested) : queue[0];
+
+  if (!item) {
+    const gone = requested && api.getItem(requested);
+    return (
+      <Page title="Clarify" back={BACK} actions={null}>
+        <div className="flex h-full flex-col items-center justify-center gap-3">
+          <Meta>
+            {gone ? 'This item is no longer in the inbox.' : queue.length ? 'No such inbox item.' : 'Inbox is empty — nice.'}
+          </Meta>
+          <Btn href={queue.length ? '/clarify' : '/inbox'}>{queue.length ? 'Clarify the oldest item' : 'Back to Inbox'}</Btn>
+        </div>
+      </Page>
+    );
+  }
+
+  const pos = queue.indexOf(item);
+  // Skip wraps round the queue; filing moves on to the item after this one.
+  const after = queue.slice(pos + 1).concat(queue.slice(0, pos)).map((i) => i.id);
+  const projects: PickerProject[] = api
+    .listProjects('active')
+    .concat(api.listProjects('someday'))
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      active: p.status === 'active',
+      nextActions: api.nextActionCount(p.id),
+    }));
+
+  const meta = (
+    <span className="inline-flex items-center gap-4">
+      <span>
+        item {pos + 1} of {queue.length}
+      </span>
+      <span className="inline-flex gap-0.75" aria-hidden="true">
+        {queue.map((q, i) => (
+          <span key={q.id} className={`h-1 w-4.5 rounded-sm ${i <= pos ? 'bg-accent' : 'bg-line'}`} />
+        ))}
+      </span>
+    </span>
+  );
+
   return (
-    <Page title="Clarify">
-      <Meta>Process inbox items one at a time.</Meta>
+    <Page
+      title="Clarify"
+      meta={meta}
+      back={BACK}
+      actions={
+        after.length ? (
+          <Btn href={`/clarify?item=${encodeURIComponent(after[0])}`}>Skip for now <Kbd>s</Kbd></Btn>
+        ) : (
+          <Btn disabled>Skip for now <Kbd>s</Kbd></Btn>
+        )
+      }
+    >
+      <ClarifyForm
+        key={item.id}
+        item={{
+          id: item.id,
+          text: item.text,
+          captured: item.captured,
+          source: item.source,
+          when: fmtWeekdayTime(item.capturedAt),
+          context: item.context,
+          priority: item.priority,
+          day: item.day,
+          tags: item.tags,
+        }}
+        after={after}
+        contexts={api.listContexts()}
+        projects={projects}
+        similar={api.similar(item.text, item.id)}
+      />
     </Page>
   );
 }

@@ -19,3 +19,9 @@ export async function untrashAction(entries: { id: string; status: Item['status'
   api.untrash(entries);
   revalidatePath('/', 'layout');
 }
+
+export async function clarifyAction(itemId: string, decision: api.Decision): Promise<api.ClarifyResult> {
+  const result = api.clarify(itemId, decision);
+  revalidatePath('/', 'layout');
+  return result;
+}
