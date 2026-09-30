@@ -13,7 +13,8 @@ docs/handoff/
 │  ├─ tokens.css        the visual system as CSS variables (+ Tailwind v4 @theme mapping)
 │  └─ mockups/          the 14 artboards as plain HTML (open in a browser)
 ├─ data/
-│  └─ seed.json         the sample data all mockups use, typed like the model
+│  ├─ seed.base.json    what a new installation starts with (contexts, buckets, checklist)
+│  └─ seed.demo.json    the sample data all mockups use, typed like the model
 └─ prompts/             one prompt per iteration, in order (00 → 09)
 src/                    the app (Next.js app router)
 ```
@@ -53,7 +54,7 @@ each other, so the order can change after 02 (Clarify creates the data the other
 
 - Route = screen = one mockup. Desktop layout first, phone layout in 08.
 - No UI library. Primitives from 00 only; add one when two screens need it.
-- Sample data comes from `docs/handoff/data/seed.json`; screens never hard-code copy that is data.
+- Sample data comes from `docs/handoff/data/seed.demo.json` (on top of `seed.base.json`); screens never hard-code copy that is data.
 - The "one control per decision" rule from `docs/handoff/SPEC.md` §4 is a review criterion for every PR.
 
 ## Run it

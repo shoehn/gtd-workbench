@@ -62,7 +62,7 @@ project → next action → defer" branch; you build all branches.
 - Walking the seed item i4 into the existing project "Home maintenance 2026" with the
   next-action box unticked makes it a later step of that project (status later, no
   step 4), leaves the project's next action n9 untouched, and drops the inbox count by
-  one. (The mockup's i3 branch is already in the seed as p-bench / n1.)
+  one. (The mockup's i3 branch is already in the seed as p-table / n1.)
 - An item captured with `^date` opens with Defer → Calendar preselected on that day.
 - Each of the other branches is reachable with the keyboard alone and leaves the store
   consistent (tests prove it).

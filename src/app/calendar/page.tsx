@@ -51,7 +51,7 @@ export default async function CalendarPage({ searchParams }: PageProps<'/calenda
         title: `${weekday} ${fmtDate(iso)}${iso === today ? ' · today' : ''}`,
         summary: daySummary(entries),
         entries,
-        ...(iso === today && { nowMin: now.getHours() * 60 + now.getMinutes() }),
+        ...(iso === today && { nowMin: api.minutesOfDay(now) }),
       };
     })
     .filter((d) => d.entries.length > 0);
@@ -109,7 +109,7 @@ export default async function CalendarPage({ searchParams }: PageProps<'/calenda
             today: iso === today,
           }))}
           entries={api.weekLandscape(week)}
-          nowMin={days.includes(today) ? now.getHours() * 60 + now.getMinutes() : undefined}
+          nowMin={days.includes(today) ? api.minutesOfDay(now) : undefined}
         />
         <CalendarRail
           deadlines={api.upcomingDeadlines().map((d) => ({

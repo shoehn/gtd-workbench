@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
-import seed from './store/seed.json';
+import { demoSeed as seed } from './store/seed';
 import { store } from './store';
 import type { State } from './store/types';
 
@@ -17,7 +17,7 @@ describe('clarify — not actionable', () => {
     const before = api.navCounts().inbox;
     const res = api.clarify('i9', { kind });
     expect(res).toEqual({ itemId: 'i9', projectCreated: false });
-    expect(item('i9')).toMatchObject({ status: kind, text: 'Maybe learn to solder SMD by hand' });
+    expect(item('i9')).toMatchObject({ status: kind, text: 'Maybe learn to throw bowls on the wheel' });
     expect(api.navCounts().inbox).toBe(before - 1);
   });
 });
@@ -33,14 +33,14 @@ describe('clarify — single action', () => {
   it('delegate: waiting for whom, since today, optional follow-up', () => {
     api.clarify('i8', {
       kind: 'action',
-      text: 'Annex needed for the grant report?',
-      route: { to: 'waiting', who: ' Marc ', followUp: '2026-10-01' },
+      text: 'Appendix needed for the funding report?',
+      route: { to: 'waiting', who: ' Team lead ', followUp: '2026-10-01' },
     });
     expect(item('i8')).toMatchObject({
       status: 'waiting',
-      text: 'Annex needed for the grant report?',
-      captured: 'Ask Marc whether the grant report needs the annex',
-      waiting: { who: 'Marc', since: '2026-09-26', followUp: '2026-10-01' },
+      text: 'Appendix needed for the funding report?',
+      captured: 'Ask the team lead whether the funding report needs the appendix',
+      waiting: { who: 'Team lead', since: '2026-09-26', followUp: '2026-10-01' },
     });
   });
 
@@ -55,7 +55,7 @@ describe('clarify — single action', () => {
 
     api.clarify('i5', {
       kind: 'action',
-      text: 'Read Anna\'s notes on Deep Work ch. 3',
+      text: 'Read a colleague\'s notes on Deep Work ch. 3',
       route: { to: 'next', context: '@home', priority: 'C', time: 30, energy: 'low' },
     });
     expect(item('i5').priority).toBe('C');
@@ -88,16 +88,16 @@ describe('clarify — projects', () => {
     const res = api.clarify('i2', {
       kind: 'action',
       text: 'Draft the silent-brainstorm prompt cards',
-      project: { newTitle: 'Module retrospective run as a silent brainstorm' },
+      project: { newTitle: 'Project retrospective run as a silent brainstorm' },
       route: { to: 'next', context: '@computer', priority: 'A', time: 30, energy: 'focus', deadline: '2026-10-03' },
     });
     expect(res.projectCreated).toBe(true);
-    expect(project(res.projectId!)).toMatchObject({ title: 'Module retrospective run as a silent brainstorm', status: 'active' });
+    expect(project(res.projectId!)).toMatchObject({ title: 'Project retrospective run as a silent brainstorm', status: 'active' });
     expect(item('i2')).toMatchObject({
       status: 'next',
       projectId: res.projectId,
       text: 'Draft the silent-brainstorm prompt cards',
-      captured: 'Idea: run the module retrospective as a silent brainstorm',
+      captured: 'Idea: run the project retrospective as a silent brainstorm',
       context: '@computer',
       priority: 'A',
       priorityNo: 4,
@@ -111,46 +111,46 @@ describe('clarify — projects', () => {
 
   it('refuses a new project whose title already exists', () => {
     expect(() =>
-      api.clarify('i2', { kind: 'later', text: 'x', project: { newTitle: '  workshop BENCH decided  and ordered ' } }),
-    ).toThrow('clarify: project "Workshop bench decided and ordered" already exists');
+      api.clarify('i2', { kind: 'later', text: 'x', project: { newTitle: '  dining TABLE decided  and ordered ' } }),
+    ).toThrow('clarify: project "Dining table decided and ordered" already exists');
   });
 
   it('existing project + later step: no step 4, capture fields dropped, next actions untouched', () => {
-    api.capture('Order the bench legs @computer !A');
+    api.capture('Order the table legs @computer !A');
     const id = api.listInbox()[0].id;
-    const res = api.clarify(id, { kind: 'later', text: 'Order the bench legs', project: { id: 'p-bench' } });
-    expect(res).toEqual({ itemId: id, projectId: 'p-bench', projectCreated: false });
+    const res = api.clarify(id, { kind: 'later', text: 'Order the table legs', project: { id: 'p-table' } });
+    expect(res).toEqual({ itemId: id, projectId: 'p-table', projectCreated: false });
     const i = item(id);
-    expect(i).toMatchObject({ status: 'later', projectId: 'p-bench' });
+    expect(i).toMatchObject({ status: 'later', projectId: 'p-table' });
     expect(i.context).toBeUndefined();
     expect(i.priority).toBeUndefined();
-    expect(nextOf('p-bench')).toEqual(['n1', 'n8']);
+    expect(nextOf('p-table')).toEqual(['n1', 'n8']);
   });
 
   it('later step into a new project leaves it stalled — flagged, not fixed', () => {
-    const res = api.clarify('i6', { kind: 'later', text: 'Book train for the Zurich conference', project: { newTitle: 'Zurich trip' } });
+    const res = api.clarify('i6', { kind: 'later', text: 'Book train for the design fair', project: { newTitle: 'Fair trip' } });
     expect(api.projectStalled(project(res.projectId!)!)).toBe(true);
   });
 
   it('a next action in a project that has some adds another, demoting nothing', () => {
     api.clarify('i6', {
       kind: 'action',
-      text: 'Book train Bern → Zurich for 14.10',
-      project: { id: 'p-conf' },
+      text: 'Book train to the fair for 14.10',
+      project: { id: 'p-fair' },
       route: { to: 'next', context: '@computer', priority: 'B', time: 15, energy: 'low' },
     });
-    expect(nextOf('p-conf').sort()).toEqual(['i6', 'n4']);
+    expect(nextOf('p-fair').sort()).toEqual(['i6', 'n4']);
     expect(item('n4')).toMatchObject({ status: 'next', context: '@computer', priority: 'B', priorityNo: 2 });
   });
 
   it('new next action in a stalled project un-stalls it', () => {
-    const p = project('p-gridfinity')!;
+    const p = project('p-shelves')!;
     expect(api.projectStalled(p)).toBe(true);
     api.clarify('i9', {
       kind: 'action',
-      text: 'Print the first 3×3 Gridfinity base',
-      project: { id: 'p-gridfinity' },
-      route: { to: 'next', context: '@workshop', priority: 'C', time: 120, energy: 'normal' },
+      text: 'Glaze the first test tile',
+      project: { id: 'p-shelves' },
+      route: { to: 'next', context: '@studio', priority: 'C', time: 120, energy: 'normal' },
     });
     expect(api.projectStalled(p)).toBe(false);
   });
@@ -175,8 +175,8 @@ describe('clarify — validation leaves the store untouched', () => {
 
 describe('similar', () => {
   it('finds list entries sharing two significant words', () => {
-    expect(api.similar('Fwd: Offer for the new workshop bench — decide by Oct 3')).toEqual([
-      { kind: 'project', id: 'p-bench', title: 'Workshop bench decided and ordered' },
+    expect(api.similar('Fwd: Offer for the new dining table — decide by Oct 3')).toEqual([
+      { kind: 'project', id: 'p-table', title: 'Dining table decided and ordered' },
     ]);
   });
 

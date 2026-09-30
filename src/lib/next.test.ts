@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
 import { filterQuery, groupByContext, matches, parseFilter } from './next-filter';
-import seed from './store/seed.json';
+import { demoSeed as seed } from './store/seed';
 import { store } from './store';
 import type { State } from './store/types';
 
@@ -68,13 +68,13 @@ describe('focus', () => {
 });
 
 describe('complete and renumber', () => {
-  it('DoD: A1 done keeps the bench project green, B4 done stalls it', () => {
-    const bench = store.getState().projects.find((p) => p.id === 'p-bench')!;
+  it('DoD: A1 done keeps the table project green, B4 done stalls it', () => {
+    const table = store.getState().projects.find((p) => p.id === 'p-table')!;
     expect(api.health()).toEqual({ stalled: 1, waitingOverdue: 1, oldActions: 1 });
 
     api.complete('n1');
     expect(item('n1')).toMatchObject({ status: 'done' });
-    expect(api.projectStalled(bench)).toBe(false);
+    expect(api.projectStalled(table)).toBe(false);
     expect(api.health().stalled).toBe(1);
     // A renumbers across the whole list; B is untouched.
     expect([label('n2'), label('n7'), label('n8')]).toEqual(['A1', 'A2', 'B4']);
@@ -82,7 +82,7 @@ describe('complete and renumber', () => {
     expect(api.focusToday().filter((i) => i.status === 'done').map((i) => i.id)).toEqual(['d1', 'n1']);
 
     api.complete('n8');
-    expect(api.projectStalled(bench)).toBe(true);
+    expect(api.projectStalled(table)).toBe(true);
     expect(api.health().stalled).toBe(2);
   });
 
@@ -129,8 +129,8 @@ describe('inline edit', () => {
   it('moves between projects, to none, and into a new one', () => {
     api.editNext('n8', { project: null });
     expect(item('n8').projectId).toBeUndefined();
-    api.editNext('n8', { project: { id: 'p-gridfinity' } });
-    expect(item('n8').projectId).toBe('p-gridfinity');
+    api.editNext('n8', { project: { id: 'p-shelves' } });
+    expect(item('n8').projectId).toBe('p-shelves');
     const { projectId } = api.editNext('n6', { project: { newTitle: 'Shared drive tidy' } });
     expect(store.getState().projects.find((p) => p.id === projectId)?.title).toBe('Shared drive tidy');
   });
@@ -138,9 +138,9 @@ describe('inline edit', () => {
   it('refuses bad input without changing anything', () => {
     expect(() => api.editNext('n6', { text: ' ' })).toThrow(/^edit:/);
     expect(() => api.editNext('n6', { context: '@moon' })).toThrow(/^edit:/);
-    expect(() => api.editNext('n6', { project: { newTitle: 'delay pedal built' } })).toThrow(/already exists/);
+    expect(() => api.editNext('n6', { project: { newTitle: 'glaze test series fired' } })).toThrow(/already exists/);
     expect(() => api.editNext('l1', { text: 'x' })).toThrow(/^edit:/);
-    expect(item('n6').text).toBe('Clean up the shared drive folder for last semester');
+    expect(item('n6').text).toBe('Clean up the shared drive folder for last quarter');
   });
 });
 
@@ -148,15 +148,15 @@ describe('today and health', () => {
   it('hard landscape: appointments by time, then the all-day deadline', () => {
     expect(api.todayLandscape().map((e) => [e.time ?? 'all day', e.text, e.deadline])).toEqual([
       ['10:00', 'Dentist', false],
-      ['14:00', 'Call with Marc — grant report', false],
-      ['all day', 'Submit conference abstract', true],
+      ['14:00', 'Call with team lead — funding report', false],
+      ['all day', 'Submit fair application', true],
     ]);
   });
 
   it('includes tickler info and deadlines owned by lists; an action due with its project shows once', () => {
     const day = '2026-10-03';
     expect(api.todayLandscape(day).map((e) => [e.kind, e.text])).toEqual([
-      ['deadline', 'Workshop bench decided and ordered'],
+      ['deadline', 'Dining table decided and ordered'],
     ]);
     expect(api.todayLandscape('2026-09-27').map((e) => e.kind)).toEqual(['timeblock', 'info']);
   });

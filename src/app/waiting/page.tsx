@@ -87,6 +87,7 @@ export default async function WaitingPage({ searchParams }: PageProps<'/waiting'
         somedayTotal={someday.reduce((n, g) => n + g.items.length, 0)}
         buckets={api.listBuckets()}
         contexts={api.listContexts()}
+        followUpContext={api.getSettings().followUpContext}
         initialPane={params.tab === 'someday' ? 'someday' : 'waiting'}
       />
     </Page>

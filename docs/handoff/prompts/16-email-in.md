@@ -46,5 +46,5 @@ Principle unchanged: capture never asks questions. Every channel here ends in
   cleaned subject as text and the body preview visible in Clarify's item card;
   forwarding it again produces nothing.
 - Sharing a page from Android Chrome creates an item with the URL attached.
-- `curl -H 'Authorization: Bearer …' -d '{"text":"Call Lena @calls"}' /api/capture`
+- `curl -H 'Authorization: Bearer …' -d '{"text":"Call the shop @calls"}' /api/capture`
   creates the item with @calls parsed.

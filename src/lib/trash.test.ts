@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
-import seed from './store/seed.json';
+import { demoSeed as seed } from './store/seed';
 import { store } from './store';
 import type { State } from './store/types';
 

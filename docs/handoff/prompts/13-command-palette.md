@@ -38,7 +38,7 @@ command it offers must already exist as an api call or a route.
 
 ## Definition of done
 
-- From any screen: ⌘K, type "lena", ⏎ → lands on the Waiting-for row for Lena; ⌘K,
+- From any screen: ⌘K, type "shop", ⏎ → lands on the Waiting-for row for the furniture shop; ⌘K,
   "+ Call plumber @calls", ⏎ → item captured with @calls; ⌘K, "> start", ⏎ → review
   started; all without the mouse.
 - With the cursor on a Next Actions row, ⌘K "> later" demotes that row.

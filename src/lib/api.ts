@@ -2,10 +2,11 @@
 // nothing derived is ever written back to the store.
 import { parse } from './capture-syntax';
 import { SeedCalendarSource, type CalendarSource } from './calendar-source';
-import type { Energy, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Source, TimeBucket } from './model';
+import type { Energy, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, TimeBucket } from './model';
+import { instantAt, isTimeZone, wallClock } from './clock';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
-import seed from './store/seed.json';
-import { STORE_KIND, store } from './store';
+import { baseSeed } from './store/seed';
+import { STORE_KIND, createdThisBoot, store } from './store';
 import type { ExternalCalendar, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
 import { addDays, compareStamps, isoWeek, weekDays } from './week';
@@ -15,17 +16,27 @@ const DAY_MS = 86_400_000;
 /** The seed's pinned date outside production; `undefined` means the real clock. Delete to unpin. */
 const pinnedDay = () => (process.env.NODE_ENV !== 'production' ? store.getState().today : undefined);
 
+/** The zone "today", midnight and overdue are counted in: Settings.timezone, else the server's TZ. */
+export function timeZone(): string | undefined {
+  return store.getState().timezone || undefined;
+}
+
 /**
  * The one clock. Everything time-dependent (ages, "today", focus, review due) reads this,
- * never `new Date()`. Pinned: the real time of day on the seed's date.
+ * never `new Date()`. Pinned: the real time of day (in `timeZone()`) on the seed's date.
  */
 export function now(): Date {
   const real = new Date();
   const day = pinnedDay();
   if (!day) return real;
-  const d = new Date(`${day}T00:00:00`);
-  d.setHours(real.getHours(), real.getMinutes(), real.getSeconds(), real.getMilliseconds());
-  return d;
+  const w = wallClock(real, timeZone());
+  return instantAt(day, w.hour, w.minute, w.second, real.getMilliseconds(), timeZone());
+}
+
+/** Minutes since midnight on the wall clock of `timeZone()` (the calendar's now line). */
+export function minutesOfDay(at: Date = now()): number {
+  const w = wallClock(at, timeZone());
+  return w.hour * 60 + w.minute;
 }
 
 /** Which store answers, and how many items it holds (the health check). Throws if it cannot open. */
@@ -33,11 +44,9 @@ export function storeInfo(): { store: typeof STORE_KIND; items: number } {
   return { store: STORE_KIND, items: store.getState().items.length };
 }
 
-/** Today as a local ISO date (yyyy-mm-dd), from `now()`. */
+/** Today as an ISO date (yyyy-mm-dd) in `timeZone()`, from `now()`. */
 export function today(): string {
-  const d = now();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return wallClock(now(), timeZone()).day;
 }
 
 const byNewest = (a: Item, b: Item) => compareStamps(b.capturedAt, a.capturedAt);
@@ -126,6 +135,7 @@ export function capture(line: string, source: Source = 'typed'): Item | null {
   store.update((s) => {
     s.items.push(item);
   });
+  firstCaptureDone = true;
   return item;
 }
 
@@ -783,9 +793,16 @@ export function listWaiting(): Item[] {
 /** Whoever answers by mail or ticket rather than by phone. */
 const WRITES_BACK = /desk|support|committee/i;
 
+/** @computer for desks and committees (when it exists), else the follow-up context from Settings. */
+function followUpContext(s: { contexts: string[]; followUpContext: string }, who: string): string {
+  if (WRITES_BACK.test(who) && s.contexts.includes('@computer')) return '@computer';
+  return s.contexts.includes(s.followUpContext) ? s.followUpContext : s.contexts[0];
+}
+
 /**
- * `f` on a waiting-for: a next action to chase it ("Follow up with <who>: <text>", @calls, or
- * @computer for desks and committees; B, 15 min, low), in the same project. The follow-up date
+ * `f` on a waiting-for: a next action to chase it ("Follow up with <who>: <text>"; in the
+ * follow-up context from Settings, @calls by default, or @computer for desks and committees;
+ * B, 15 min, low), in the same project. The follow-up date
  * moves to a week from today.
  */
 export function followUp(id: string): Item {
@@ -805,7 +822,7 @@ export function followUp(id: string): Item {
   };
   store.update((s) => {
     s.items.push(action);
-    applyFields(s.items, action, { context: WRITES_BACK.test(who) ? '@computer' : '@calls', priority: 'B', time: 15, energy: 'low' });
+    applyFields(s.items, action, { context: followUpContext(s, who), priority: 'B', time: 15, energy: 'low' });
     s.items.find((i) => i.id === id)!.waiting!.followUp = addDays(today(), 7);
     renumberIn(s.items);
   });
@@ -1151,7 +1168,7 @@ export function deleteTickler(id: string): void {
 // ── Weekly Review ──────────────────────────────────────────────────────────
 
 const STALE_RUN_MS = 24 * 3_600_000;
-const DEFAULT_TEMPLATE = seed.reviewTemplate as ReviewTemplate;
+const DEFAULT_TEMPLATE = baseSeed.reviewTemplate;
 
 export interface ReviewStep {
   id: string;
@@ -1164,16 +1181,36 @@ export function reviewTemplate(): ReviewTemplate {
   return store.getState().reviewTemplate;
 }
 
-/** Put the template the app ships with back (template editing comes later). */
+/** "Reset to GTD default": the template of the base seed. Runs keep their own copy. */
 export function resetTemplate(): void {
   store.update((s) => {
     s.reviewTemplate = structuredClone(DEFAULT_TEMPLATE);
   });
 }
 
-/** The template's steps in order, across phases. */
-export function reviewSteps(): ReviewStep[] {
-  return reviewTemplate().phases.flatMap((ph) => ph.steps.map((st) => ({ ...st, phaseId: ph.id })));
+/** The checklist a run follows: the copy taken when it started (older runs: the current one). */
+export function runTemplate(run?: ReviewRun): ReviewTemplate {
+  return run?.template ?? reviewTemplate();
+}
+
+/** The steps in order, across phases — of `run`'s own template, else the current template. */
+export function reviewSteps(run?: ReviewRun): ReviewStep[] {
+  return runTemplate(run).phases.flatMap((ph) => ph.steps.map((st) => ({ ...st, phaseId: ph.id })));
+}
+
+/** Where a step comes from in the note and live-figure rules: the shipped steps by id, added ones by link. */
+const RULE_BY_LINK: Record<string, string> = {
+  '/clarify': 'inbox-zero',
+  '/inbox': 'inbox-zero',
+  '/next': 'next',
+  '/calendar': 'past-cal',
+  '/waiting': 'waiting',
+  '/projects': 'projects',
+  '/waiting?tab=someday': 'someday',
+};
+function ruleOf(step: ReviewStep | undefined, stepId: string): string {
+  if (!step || DEFAULT_TEMPLATE.phases.some((p) => p.steps.some((s) => s.id === stepId))) return stepId;
+  return (step.link && RULE_BY_LINK[step.link]) || stepId;
 }
 
 /** An open run started 24 h ago or earlier: it reads as abandoned, whether or not that was written. */
@@ -1217,7 +1254,7 @@ export function ticked(run: ReviewRun): number {
 
 /** The step to work on: the first unticked one in template order. */
 export function currentStep(run: ReviewRun): string | undefined {
-  return reviewSteps().find((st) => !run.steps.some((s) => s.stepId === st.id && s.doneAt))?.id;
+  return reviewSteps(run).find((st) => !run.steps.some((s) => s.stepId === st.id && s.doneAt))?.id;
 }
 
 /** Whole minutes a ticked step took: from becoming current (else the tick before it) to its tick. */
@@ -1272,9 +1309,10 @@ export function reviewFacts(): ListFacts {
   };
 }
 
-/** The live figure of an open step. */
+/** The live figure of an open step (of the open run's checklist, else the current one). */
 export function reviewLiveLine(stepId: string): LiveLine | undefined {
-  return liveLine(stepId, reviewFacts());
+  const step = reviewSteps(openRun()).find((s) => s.id === stepId);
+  return liveLine(ruleOf(step, stepId), reviewFacts());
 }
 
 function requireOpenRun(scope: string): ReviewRun {
@@ -1283,8 +1321,8 @@ function requireOpenRun(scope: string): ReviewRun {
   return run;
 }
 
-function checkStep(stepId: string, scope: string) {
-  check(reviewSteps().some((s) => s.id === stepId), `unknown step ${stepId}`, scope);
+function checkStep(stepId: string, scope: string, run?: ReviewRun) {
+  check(reviewSteps(run).some((s) => s.id === stepId), `unknown step ${stepId}`, scope);
 }
 
 /** Mark a step current: remember when, and snapshot the counters its note will compare against. */
@@ -1300,8 +1338,16 @@ function openIn(run: ReviewRun, stepId: string) {
 export function startReview(): ReviewRun {
   check(!openRun(), 'a review is already in progress', 'startReview');
   abandonStaleRuns(); // write down what reads already show
-  const run: ReviewRun = { id: `r-${crypto.randomUUID()}`, startedAt: now().toISOString(), pausedMs: 0, steps: [], notes: '' };
-  const first = reviewSteps()[0];
+  const run: ReviewRun = {
+    id: `r-${crypto.randomUUID()}`,
+    startedAt: now().toISOString(),
+    pausedMs: 0,
+    steps: [],
+    notes: '',
+    // Its own copy: editing the template later never changes a review under way.
+    template: structuredClone(reviewTemplate()),
+  };
+  const first = reviewSteps(run)[0];
   if (first) openIn(run, first.id);
   store.update((s) => {
     s.reviewRuns.push(run);
@@ -1311,8 +1357,7 @@ export function startReview(): ReviewRun {
 
 /** A step becomes current by moving to it or following its link. Idempotent. */
 export function openStep(stepId: string): void {
-  requireOpenRun('openStep');
-  checkStep(stepId, 'openStep');
+  checkStep(stepId, 'openStep', requireOpenRun('openStep'));
   store.update(() => openIn(openRun()!, stepId));
 }
 
@@ -1322,7 +1367,7 @@ export function openStep(stepId: string): void {
  */
 export function tickStep(stepId: string): void {
   const run = requireOpenRun('tickStep');
-  checkStep(stepId, 'tickStep');
+  checkStep(stepId, 'tickStep', run);
   check(!run.steps.some((s) => s.stepId === stepId && s.doneAt), `step ${stepId} is already ticked`, 'tickStep');
   const at = now();
   const own = run.steps.find((s) => s.stepId === stepId);
@@ -1337,7 +1382,7 @@ export function tickStep(stepId: string): void {
     if (!entry) r.steps.push((entry = { stepId }));
     entry.doneAt = at.toISOString();
     entry.note = measuredNote({
-      stepId,
+      stepId: ruleOf(reviewSteps(r).find((s) => s.id === stepId), stepId),
       opened: base?.snapshot,
       now: reviewCounters(),
       captured: items.filter((i) => Date.parse(i.capturedAt) >= since).length,
@@ -1431,3 +1476,151 @@ export function weekStats(): WeekStats {
     stalled: health().stalled,
   };
 }
+
+// ── Settings ───────────────────────────────────────────────────────────────
+
+export function getSettings(): Settings {
+  const s = store.getState();
+  return {
+    contexts: s.contexts,
+    followUpContext: s.followUpContext,
+    buckets: s.buckets,
+    reviewTemplate: s.reviewTemplate,
+    weekStart: s.weekStart,
+    timezone: s.timezone,
+  };
+}
+
+/** The routes a review step may link to (the template editor's select). */
+export const STEP_LINKS = ['/inbox', '/clarify', '/next', '/calendar', '/waiting', '/waiting?tab=someday', '/projects'] as const;
+
+/** A template may change its steps, never its phases (their names drive warnings, SPEC §3.7). */
+function checkTemplate(t: ReviewTemplate) {
+  const fixed = DEFAULT_TEMPLATE.phases;
+  check(
+    t.phases.length === fixed.length && t.phases.every((p, n) => p.id === fixed[n].id && p.name === fixed[n].name),
+    'the three phases are fixed',
+    'settings',
+  );
+  const ids = t.phases.flatMap((p) => p.steps.map((s) => s.id));
+  check(new Set(ids).size === ids.length && ids.every(Boolean), 'step ids must be unique', 'settings');
+  for (const step of t.phases.flatMap((p) => p.steps)) {
+    check(step.text.trim(), 'a step needs text', 'settings');
+    check(!step.link || (STEP_LINKS as readonly string[]).includes(step.link), `unknown link ${step.link}`, 'settings');
+  }
+}
+
+/**
+ * Change the review template, the time zone or the week start. Contexts and buckets change
+ * through the list operations below, which also update the items that use them.
+ */
+export function updateSettings(
+  patch: Partial<Pick<Settings, 'reviewTemplate' | 'timezone' | 'weekStart' | 'followUpContext'>>,
+): void {
+  if (patch.reviewTemplate) checkTemplate(patch.reviewTemplate);
+  if (patch.followUpContext !== undefined) {
+    check(store.getState().contexts.includes(patch.followUpContext), `unknown context ${patch.followUpContext}`, 'settings');
+  }
+  if (patch.timezone !== undefined) check(!patch.timezone || isTimeZone(patch.timezone), `unknown time zone ${patch.timezone}`, 'settings');
+  if (patch.weekStart !== undefined) check(patch.weekStart === 'mon', 'the week starts on Monday', 'settings');
+  store.update((s) => {
+    if (patch.reviewTemplate) s.reviewTemplate = structuredClone(patch.reviewTemplate);
+    if (patch.timezone !== undefined) s.timezone = patch.timezone;
+    if (patch.weekStart) s.weekStart = patch.weekStart;
+    if (patch.followUpContext) s.followUpContext = patch.followUpContext;
+  });
+}
+
+/** Contexts and Someday buckets: ordered lists of names that items point to. */
+export type SettingsList = 'context' | 'bucket';
+
+const LISTS = {
+  context: {
+    key: 'contexts',
+    field: 'context',
+    /** Open items still pointing here keep a delete from happening. */
+    open: (i: Item) => i.status !== 'done' && i.status !== 'trash',
+    noun: (n: number) => (n === 1 ? 'action uses' : 'actions use'),
+    valid: (name: string) => /^@[\p{L}\p{N}_-]+$/u.test(name),
+    rule: 'a context is @ and one word, e.g. @calls',
+  },
+  bucket: {
+    key: 'buckets',
+    field: 'bucket',
+    open: (i: Item) => i.status === 'someday',
+    noun: (n: number) => (n === 1 ? 'someday item uses' : 'someday items use'),
+    valid: (name: string) => name.length > 0 && name.length <= 40,
+    rule: 'a bucket name is 1–40 characters',
+  },
+} as const;
+
+/** Items that keep `name` from being deleted. */
+export function listUsage(list: SettingsList, name: string): number {
+  const l = LISTS[list];
+  return store.getState().items.filter((i) => l.open(i) && i[l.field] === name).length;
+}
+
+function checkName(list: SettingsList, name: string, except?: string) {
+  const l = LISTS[list];
+  check(l.valid(name), l.rule, 'settings');
+  const taken = store.getState()[l.key].some((n) => n !== except && n.toLowerCase() === name.toLowerCase());
+  check(!taken, `${name} already exists`, 'settings');
+}
+
+/** Add an entry, at the end or at `at`. */
+export function addListEntry(list: SettingsList, raw: string, at?: number): void {
+  const name = raw.trim();
+  checkName(list, name);
+  store.update((s) => {
+    const names = s[LISTS[list].key];
+    names.splice(at === undefined ? names.length : Math.max(0, Math.min(at, names.length)), 0, name);
+  });
+}
+
+/** Rename an entry and every item that uses it, in one transaction. */
+export function renameListEntry(list: SettingsList, from: string, raw: string): void {
+  const to = raw.trim();
+  const l = LISTS[list];
+  check(store.getState()[l.key].includes(from), `unknown ${list} ${from}`, 'settings');
+  if (to === from) return;
+  checkName(list, to, from);
+  store.update((s) => {
+    const names = s[l.key];
+    names[names.indexOf(from)] = to;
+    for (const i of s.items) if (i[l.field] === from) i[l.field] = to;
+    if (list === 'context' && s.followUpContext === from) s.followUpContext = to;
+  });
+}
+
+/** Delete an entry — refused while open items use it ("3 actions use @office — move them first"). */
+export function deleteListEntry(list: SettingsList, name: string): void {
+  const l = LISTS[list];
+  check(store.getState()[l.key].includes(name), `unknown ${list} ${name}`, 'settings');
+  const used = listUsage(list, name);
+  check(used === 0, `${used} ${l.noun(used)} ${name} — move them first`, 'settings');
+  check(
+    list !== 'context' || store.getState().followUpContext !== name,
+    `${name} is where follow-ups go — choose another context for them first`,
+    'settings',
+  );
+  store.update((s) => {
+    s[l.key].splice(s[l.key].indexOf(name), 1);
+  });
+}
+
+/** Move an entry to position `to` (the display order of contexts on Next Actions). */
+export function moveListEntry(list: SettingsList, name: string, to: number): void {
+  const l = LISTS[list];
+  check(store.getState()[l.key].includes(name), `unknown ${list} ${name}`, 'settings');
+  store.update((s) => {
+    const names = s[l.key];
+    names.splice(names.indexOf(name), 1);
+    names.splice(Math.max(0, Math.min(to, names.length)), 0, name);
+  });
+}
+
+/** The Inbox's one-time welcome: a database created at this boot that nobody has captured into yet. */
+export function firstRun(): boolean {
+  return !firstCaptureDone && createdThisBoot() && store.getState().items.length === 0;
+}
+let firstCaptureDone = false;

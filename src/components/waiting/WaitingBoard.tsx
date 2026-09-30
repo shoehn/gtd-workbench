@@ -60,6 +60,8 @@ interface WaitingBoardProps {
   somedayTotal: number;
   buckets: string[];
   contexts: string[];
+  /** Where `f` files the follow-up (Settings). */
+  followUpContext: string;
   /** `?tab=someday` starts with the cursor pane on Someday/Maybe; on the phone it picks the tab. */
   initialPane: Pane;
 }
@@ -379,7 +381,7 @@ export function WaitingBoard(props: WaitingBoardProps) {
         </div>
         <Footer more={waitingMore}>
           <button type="button" disabled={pane !== 'waiting' || !current} onClick={() => current && followUp(current.id)} className="text-left disabled:cursor-default enabled:hover:text-ink">
-            <Kbd>f</Kbd> follow up → creates @calls / @computer action
+            <Kbd>f</Kbd> follow up → creates {props.followUpContext} / @computer action
           </button>
           <span aria-hidden="true">·</span>
           <button

@@ -21,7 +21,7 @@ function inFilter(p: Project, filter: ProjectFilter): boolean {
   return true;
 }
 
-/** "No next action — waiting on Marc only" or "… — define one in review". */
+/** "No next action — waiting on Team lead only" or "… — define one in review". */
 function stalledReason(projectId: string): string {
   const who = [...new Set(api.projectItems(projectId).filter((i) => i.status === 'waiting').map((i) => i.waiting!.who))];
   return `No next action — ${who.length ? `waiting on ${who.join(', ')} only` : 'define one in review'}`;

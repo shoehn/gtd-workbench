@@ -55,7 +55,7 @@ interface NextBoardProps {
   /** Server-rendered cards for the right column. */
   today: ReactNode;
   health: ReactNode;
-  /** Phone: the one-line Today strip, `10:00 Dentist · 14:00 Marc · abstract deadline`. */
+  /** Phone: the one-line Today strip, `10:00 Dentist · 14:00 team lead · application deadline`. */
   todayLine: string;
 }
 

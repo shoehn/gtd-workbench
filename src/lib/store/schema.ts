@@ -1,6 +1,7 @@
 // SQLite schema: one table per SPEC §5 interface plus the store-level lists. Nested value
 // objects that are always read with their row (`Item.timeSlot`, `Item.waiting`) are flattened
 // into typed columns; `Item.tags`, `ReviewRun.steps` and the review template are JSON.
+// The user's Settings are one JSON row in `settings`.
 // `seq` keeps each list in the order the store holds it (the memory store's array order).
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { ReviewRun, ReviewTemplate } from '../model';
@@ -70,12 +71,7 @@ export const reviewRuns = sqliteTable('review_runs', {
   steps: text({ mode: 'json' }).$type<ReviewRun['steps']>().notNull(),
   notes: text().notNull(),
   outcome: text(),
-});
-
-/** One row (`id = 'default'`): the user's checklist template. */
-export const reviewTemplates = sqliteTable('review_templates', {
-  id: text().primaryKey(),
-  phases: text({ mode: 'json' }).$type<ReviewTemplate['phases']>().notNull(),
+  template: text({ mode: 'json' }).$type<ReviewTemplate>(),
 });
 
 export const externalEvents = sqliteTable('external_events', {
@@ -101,23 +97,16 @@ export const tickler = sqliteTable('tickler', {
   text: text().notNull(),
 });
 
-export const contexts = sqliteTable('contexts', {
-  name: text().primaryKey(),
-  seq: integer().notNull(),
-});
-
-export const buckets = sqliteTable('buckets', {
-  name: text().primaryKey(),
-  seq: integer().notNull(),
-});
-
 export const areaKinds = sqliteTable('area_kinds', {
   area: text().primaryKey(),
   seq: integer().notNull(),
   kind: text().notNull(),
 });
 
-/** Single values: `today` (the seed's pinned date), `externalSyncedAt`. */
+/**
+ * Single values: `settings` (JSON: contexts, buckets, review template, week start, time zone —
+ * the user's Settings as one row), `today` (the demo's pinned date), `externalSyncedAt`.
+ */
 export const settings = sqliteTable('settings', {
   key: text().primaryKey(),
   value: text().notNull(),

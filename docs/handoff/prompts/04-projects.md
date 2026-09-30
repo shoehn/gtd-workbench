@@ -45,9 +45,9 @@ This is a planning view: **no done checkboxes, no focus stars**.
 
 ## Definition of done
 
-- Seed renders as the mockup with p-bench selected: 2 next actions (A1 with "today",
+- Seed renders as the mockup with p-table selected: 2 next actions (A1 with "today",
   B4), 3 later steps + 1 done, one waiting-for, horizon filled.
-- `↓ later` on B4 then on A1 turns p-bench stalled in the list, in Next Actions' Health
+- `↓ later` on B4 then on A1 turns p-table stalled in the list, in Next Actions' Health
   box, and in the sidebar count of stalled projects (if you show one).
 - `↑ next` on "Place the order…" asks for context/priority/time inline and the item then
   appears in `/next` under that context.

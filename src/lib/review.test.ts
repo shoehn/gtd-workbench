@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
-import seed from './store/seed.json';
+import { demoSeed as seed } from './store/seed';
 import { store } from './store';
 import type { State } from './store/types';
 
@@ -101,7 +101,7 @@ describe('weekly review', () => {
     expect(api.weekStats()).toMatchObject({ done: 3, completedProjects: 0, stalled: 1 });
     api.moveProjectToSomeday('p-blog');
     api.dropProject('p-blog'); // dropped is not completed
-    api.completeProject('p-gridfinity');
+    api.completeProject('p-shelves');
     expect(api.weekStats()).toMatchObject({ completedProjects: 1, stalled: 0 });
     api.complete('n6');
     expect(api.weekStats().done).toBe(4);

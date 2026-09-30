@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
-import seed from './store/seed.json';
+import { demoSeed as seed } from './store/seed';
 import { store } from './store';
 import type { State } from './store/types';
 import { compareStamps, isoWeek, parseWeek, shiftWeek, weekDays } from './week';
@@ -46,15 +46,15 @@ describe('week landscape', () => {
         .filter((e) => e.day === day)
         .map((e) => `${e.kind}: ${e.text}${'start' in e && e.start ? ` ${e.start}` : ''}${'done' in e && e.done ? ' (done)' : ''}`)
         .sort();
-    expect(at('2026-09-21')).toEqual(['appointment: Lecture block 09:00']);
-    expect(at('2026-09-22')).toEqual(['appointment: Institute meeting 13:00', 'dayaction: Hand in the module description (done)']);
+    expect(at('2026-09-21')).toEqual(['appointment: Client session 09:00']);
+    expect(at('2026-09-22')).toEqual(['appointment: Studio meeting 13:00', 'dayaction: Hand in the project brief (done)']);
     expect(at('2026-09-23')).toEqual(['dayaction: Pay the printer invoice (done)']);
     expect(at('2026-09-24')).toEqual(['appointment: Office hours 16:00']);
-    expect(at('2026-09-25')).toEqual(['info: Holzwerk offer arrives · decide by 03.10', 'timeblock: Deep work: grading rubric 10:00']);
+    expect(at('2026-09-25')).toEqual(['info: Table offer arrives · decide by 03.10', 'timeblock: Deep work: welcome checklist 10:00']);
     expect(at('2026-09-26')).toEqual([
-      'appointment: Call with Marc — grant report 14:00',
+      'appointment: Call with team lead — funding report 14:00',
       'appointment: Dentist 10:00',
-      'dayaction: Submit conference abstract',
+      'dayaction: Submit fair application',
     ]);
     expect(at('2026-09-27')).toEqual(['info: Bins out · paper', 'timeblock: Weekly review 17:00']);
   });
@@ -64,16 +64,16 @@ describe('week landscape', () => {
     expect(c1).toMatchObject({ kind: 'dayaction', deadline: true, done: false });
   });
 
-  it('DoD: upcoming deadlines are the bench offer, the reviewer comments and the conference', () => {
+  it('DoD: upcoming deadlines are the table offer, the reviewer comments and the conference', () => {
     expect(api.upcomingDeadlines().map((d) => [d.day, d.text, d.href])).toEqual([
-      ['2026-10-03', 'Workshop bench decided and ordered', '/projects?p=p-bench'],
-      ['2026-10-12', 'Reviewer comments on the abstract', '/waiting'],
-      ['2026-10-14', 'Conference trip organised', '/projects?p=p-conf'],
+      ['2026-10-03', 'Dining table decided and ordered', '/projects?p=p-table'],
+      ['2026-10-12', 'Jury comments on the fair application', '/waiting'],
+      ['2026-10-14', 'Design fair trip organised', '/projects?p=p-fair'],
     ]);
   });
 
   it('an action due without its project is its own deadline, linking to its row', () => {
-    api.updateProject('p-bench', { deadline: '' });
+    api.updateProject('p-table', { deadline: '' });
     expect(api.upcomingDeadlines()[0]).toMatchObject({ day: '2026-10-03', text: item('n1').text, href: '/next?highlight=n1' });
   });
 });

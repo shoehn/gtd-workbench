@@ -1,4 +1,4 @@
-import type { ExternalEvent, Item, Project, ReviewRun, ReviewTemplate } from '../model';
+import type { ExternalEvent, Item, Project, ReviewRun, ReviewTemplate, Settings } from '../model';
 
 /** Day-specific information (SPEC §3.6, kind 4). */
 export interface TicklerEntry { id: string; day: string; text: string }
@@ -11,6 +11,11 @@ export interface State {
   today?: string;
   contexts: string[];
   buckets: string[];
+  /** One of `contexts`: where a follow-up on a waiting-for lands. */
+  followUpContext: string;
+  weekStart: Settings['weekStart'];
+  /** IANA time zone for "today", midnight and overdue; empty = the server's (TZ). */
+  timezone: string;
   /** Areas counted as "work" or "home" by the Projects filter chips; others count as neither. */
   areaKinds: Record<string, 'work' | 'home'>;
   projects: Project[];

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import * as api from './api';
-import seed from './store/seed.json';
+import { demoSeed as seed } from './store/seed';
 import { store } from './store';
 import type { State } from './store/types';
 
@@ -22,12 +22,12 @@ describe('waiting for', () => {
     const a = api.followUp('w1');
     expect(item(a.id)).toMatchObject({
       status: 'next',
-      text: 'Follow up with Marc: Annex decision for the grant report',
+      text: 'Follow up with Team lead: Appendix decision for the funding report',
       context: '@calls',
       priority: 'B',
       time: 15,
       energy: 'low',
-      projectId: 'p-grant',
+      projectId: 'p-funding',
     });
     expect(api.listNext().map((i) => i.id)).toContain(a.id);
     expect(item('w1').waiting!.followUp).toBe('2026-10-03');
@@ -43,11 +43,11 @@ describe('waiting for', () => {
   });
 
   it('received closes it, asks for a next action only when the project stalls, and undoes', () => {
-    expect(api.received('w2')).toEqual({ id: 'w2', status: 'waiting' }); // bench still has n1, n8
+    expect(api.received('w2')).toEqual({ id: 'w2', status: 'waiting' }); // table still has n1, n8
     expect(item('w2').status).toBe('done');
 
     api.demote('n3');
-    expect(api.received('w1')).toEqual({ id: 'w1', status: 'waiting', askNextFor: 'p-grant' });
+    expect(api.received('w1')).toEqual({ id: 'w1', status: 'waiting', askNextFor: 'p-funding' });
 
     api.uncomplete({ id: 'w1', status: 'waiting' });
     expect(item('w1')).toMatchObject({ status: 'waiting' });
@@ -58,15 +58,15 @@ describe('waiting for', () => {
 describe('someday / maybe', () => {
   it('groups by bucket in store order', () => {
     expect(api.listSomeday().map((g) => [g.bucket, g.items.length])).toEqual([
-      ['Workshop & electronics', 3],
-      ['Teaching & research', 2],
+      ['Studio & craft', 3],
+      ['Work & learning', 2],
       ['Home & travel', 2],
     ]);
   });
 
   it('DoD: activate puts s1 into the inbox with its text for Clarify', () => {
     api.activate('s1');
-    expect(item('s1')).toMatchObject({ status: 'inbox', text: 'Learn to solder SMD by hand' });
+    expect(item('s1')).toMatchObject({ status: 'inbox', text: 'Learn to throw bowls on the wheel' });
     expect(api.listInboxQueue().map((i) => i.id)).toContain('s1');
   });
 
@@ -99,6 +99,6 @@ describe('projects on hold', () => {
   });
 
   it('only a project on hold can be dropped', () => {
-    expect(() => api.dropProject('p-bench')).toThrow(/^dropProject:/);
+    expect(() => api.dropProject('p-table')).toThrow(/^dropProject:/);
   });
 });

@@ -84,7 +84,7 @@ export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'
           text: item.text,
           captured: item.captured,
           source: item.source,
-          when: fmtWeekdayTime(item.capturedAt),
+          when: fmtWeekdayTime(item.capturedAt, api.timeZone()),
           context: item.context,
           priority: item.priority,
           day: item.day,

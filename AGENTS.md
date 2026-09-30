@@ -25,8 +25,9 @@ capture on the phone.
   to port.
 - `docs/handoff/design/tokens.css` — the only place colors, fonts and radii are
   defined.
-- `docs/handoff/data/seed.json` — sample data. Screens render this through the
-  store, never their own literals.
+- `docs/handoff/data/seed.base.json` + `seed.demo.json` — what a new installation
+  starts with, and the demo data on top (`src/lib/store/` holds the copies the app
+  loads). Screens render them through the store, never their own literals.
 
 ## Stack
 
@@ -68,8 +69,9 @@ lib/capture-syntax.ts  parser for `#tag @context !prio ^date`
   Enforce in the store, surface in the UI, never auto-fix.
 - Priorities are `A|B|C` + running number within priority; contexts are `@name`
   strings; energy `focus|normal|low`; time buckets `15|30|60|120+` minutes.
-- Time comes from `api.now()` / `api.today()` only, never `new Date()`. Outside
-  production they run on the seed's pinned date; removing that pin is one line.
+- Time comes from `api.now()` / `api.today()` only, never `new Date()`; wall-clock
+  conversions go through `lib/clock.ts` in `api.timeZone()`. Outside production they
+  run on the demo's pinned date; removing that pin is one line.
 - Dates are ISO strings in the store; display formats follow the mockups
   (`sat 26.09`, `03.10`).
 - Accessibility as drawn: real `<button>`, `<a>`, `<input>`+`<label>`; icon-only

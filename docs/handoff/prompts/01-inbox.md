@@ -32,7 +32,7 @@ Reference: `docs/handoff/design/mockups/Main.dc.html`; SPEC §3.1. Build on the 
 ## Definition of done
 
 - Seed renders identical in structure to the mockup at 1280×860 (compare side by side).
-- Capture of `Call Lena @calls !B ^fri` creates an item whose text is "Call Lena" and
+- Capture of `Call the shop @calls !B ^fri` creates an item whose text is "Call the shop" and
   whose parsed context/priority/date are stored on the item and shown as small chips at
   the end of the row.
 - Keyboard flow j → x → ⌫ → undo works without touching the mouse.

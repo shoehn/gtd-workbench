@@ -9,7 +9,7 @@ export function parseProjectFilter(value: string | string[] | undefined): Projec
   return v === 'completed' || PROJECT_FILTERS.includes(v as (typeof PROJECT_FILTERS)[number]) ? (v as ProjectFilter) : 'active';
 }
 
-/** `/projects`, `/projects?filter=home`, `/projects?filter=home&p=p-bench`. */
+/** `/projects`, `/projects?filter=home`, `/projects?filter=home&p=p-table`. */
 export function projectsHref(filter: ProjectFilter, projectId?: string): string {
   const q = [filter !== 'active' && `filter=${filter}`, projectId && `p=${encodeURIComponent(projectId)}`].filter(Boolean);
   return q.length ? `/projects?${q.join('&')}` : '/projects';

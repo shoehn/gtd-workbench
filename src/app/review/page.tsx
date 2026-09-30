@@ -15,10 +15,10 @@ function when(iso: string, today: string, withDay = true): string {
 
 export default async function WeeklyReviewPage() {
   const today = api.today();
-  const steps = api.reviewSteps();
+  const run = api.openRun();
+  const steps = api.reviewSteps(run); // a run follows the checklist it started with
   const last = api.lastFinishedRun();
   const lastLine = last?.finishedAt ? `last: ${when(last.finishedAt, today)}` : 'no review yet';
-  const run = api.openRun();
 
   if (!run) {
     const closed = api.lastClosedRun();
@@ -45,7 +45,7 @@ export default async function WeeklyReviewPage() {
   }
 
   const current = api.currentStep(run);
-  const phases: ReviewPhase[] = api.reviewTemplate().phases.map((ph, n) => {
+  const phases: ReviewPhase[] = api.runTemplate(run).phases.map((ph, n) => {
     const rows = ph.steps.map((st) => {
       const entry = run.steps.find((s) => s.stepId === st.id);
       const minutes = api.stepMinutes(run, st.id);

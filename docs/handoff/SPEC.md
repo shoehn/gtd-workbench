@@ -21,8 +21,11 @@ phone is the same lists with one-hand capture.
 | `/waiting` | `Waiting` / `M-Waiting` | Waiting For and Someday/Maybe (two panes / two tabs) |
 | `/calendar` | `Calendar` / `M-Calendar` | Hard landscape: week view / agenda |
 | `/review` | `Review` / `M-Review` | Weekly review checklist with timer |
+| `/settings` | — (built from the primitives) | Contexts, buckets, calendars, time zone, review checklist |
 
-Reference is a sidebar entry but not a screen in v1 (link goes to Projects). Desktop shell:
+Reference is a sidebar entry but not a screen in v1 (link goes to Projects). Settings
+(`/settings`) is desktop-only in v1: the sidebar links to it, the phone tab bar does not (the
+page still works at phone width). Desktop shell:
 224 px sidebar (Collect / Do / Horizons groups + Weekly Review at the bottom), 48 px top bar
 with a "Capture to inbox" field on every screen except Inbox and Clarify. Phone shell:
 five-tab bar (Inbox, Next, Projects, Waiting, Review); Calendar and Clarify are reached
@@ -33,6 +36,9 @@ from Next and Inbox respectively. Phone rules: §3.8.
 ### 3.1 Capture (Inbox)
 - One line per thought, Enter captures, field clears, nothing else happens. Capture never
   asks questions.
+- First run: on a database created at this boot, a card above the list says "New here.
+  Capture the first thing on your mind; the lists fill themselves. Contexts and the review
+  checklist are in settings." The first capture dismisses it. No wizard, no tour.
 - Inline shorthand is parsed best-effort: `#tag`, `@context`, `!A|!B|!C`, `^date`
   (`^03.10`, `^fri`, `^tomorrow`). Unparseable tokens stay in the text.
 - Items carry `source`: typed | voice | email | share | scan. Only `typed` exists in v1;
@@ -117,7 +123,8 @@ from Next and Inbox respectively. Phone rules: §3.8.
 - Waiting For row: what, from whom, project, since, follow-up date. Overdue rows tinted.
   Fixed order: follow-up date ascending, undated last, ties by oldest since (no sort menu in
   v1). `f` creates "Follow up with <who>: <what>" — @computer when who is a desk, support
-  or committee, else @calls; B, 15 min, low; same project — and moves the follow-up date
+  or committee, else the follow-up context from Settings (default @calls); B, 15 min, low;
+  same project — and moves the follow-up date
   to a week from today. `x` received offers undo for 5 s; if the project is left without a
   next action, an inline "Next action for <project>?" asks for one (skip allowed).
   `/waiting?filter=overdue` shows only overdue rows (linked from Health and project detail).
@@ -168,6 +175,9 @@ review, bins) repeat here. Everything else stays on the lists.
 - A checklist template shipped with the app (Get clear 4 steps / Get current 6 / Get
   creative 2) that the user can edit; each review is an instance of the template at that
   time. Phase names are fixed (they drive the stalled/overdue warnings elsewhere).
+- A run stores a copy of the template when it starts (`ReviewRun.template`): editing the
+  checklist never changes a review under way; the next one uses the edit. An added step
+  linked to a list (e.g. `/waiting`) gets that list's live figure and measured note.
 - Start → timer runs, sidebar shows "in progress". Steps link to the screen where the
   work happens; the user leaves, does the maintenance there, comes back and ticks.
 - Step notes ("captured 6 items", "14 → 0", "2 moved to someday") are **measured deltas**
@@ -220,6 +230,27 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
   44 px hit area around them. No hover-only control: what appears on hover on desktop is
   always visible on phone (the bucket select).
 
+### 3.9 Settings
+- `/settings`, a small mono "settings" link under Weekly Review in the sidebar (desktop only
+  in v1, see §2).
+  One column of cards: Contexts, Someday / Maybe buckets, Calendars (read-only names; the
+  time zone), the review checklist. No save button: a row commits on ⏎ or leaving the
+  field; every change offers undo for 5 s (`u` / `⌘Z`).
+- Contexts and buckets are lists the items point to, not loose strings. A context is `@`
+  and one word; names are unique regardless of case. Renaming renames every item that uses
+  it, in one transaction. Deleting is refused while open items use it ("6 actions use
+  @computer — move them first", with a link to `/next?ctx=@computer`; buckets link to
+  Someday / Maybe). Order = display order (↑ ↓).
+- Follow-up context: a select in the Contexts card ("Follow-ups go to", default @calls) picks
+  where `f` on a waiting-for files its action. It is treated like an item using the context:
+  a rename carries it along; a delete is refused while it points there ("@calls is where
+  follow-ups go — choose another context for them first").
+- The checklist: steps are edited per phase (text, optional link to a screen, order, add,
+  remove); "Reset to GTD default" restores the base seed's template.
+- Time zone (Settings.timezone, else the server's `TZ`): "today", midnight (focus stars),
+  overdue and the calendar's now line all count in it; one clock in `lib/clock.ts` behind
+  `api.now()` / `api.today()`.
+
 ## 4. The "one control per decision" rule
 
 A state is set on exactly one screen and only shown elsewhere, as a label linking to where
@@ -270,7 +301,7 @@ interface Project {
   id: string;
   title: string;              // outcome phrasing
   successfulWhen?: string;
-  area?: string;              // 'Home & workshop'
+  area?: string;              // 'Home & garden'
   goal?: string;
   deadline?: string;
   status: 'active' | 'someday' | 'completed';
@@ -291,10 +322,21 @@ interface ReviewTemplate { phases: { id: string; name: string; steps: { id: stri
 interface ReviewCounters { inbox: number; someday: number; waitingOverdue: number; stalled: number }
 interface ReviewRun {
   id: string; startedAt: string; finishedAt?: string; pausedMs: number;
+  template?: ReviewTemplate;  // the checklist as it was when the run started
   pausedAt?: string;          // set while paused
   steps: { stepId: string; doneAt?: string; note?: string; openedAt?: string; snapshot?: ReviewCounters }[];
   notes: string;
   outcome?: 'finished' | 'abandoned';
+}
+
+// One per installation, edited on /settings.
+interface Settings {
+  contexts: string[];         // '@computer', in the order Next Actions shows them
+  followUpContext: string;    // where `f` on a waiting-for files the action (default '@calls')
+  buckets: string[];          // Someday/Maybe buckets, in display order
+  reviewTemplate: ReviewTemplate;
+  weekStart: 'mon';
+  timezone: string;           // IANA; empty = the server's TZ
 }
 
 interface ExternalEvent { id: string; calendar: string; title: string; start: string; end: string; allDay: boolean }
@@ -302,10 +344,11 @@ interface ExternalEvent { id: string; calendar: string; title: string; start: st
 
 Storage (`STORE=memory|sqlite`, sqlite by default in production, memory in dev and tests;
 `DATABASE_FILE`, default `data/gtd.db`): SQLite through Drizzle, one table per interface
-above plus the store-level lists (contexts, buckets, area kinds, tickler, external
-calendars, settings). A database that was never filled starts from the base seed
-(`seed.base.json`: contexts, buckets, review template — no demo data); memory mode and
-`db:seed` / `db:reset` use the demo seed. Deployment, backup and restore:
+above plus the store-level lists (area kinds, tickler, external calendars); `Settings` is
+one JSON row in the `settings` table. Two seeds: `seed.base.json` (generic contexts and
+buckets, the review template, week start, time zone) and `seed.demo.json` (the demo's own
+contexts and buckets, projects, items, calendar, review runs). A database that was never
+filled gets the base only; memory mode and `db:seed` / `db:reset` load base + demo. Deployment, backup and restore:
 `docs/OPERATIONS.md`. Deviations from the interfaces, each for a reason:
 - `Item.timeSlot` and `Item.waiting` are flattened into `time_slot_start/_end` and
   `waiting_who/_since/_follow_up`: always read with their item, and `waiting` is queried.

@@ -97,7 +97,20 @@ function runRow(r: ReviewRun, seq: number) {
     steps: r.steps,
     notes: r.notes,
     outcome: r.outcome ?? null,
+    template: r.template ?? null,
   };
+}
+
+/** The user's Settings, stored as one JSON row. */
+function settingsValue(s: State): string {
+  return JSON.stringify({
+    contexts: s.contexts,
+    followUpContext: s.followUpContext,
+    buckets: s.buckets,
+    reviewTemplate: s.reviewTemplate,
+    weekStart: s.weekStart,
+    timezone: s.timezone,
+  });
 }
 
 function eventRow(e: ExternalEvent, seq: number) {
@@ -110,18 +123,16 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
     { table: t.items, pk: t.items.id, key: 'id', rows: s.items.map(itemRow) },
     { table: t.projects, pk: t.projects.id, key: 'id', rows: s.projects.map(projectRow) },
     { table: t.reviewRuns, pk: t.reviewRuns.id, key: 'id', rows: s.reviewRuns.map(runRow) },
-    { table: t.reviewTemplates, pk: t.reviewTemplates.id, key: 'id', rows: [{ id: 'default', phases: s.reviewTemplate.phases }] },
     { table: t.externalEvents, pk: t.externalEvents.id, key: 'id', rows: s.externalEvents.map(eventRow) },
     { table: t.externalCalendars, pk: t.externalCalendars.name, key: 'name', rows: s.externalCalendars.map((c, seq) => ({ name: c.name, seq, via: c.via })) },
     { table: t.tickler, pk: t.tickler.id, key: 'id', rows: s.tickler.map((e, seq) => ({ id: e.id, seq, day: e.day, text: e.text })) },
-    { table: t.contexts, pk: t.contexts.name, key: 'name', rows: s.contexts.map((name, seq) => ({ name, seq })) },
-    { table: t.buckets, pk: t.buckets.name, key: 'name', rows: s.buckets.map((name, seq) => ({ name, seq })) },
     { table: t.areaKinds, pk: t.areaKinds.area, key: 'area', rows: Object.entries(s.areaKinds).map(([area, kind], seq) => ({ area, seq, kind })) },
     {
       table: t.settings,
       pk: t.settings.key,
       key: 'key',
       rows: [
+        { key: 'settings', value: settingsValue(s) },
         ...(s.today ? [{ key: 'today', value: s.today }] : []),
         ...(s.externalSyncedAt ? [{ key: 'externalSyncedAt', value: s.externalSyncedAt }] : []),
       ],
@@ -151,13 +162,20 @@ function write(db: Db, before: State | null, after: State) {
 /** The state in the database, or `null` when it has never been filled. */
 function load(db: Db): State | null {
   const bySeq = <R extends { seq: number }>(rows: R[]) => rows.sort((a, b) => a.seq - b.seq);
-  const template = db.select().from(t.reviewTemplates).all()[0];
-  if (!template) return null;
   const settings = Object.fromEntries(db.select().from(t.settings).all().map((s) => [s.key, s.value]));
+  if (!settings.settings) return null;
+  const user = JSON.parse(settings.settings) as Pick<
+    State,
+    'contexts' | 'followUpContext' | 'buckets' | 'reviewTemplate' | 'weekStart' | 'timezone'
+  >;
   return {
     ...(settings.today && { today: settings.today }),
-    contexts: bySeq(db.select().from(t.contexts).all()).map((c) => c.name),
-    buckets: bySeq(db.select().from(t.buckets).all()).map((b) => b.name),
+    contexts: user.contexts,
+    // Rows written before the setting existed: @calls if it is a context, else the first one.
+    followUpContext: user.followUpContext ?? (user.contexts.includes('@calls') ? '@calls' : user.contexts[0]),
+    buckets: user.buckets,
+    weekStart: user.weekStart,
+    timezone: user.timezone,
     areaKinds: Object.fromEntries(bySeq(db.select().from(t.areaKinds).all()).map((a) => [a.area, a.kind as 'work' | 'home'])),
     projects: bySeq(db.select().from(t.projects).all()).map((p) => compact(unseq(p)) as unknown as Project),
     items: bySeq(db.select().from(t.items).all()).map(rowItem),
@@ -165,7 +183,7 @@ function load(db: Db): State | null {
     externalCalendars: bySeq(db.select().from(t.externalCalendars).all()).map(({ name, via }) => ({ name, via })),
     ...(settings.externalSyncedAt && { externalSyncedAt: settings.externalSyncedAt }),
     externalEvents: bySeq(db.select().from(t.externalEvents).all()).map(unseq),
-    reviewTemplate: { phases: template.phases },
+    reviewTemplate: user.reviewTemplate,
     reviewRuns: bySeq(db.select().from(t.reviewRuns).all()).map((r) => compact(unseq(r)) as unknown as ReviewRun),
   };
 }

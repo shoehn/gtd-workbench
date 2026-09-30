@@ -199,3 +199,40 @@ export async function finishReviewAction(): Promise<void> {
   api.finishReview();
   revalidatePath('/', 'layout');
 }
+
+/** Settings changes answer with the refusal instead of throwing: it is shown next to the row. */
+export type SettingsResult = { error?: string };
+
+async function settle(run: () => void): Promise<SettingsResult> {
+  try {
+    run();
+  } catch (e) {
+    return { error: (e instanceof Error ? e.message : String(e)).replace(/^settings: /, '') };
+  }
+  revalidatePath('/', 'layout');
+  return {};
+}
+
+export async function addListEntryAction(list: api.SettingsList, name: string, at?: number): Promise<SettingsResult> {
+  return settle(() => api.addListEntry(list, name, at));
+}
+
+export async function renameListEntryAction(list: api.SettingsList, from: string, to: string): Promise<SettingsResult> {
+  return settle(() => api.renameListEntry(list, from, to));
+}
+
+export async function deleteListEntryAction(list: api.SettingsList, name: string): Promise<SettingsResult> {
+  return settle(() => api.deleteListEntry(list, name));
+}
+
+export async function moveListEntryAction(list: api.SettingsList, name: string, to: number): Promise<SettingsResult> {
+  return settle(() => api.moveListEntry(list, name, to));
+}
+
+export async function updateSettingsAction(patch: Parameters<typeof api.updateSettings>[0]): Promise<SettingsResult> {
+  return settle(() => api.updateSettings(patch));
+}
+
+export async function resetTemplateAction(): Promise<SettingsResult> {
+  return settle(() => api.resetTemplate());
+}

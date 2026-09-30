@@ -51,7 +51,7 @@ describe('measured notes', () => {
 describe('live lines', () => {
   const facts: ListFacts = {
     inbox: 14, next: 23, waiting: 7, waitingOverdue: 1, projects: 11, stalled: 2, someday: 31,
-    areas: ['Teaching', 'Research', 'Home'],
+    areas: ['Clients', 'Studio', 'Home'],
     calendar: { past7: 11, next14: 4, deadlines14: [{ text: 'conference', day: '2026-10-14' }, { text: 'x', day: '2026-10-20' }] },
   };
 
@@ -63,7 +63,7 @@ describe('live lines', () => {
     expect(liveLine('someday', facts)).toEqual({ text: '31 items · activate or drop', href: '/waiting?tab=someday', warn: false });
     expect(liveLine('past-cal', facts)?.text).toBe('last 7 days: 11 events · any follow-ups?');
     expect(liveLine('future-cal', facts)?.text).toBe('next 14 days: 2 hard deadlines, conference 14.10');
-    expect(liveLine('areas', facts)?.text).toBe('teaching · research · home');
+    expect(liveLine('areas', facts)?.text).toBe('clients · studio · home');
     expect(liveLine('collect', facts)).toBeUndefined();
   });
 });

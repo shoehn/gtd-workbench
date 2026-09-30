@@ -45,8 +45,8 @@ appear here — that is the point of the screen.
 
 ## Definition of done
 
-- Week 39 of the seed renders as the mockup: Mon lecture block, Tue meeting, Tue/Wed
+- Week 39 of the seed renders as the mockup: Mon client session, Tue meeting, Tue/Wed
   done day-actions, Thu office hours, Fri tickler + deep-work time block, Sat dentist,
-  Marc call, abstract deadline, now-line, Sun bins tickler + weekly review block.
+  team-lead call, application deadline, now-line, Sun bins tickler + weekly review block.
 - Dragging n2 from `/next` onto Mon 09:00 creates a time block there and stars n2.
-- Upcoming deadlines lists 03.10 bench offer, 12.10 reviewer comments, 14.10 conference.
+- Upcoming deadlines lists 03.10 table offer, 12.10 jury comments, 14.10 fair.

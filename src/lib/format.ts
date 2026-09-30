@@ -1,3 +1,5 @@
+import { wallClock } from './clock';
+
 // Display formats from the mockups: `sat 26.09`, `03.10`. Input is an ISO date or datetime.
 
 const WEEKDAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -19,12 +21,11 @@ export function fmtDay(iso: string): string {
   return `${WEEKDAYS[date.getDay()]} ${dd}.${mm}`;
 }
 
-/** `sat 09:12` */
-export function fmtWeekdayTime(iso: string): string {
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${WEEKDAYS[d.getDay()]} ${hh}:${mi}`;
+/** `sat 09:12`, on the wall clock of `timeZone` (default: the server's). */
+export function fmtWeekdayTime(iso: string, timeZone?: string): string {
+  const w = wallClock(new Date(iso), timeZone);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${WEEKDAYS[parts(w.day).date.getDay()]} ${pad(w.hour)}:${pad(w.minute)}`;
 }
 
 /** `2 h` below a day, `1 d` from there. */

@@ -1,17 +1,20 @@
 {
   "contexts": [
     "@computer",
+    "@calls",
     "@office",
     "@home",
-    "@calls",
     "@errands",
-    "@workshop"
+    "@anywhere"
   ],
+  "followUpContext": "@calls",
   "buckets": [
-    "Workshop & electronics",
-    "Teaching & research",
-    "Home & travel"
+    "Projects to start",
+    "Things to learn",
+    "Places to go"
   ],
+  "weekStart": "mon",
+  "timezone": "Europe/Zurich",
   "areaKinds": {},
   "projects": [],
   "items": [],

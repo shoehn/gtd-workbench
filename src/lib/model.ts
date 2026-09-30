@@ -33,7 +33,7 @@ export interface Project {
   id: string;
   title: string;              // outcome phrasing
   successfulWhen?: string;
-  area?: string;              // 'Home & workshop'
+  area?: string;              // 'Home & garden'
   goal?: string;
   deadline?: string;
   status: 'active' | 'someday' | 'completed';
@@ -51,10 +51,21 @@ export interface ReviewTemplate { phases: { id: string; name: string; steps: { i
 export interface ReviewCounters { inbox: number; someday: number; waitingOverdue: number; stalled: number }
 export interface ReviewRun {
   id: string; startedAt: string; finishedAt?: string; pausedMs: number;
+  template?: ReviewTemplate;  // the checklist as it was when the run started; later edits leave it alone
   pausedAt?: string;          // ISO; set while paused
   steps: { stepId: string; doneAt?: string; note?: string; openedAt?: string; snapshot?: ReviewCounters }[];
   notes: string;
   outcome?: 'finished' | 'abandoned';
+}
+
+/** User settings, one per installation (edited on /settings). */
+export interface Settings {
+  contexts: string[];         // '@computer', in display order
+  followUpContext: string;    // where `f` on a waiting-for files the chase (default '@calls')
+  buckets: string[];          // Someday/Maybe buckets, in display order
+  reviewTemplate: ReviewTemplate;
+  weekStart: 'mon';
+  timezone: string;           // IANA, e.g. 'Europe/Zurich'
 }
 
 export interface ExternalEvent { id: string; calendar: string; title: string; start: string; end: string; allDay: boolean }

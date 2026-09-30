@@ -1,0 +1,109 @@
+{
+  "contexts": ["@computer", "@office", "@home", "@calls", "@errands", "@studio"],
+  "buckets": ["Studio & craft", "Work & learning", "Home & travel"],
+  "today": "2026-09-26",
+  "areaKinds": { "Clients": "work", "Studio": "work", "Home": "home", "Home & garden": "home", "Pottery": "home" },
+  "projects": [
+    { "id": "p-table", "title": "Dining table decided and ordered", "successfulWhen": "A table that fits the 180 cm nook is ordered, delivery date known, old table listed for sale.", "area": "Home & garden", "goal": "Kitchen ready for guests by winter", "deadline": "2026-10-03", "status": "active", "createdAt": "2026-09-26T08:20:00+02:00", "createdFrom": "inbox", "notes": "Nook: 180 × 92 cm, radiator on the left wall. The shop's offer includes delivery to the door only — stairs are our problem. Quote A is cheaper but 190 cm long.", "lastReviewedAt": "2026-09-23" },
+    { "id": "p-onboarding", "title": "Client onboarding kit ready", "area": "Clients", "status": "active", "notes": "", "lastReviewedAt": "2026-09-25" },
+    { "id": "p-funding", "title": "Funding report submitted", "area": "Studio", "status": "active", "notes": "", "lastReviewedAt": "2026-09-17" },
+    { "id": "p-fair", "title": "Design fair trip organised", "area": "Studio", "deadline": "2026-10-14", "status": "active", "notes": "", "lastReviewedAt": "2026-09-24" },
+    { "id": "p-glaze", "title": "Glaze test series fired", "area": "Pottery", "status": "active", "notes": "", "lastReviewedAt": "2026-09-21" },
+    { "id": "p-home", "title": "Home maintenance 2026", "area": "Home", "status": "active", "notes": "", "lastReviewedAt": "2026-09-20" },
+    { "id": "p-shelves", "title": "Pottery shelves reorganised", "area": "Pottery", "status": "active", "notes": "", "lastReviewedAt": "2026-09-05" },
+    { "id": "p-blog", "title": "Blog post on the glaze tests published", "area": "Pottery", "status": "active", "notes": "", "lastReviewedAt": "2026-09-22" }
+  ],
+  "items": [
+    { "id": "i1", "text": "Call the dentist about the invoice", "captured": "Call the dentist about the invoice", "source": "typed", "capturedAt": "2026-09-26T09:12:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i2", "text": "Idea: run the project retrospective as a silent brainstorm", "captured": "Idea: run the project retrospective as a silent brainstorm", "source": "voice", "capturedAt": "2026-09-26T08:40:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i4", "text": "Replace the kitchen tap cartridge", "captured": "Replace the kitchen tap cartridge", "source": "typed", "capturedAt": "2026-09-25T12:31:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i5", "text": "Read: \"Deep Work\" chapter 3 notes from a colleague", "captured": "Read: \"Deep Work\" chapter 3 notes from a colleague", "source": "share", "capturedAt": "2026-09-24T21:15:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i6", "text": "Book train for the design fair", "captured": "Book train for the design fair", "source": "typed", "capturedAt": "2026-09-24T16:48:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i7", "text": "Warranty card for the printer — where to file?", "captured": "Warranty card for the printer — where to file?", "source": "scan", "capturedAt": "2026-09-24T10:03:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i8", "text": "Ask the team lead whether the funding report needs the appendix", "captured": "Ask the team lead whether the funding report needs the appendix", "source": "voice", "capturedAt": "2026-09-23T19:20:00+02:00", "status": "inbox", "tags": [] },
+    { "id": "i9", "text": "Maybe learn to throw bowls on the wheel", "captured": "Maybe learn to throw bowls on the wheel", "source": "typed", "capturedAt": "2026-09-23T08:55:00+02:00", "status": "inbox", "tags": [] },
+
+    { "id": "n1", "text": "Compare the furniture shop's offer with the two quotes in Reference", "captured": "Fwd: Offer for the new dining table — decide by Oct 3", "source": "email", "capturedAt": "2026-09-25T17:02:00+02:00", "status": "next", "projectId": "p-table", "context": "@computer", "priority": "A", "priorityNo": 1, "time": 30, "energy": "focus", "deadline": "2026-10-03", "focusOn": "2026-09-26", "tags": [] },
+    { "id": "n2", "text": "Draft the welcome checklist for new clients", "captured": "Draft the welcome checklist for new clients", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "next", "projectId": "p-onboarding", "context": "@computer", "priority": "A", "priorityNo": 2, "time": 60, "energy": "focus", "focusOn": "2026-09-26", "tags": [] },
+    { "id": "n3", "text": "Reply to the team lead re: appendix for the funding report", "captured": "Reply to the team lead re: appendix", "source": "typed", "capturedAt": "2026-09-21T10:00:00+02:00", "status": "next", "projectId": "p-funding", "context": "@computer", "priority": "B", "priorityNo": 1, "time": 15, "energy": "low", "tags": [] },
+    { "id": "n4", "text": "Book train to the design fair, 14.10", "captured": "Book train for the design fair", "source": "typed", "capturedAt": "2026-09-21T10:00:00+02:00", "status": "next", "projectId": "p-fair", "context": "@computer", "priority": "B", "priorityNo": 2, "time": 15, "energy": "low", "tags": [] },
+    { "id": "n5", "text": "List the glazes for the test series and check stock", "captured": "List the glazes for the test series and check stock", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "next", "projectId": "p-glaze", "context": "@computer", "priority": "B", "priorityNo": 3, "time": 30, "energy": "normal", "tags": [] },
+    { "id": "n6", "text": "Clean up the shared drive folder for last quarter", "captured": "Clean up the shared drive folder for last quarter", "source": "typed", "capturedAt": "2026-08-20T10:00:00+02:00", "status": "next", "context": "@computer", "priority": "C", "time": 30, "energy": "low", "tags": [] },
+    { "id": "n7", "text": "Call dentist: ask for the corrected invoice", "captured": "Call the dentist about the invoice", "source": "typed", "capturedAt": "2026-09-26T09:12:00+02:00", "status": "next", "context": "@calls", "priority": "A", "priorityNo": 3, "time": 15, "energy": "low", "tags": [] },
+    { "id": "n8", "text": "Call the furniture shop: ask about delivery lead time", "captured": "Call the shop about delivery", "source": "typed", "capturedAt": "2026-09-25T10:00:00+02:00", "status": "next", "projectId": "p-table", "context": "@calls", "priority": "B", "priorityNo": 4, "time": 15, "energy": "normal", "tags": [] },
+    { "id": "n9", "text": "Call plumber for a quote on the tap cartridge", "captured": "Replace the kitchen tap cartridge", "source": "typed", "capturedAt": "2026-09-25T12:31:00+02:00", "status": "next", "projectId": "p-home", "context": "@calls", "priority": "C", "time": 15, "energy": "low", "tags": [] },
+    { "id": "n10", "text": "Photograph the fired test tiles", "captured": "Photograph the fired test tiles", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "next", "projectId": "p-blog", "context": "@studio", "priority": "B", "priorityNo": 5, "time": 30, "energy": "normal", "tags": [] },
+
+    { "id": "l1", "text": "Place the order and pay the deposit", "captured": "Place the order and pay the deposit", "source": "typed", "capturedAt": "2026-09-25T17:10:00+02:00", "status": "later", "projectId": "p-table", "tags": [] },
+    { "id": "l2", "text": "List the old table on the marketplace", "captured": "List the old table on the marketplace", "source": "typed", "capturedAt": "2026-09-25T17:10:00+02:00", "status": "later", "projectId": "p-table", "tags": [] },
+    { "id": "l3", "text": "Clear the nook the weekend before delivery", "captured": "Clear the nook the weekend before delivery", "source": "typed", "capturedAt": "2026-09-25T17:10:00+02:00", "status": "later", "projectId": "p-table", "tags": [] },
+    { "id": "d1", "text": "Measure the dining nook", "captured": "Measure the dining nook", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "done", "projectId": "p-table", "context": "@home", "doneAt": "2026-09-26T08:30:00+02:00", "focusOn": "2026-09-26", "tags": [] },
+
+    { "id": "w1", "text": "Appendix decision for the funding report", "captured": "Appendix decision for the funding report", "source": "typed", "capturedAt": "2026-09-14T10:00:00+02:00", "status": "waiting", "projectId": "p-funding", "waiting": { "who": "Team lead", "since": "2026-09-14", "followUp": "2026-09-24" }, "tags": [] },
+    { "id": "w2", "text": "Confirm stair delivery surcharge", "captured": "Confirm stair delivery surcharge", "source": "typed", "capturedAt": "2026-09-25T10:00:00+02:00", "status": "waiting", "projectId": "p-table", "waiting": { "who": "Furniture shop", "since": "2026-09-25", "followUp": "2026-09-29" }, "tags": [] },
+    { "id": "w3", "text": "Room booking for the client kickoff", "captured": "Room booking for the client kickoff", "source": "typed", "capturedAt": "2026-09-22T10:00:00+02:00", "status": "waiting", "projectId": "p-onboarding", "waiting": { "who": "Facilities desk", "since": "2026-09-22", "followUp": "2026-09-30" }, "tags": [] },
+    { "id": "w4", "text": "Clay order #4471 (stoneware + glazes)", "captured": "Clay order #4471", "source": "typed", "capturedAt": "2026-09-20T10:00:00+02:00", "status": "waiting", "projectId": "p-glaze", "waiting": { "who": "Clay supplier", "since": "2026-09-20", "followUp": "2026-10-02" }, "tags": [] },
+    { "id": "w5", "text": "Jury comments on the fair application", "captured": "Jury comments on the fair application", "source": "typed", "capturedAt": "2026-09-24T10:00:00+02:00", "status": "waiting", "projectId": "p-fair", "deadline": "2026-10-12", "waiting": { "who": "Fair committee", "since": "2026-09-24", "followUp": "2026-10-12" }, "tags": [] },
+    { "id": "w6", "text": "Refund for the returned kitchen scale", "captured": "Refund for the returned kitchen scale", "source": "typed", "capturedAt": "2026-09-18T10:00:00+02:00", "status": "waiting", "waiting": { "who": "Shop support", "since": "2026-09-18", "followUp": "2026-10-05" }, "tags": [] },
+    { "id": "w7", "text": "Borrowed ladder back", "captured": "Borrowed ladder back", "source": "typed", "capturedAt": "2026-09-07T10:00:00+02:00", "status": "waiting", "waiting": { "who": "Neighbour", "since": "2026-09-07" }, "tags": [] },
+
+    { "id": "s1", "text": "Learn to throw bowls on the wheel", "captured": "Learn to throw bowls on the wheel", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Studio & craft", "tags": [] },
+    { "id": "s2", "text": "Build a small outdoor kiln", "captured": "Build a small outdoor kiln", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Studio & craft", "tags": [] },
+    { "id": "s3", "text": "Better ventilation for the studio", "captured": "Better ventilation for the studio", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Studio & craft", "tags": [] },
+    { "id": "s4", "text": "Silent-brainstorm format for the retrospective", "captured": "Silent-brainstorm format for the retrospective", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Work & learning", "tags": [] },
+    { "id": "s5", "text": "Write up the onboarding lessons as a short article", "captured": "Write up the onboarding lessons as a short article", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Work & learning", "tags": [] },
+    { "id": "s6", "text": "A week of walking along a coast", "captured": "A week of walking along a coast", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Home & travel", "tags": [] },
+    { "id": "s7", "text": "Replace the garden fence", "captured": "Replace the garden fence", "source": "typed", "capturedAt": "2026-08-01T10:00:00+02:00", "status": "someday", "bucket": "Home & travel", "tags": [] },
+
+    { "id": "c1", "text": "Submit fair application", "captured": "Submit fair application", "source": "typed", "capturedAt": "2026-09-10T10:00:00+02:00", "status": "calendar", "projectId": "p-fair", "day": "2026-09-26", "deadline": "2026-09-26", "tags": [] },
+    { "id": "c2", "text": "Pay the printer invoice", "captured": "Pay the printer invoice", "source": "typed", "capturedAt": "2026-09-15T10:00:00+02:00", "status": "done", "day": "2026-09-23", "doneAt": "2026-09-23T12:00:00+02:00", "tags": [] },
+    { "id": "c3", "text": "Hand in the project brief", "captured": "Hand in the project brief", "source": "typed", "capturedAt": "2026-09-15T10:00:00+02:00", "status": "done", "projectId": "p-onboarding", "day": "2026-09-22", "doneAt": "2026-09-22T12:00:00+02:00", "tags": [] },
+    { "id": "c4", "text": "Deep work: welcome checklist", "captured": "Deep work: welcome checklist", "source": "typed", "capturedAt": "2026-09-24T10:00:00+02:00", "status": "calendar", "projectId": "p-onboarding", "day": "2026-09-25", "timeSlot": { "start": "2026-09-25T10:00:00+02:00", "end": "2026-09-25T11:00:00+02:00" }, "tags": [] },
+    { "id": "c5", "text": "Weekly review", "captured": "Weekly review", "source": "typed", "capturedAt": "2026-01-01T10:00:00+01:00", "status": "calendar", "day": "2026-09-27", "timeSlot": { "start": "2026-09-27T17:00:00+02:00", "end": "2026-09-27T18:00:00+02:00" }, "tags": ["recurring:weekly"] }
+  ],
+  "tickler": [
+    { "id": "t1", "day": "2026-09-25", "text": "Table offer arrives · decide by 03.10" },
+    { "id": "t2", "day": "2026-09-27", "text": "Bins out · paper" }
+  ],
+  "externalCalendars": [{ "name": "Work", "via": "Exchange" }, { "name": "Private", "via": "CalDAV" }],
+  "externalSyncedAt": "2026-09-26T09:14:00+02:00",
+  "externalEvents": [
+    { "id": "e1", "calendar": "Work", "title": "Client session", "start": "2026-09-21T09:00:00+02:00", "end": "2026-09-21T12:00:00+02:00", "allDay": false },
+    { "id": "e2", "calendar": "Work", "title": "Studio meeting", "start": "2026-09-22T13:00:00+02:00", "end": "2026-09-22T14:00:00+02:00", "allDay": false },
+    { "id": "e3", "calendar": "Work", "title": "Office hours", "start": "2026-09-24T16:00:00+02:00", "end": "2026-09-24T18:00:00+02:00", "allDay": false },
+    { "id": "e4", "calendar": "Private", "title": "Dentist", "start": "2026-09-26T10:00:00+02:00", "end": "2026-09-26T10:45:00+02:00", "allDay": false },
+    { "id": "e5", "calendar": "Work", "title": "Call with team lead — funding report", "start": "2026-09-26T14:00:00+02:00", "end": "2026-09-26T14:30:00+02:00", "allDay": false }
+  ],
+  "reviewRuns": [
+    {
+      "id": "r-2026-38", "startedAt": "2026-09-18T16:00:00+02:00", "finishedAt": "2026-09-18T16:45:00+02:00", "pausedMs": 0, "outcome": "finished",
+      "steps": [
+        { "stepId": "collect", "doneAt": "2026-09-18T16:02:00+02:00" },
+        { "stepId": "zero-email", "doneAt": "2026-09-18T16:08:00+02:00" },
+        { "stepId": "mind-sweep", "doneAt": "2026-09-18T16:13:00+02:00" },
+        { "stepId": "inbox-zero", "doneAt": "2026-09-18T16:17:00+02:00" },
+        { "stepId": "next", "doneAt": "2026-09-18T16:23:00+02:00" },
+        { "stepId": "past-cal", "doneAt": "2026-09-18T16:25:00+02:00" },
+        { "stepId": "future-cal", "doneAt": "2026-09-18T16:28:00+02:00" },
+        { "stepId": "waiting", "doneAt": "2026-09-18T16:32:00+02:00" },
+        { "stepId": "projects", "doneAt": "2026-09-18T16:40:00+02:00" },
+        { "stepId": "areas", "doneAt": "2026-09-18T16:42:00+02:00" },
+        { "stepId": "someday", "doneAt": "2026-09-18T16:44:00+02:00" },
+        { "stepId": "ideas", "doneAt": "2026-09-18T16:45:00+02:00" }
+      ],
+      "notes": ""
+    },
+    {
+      "id": "r-2026-39", "startedAt": "2026-09-26T16:30:00+02:00", "pausedMs": 0,
+      "steps": [
+        { "stepId": "collect", "doneAt": "2026-09-26T16:33:00+02:00", "note": "desk, bag, studio shelf, car" },
+        { "stepId": "zero-email", "doneAt": "2026-09-26T16:42:00+02:00", "note": "captured 6 items to inbox" },
+        { "stepId": "mind-sweep", "doneAt": "2026-09-26T16:48:00+02:00", "note": "mind sweep with the trigger list" },
+        { "stepId": "inbox-zero", "doneAt": "2026-09-26T16:48:30+02:00", "note": "14 → 0" },
+        { "stepId": "next", "doneAt": "2026-09-26T16:55:00+02:00", "note": "marked 5 done, 2 moved to someday" },
+        { "stepId": "past-cal", "openedAt": "2026-09-26T16:55:00+02:00" }
+      ],
+      "notes": "Too many @computer A-items — the welcome checklist and the table decision compete for the same two focus blocks. Decide the table on Monday morning, checklist Tuesday."
+    }
+  ]
+}

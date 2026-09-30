@@ -1,3 +1,4 @@
+import { FirstRunCard } from '@/components/inbox/FirstRunCard';
 import { InboxList, type InboxRow } from '@/components/inbox/InboxList';
 import { PhoneInbox, PhoneRapidLog } from '@/components/inbox/PhoneInbox';
 import { RapidLog } from '@/components/inbox/RapidLog';
@@ -14,7 +15,7 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
     id: i.id,
     text: i.text,
     source: i.source,
-    captured: fmtWeekdayTime(i.capturedAt),
+    captured: fmtWeekdayTime(i.capturedAt, api.timeZone()),
     age: fmtAge(api.ageHours(i)),
     aging: api.ageDays(i) >= 3,
     context: i.context,
@@ -23,6 +24,7 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
     tags: i.tags,
   }));
   const oldest = items.at(-1);
+  const firstRun = api.firstRun();
   const meta = oldest ? `${items.length} open · oldest ${fmtAge(api.ageHours(oldest))}` : '0 open';
   const hotkey = <span className="font-mono text-meta opacity-80">c</span>;
   const clarifyCls =
@@ -49,9 +51,15 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
         header: <PhoneRapidLog focus={params.capture === '1'} />,
       }}
     >
+      {firstRun && (
+        <div className="lg:hidden">
+          <FirstRunCard />
+        </div>
+      )}
       <PhoneInbox rows={rows} />
       <div className="flex h-full flex-col gap-4 max-lg:hidden">
         <RapidLog />
+        {firstRun && <FirstRunCard />}
         <InboxList rows={rows} />
       </div>
     </Page>

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import seed from './seed.json';
+import { demoSeed as seed } from './seed';
 import { STORE_KIND } from '.';
 import { createSqliteStore } from './sqlite';
 import type { State } from './types';

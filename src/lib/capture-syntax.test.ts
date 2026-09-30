@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parse } from './capture-syntax';
 
 const TODAY = '2026-09-26'; // a Saturday
-const CONTEXTS = ['@computer', '@office', '@home', '@calls', '@errands', '@workshop'];
+const CONTEXTS = ['@computer', '@office', '@home', '@calls', '@errands', '@studio'];
 const p = (line: string) => parse(line, TODAY, CONTEXTS);
 
 describe('parse', () => {
@@ -14,8 +14,8 @@ describe('parse', () => {
   });
 
   it('parses context, priority and weekday together', () => {
-    expect(p('Call Lena @calls !B ^fri')).toEqual({
-      text: 'Call Lena',
+    expect(p('Call the shop @calls !B ^fri')).toEqual({
+      text: 'Call the shop',
       tags: [],
       context: '@calls',
       priority: 'B',
@@ -69,8 +69,8 @@ describe('parse', () => {
   });
 
   it('keeps the first of repeated shorthand and leaves the rest in the text', () => {
-    expect(p('Buy screws @errands @workshop !A !C')).toEqual({
-      text: 'Buy screws @workshop !C',
+    expect(p('Buy screws @errands @studio !A !C')).toEqual({
+      text: 'Buy screws @studio !C',
       tags: [],
       context: '@errands',
       priority: 'A',

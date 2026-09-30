@@ -1,5 +1,6 @@
 import * as api from '@/lib/api';
 import { fmtDay } from '@/lib/format';
+import Link from 'next/link';
 import { NavLink } from './NavLink';
 
 function Group({ label }: { label: string }) {
@@ -36,6 +37,12 @@ export function Sidebar() {
       <NavLink href="/review" badge={typeof review === 'string' ? review : fmtDay(review.finishedAt)} badgeWarn={typeof review === 'string'} boxed>
         Weekly Review
       </NavLink>
+      <Link
+        href="/settings"
+        className="self-start rounded px-2.5 pt-1.5 font-mono text-meta text-muted no-underline hover:text-ink"
+      >
+        settings
+      </Link>
     </nav>
   );
 }

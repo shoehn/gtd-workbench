@@ -29,7 +29,7 @@ Update: `git pull && docker compose up -d --build`. Migrations run on start.
 ## Configuration
 
 Everything comes from the environment. `compose.yaml` passes these through; put
-overrides in a `.env` file next to it.
+overrides in a `.env` file next to it — start from `.env.example`, which lists them all.
 
 | Variable | Default | Meaning |
 |---|---|---|
