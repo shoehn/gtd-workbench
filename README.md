@@ -55,3 +55,7 @@ each other, so the order can change after 02 (Clarify creates the data the other
 - No UI library. Primitives from 00 only; add one when two screens need it.
 - Sample data comes from `docs/handoff/data/seed.json`; screens never hard-code copy that is data.
 - The "one control per decision" rule from `docs/handoff/SPEC.md` §4 is a review criterion for every PR.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
