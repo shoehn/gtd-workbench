@@ -46,3 +46,13 @@ export function parseWeek(value: unknown): string | undefined {
 export function shiftWeek(week: string, n: number): string {
   return isoWeek(addDays(weekDays(week)[0], 7 * n));
 }
+
+/**
+ * Order two ISO timestamps as instants. They carry different offsets (`+02:00` from the seed,
+ * `Z` from `toISOString`), so comparing them as strings is wrong. Missing ones sort first.
+ */
+export function compareStamps(a?: string, b?: string): number {
+  const t = (s?: string) => (s ? Date.parse(s) : -Infinity);
+  const d = t(a) - t(b);
+  return Number.isNaN(d) ? 0 : d;
+}

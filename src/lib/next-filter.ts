@@ -1,5 +1,6 @@
 // Next Actions filters, kept in the URL: `?ctx=@computer,@calls&time=60&energy=low`.
 import type { Energy, Item, Priority, TimeBucket } from './model';
+import { compareStamps } from './week';
 
 export interface NextFilter {
   /** Any of these contexts; empty = all. */
@@ -63,7 +64,7 @@ export function byPriority(a: Item, b: Item): number {
   return (
     PRIO_RANK[a.priority ?? 'C'] - PRIO_RANK[b.priority ?? 'C'] ||
     (a.priorityNo ?? Infinity) - (b.priorityNo ?? Infinity) ||
-    a.capturedAt.localeCompare(b.capturedAt)
+    compareStamps(a.capturedAt, b.capturedAt)
   );
 }
 

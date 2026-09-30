@@ -8,7 +8,7 @@ import seed from './store/seed.json';
 import { store } from './store';
 import type { ExternalCalendar, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
-import { addDays, isoWeek, weekDays } from './week';
+import { addDays, compareStamps, isoWeek, weekDays } from './week';
 
 const DAY_MS = 86_400_000;
 
@@ -34,7 +34,7 @@ export function today(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const byNewest = (a: Item, b: Item) => b.capturedAt.localeCompare(a.capturedAt);
+const byNewest = (a: Item, b: Item) => compareStamps(b.capturedAt, a.capturedAt);
 
 export function listInbox(): Item[] {
   return store.getState().items.filter((i) => i.status === 'inbox').sort(byNewest);
@@ -417,7 +417,7 @@ function renumberIn(items: Item[]) {
   for (const priority of ['A', 'B'] as const) {
     items
       .filter((i) => i.status === 'next' && i.priority === priority)
-      .sort((a, b) => (a.priorityNo ?? Infinity) - (b.priorityNo ?? Infinity) || a.capturedAt.localeCompare(b.capturedAt))
+      .sort((a, b) => (a.priorityNo ?? Infinity) - (b.priorityNo ?? Infinity) || compareStamps(a.capturedAt, b.capturedAt))
       .forEach((i, n) => {
         i.priorityNo = n + 1;
       });
@@ -460,7 +460,7 @@ export function focusToday(): Item[] {
       a.status !== b.status
         ? a.status === 'done' ? -1 : 1
         : a.status === 'done'
-          ? (a.doneAt ?? '').localeCompare(b.doneAt ?? '')
+          ? compareStamps(a.doneAt, b.doneAt)
           : rank(a).localeCompare(rank(b)),
     );
 }
@@ -1322,7 +1322,7 @@ export function tickStep(stepId: string): void {
   const own = run.steps.find((s) => s.stepId === stepId);
   const base = own?.snapshot
     ? own
-    : run.steps.filter((s) => s.snapshot && s.openedAt).sort((a, b) => a.openedAt!.localeCompare(b.openedAt!)).at(-1);
+    : run.steps.filter((s) => s.snapshot && s.openedAt).sort((a, b) => compareStamps(a.openedAt, b.openedAt)).at(-1);
   const since = Date.parse(base?.openedAt ?? run.startedAt);
   const { items } = store.getState();
   store.update(() => {

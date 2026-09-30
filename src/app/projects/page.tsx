@@ -9,6 +9,7 @@ import { daysBetween, fmtDate, fmtDay, fmtDaysAgo, fmtMins, fmtNear } from '@/li
 import type { Project } from '@/lib/model';
 import { byPriority } from '@/lib/next-filter';
 import { PROJECT_FILTERS, parseProjectFilter, projectsHref, type ProjectFilter } from '@/lib/project-filter';
+import { compareStamps } from '@/lib/week';
 
 const REVIEW_WARN_DAYS = 14;
 
@@ -194,7 +195,7 @@ function detail(p: Project, today: string): DetailData {
     later: items.filter((i) => i.status === 'later').map((i) => ({ id: i.id, text: i.text })),
     done: items
       .filter((i) => i.status === 'done')
-      .sort((a, b) => (a.doneAt ?? '').localeCompare(b.doneAt ?? ''))
+      .sort((a, b) => compareStamps(a.doneAt, b.doneAt))
       .map((i) => ({ id: i.id, text: i.text, context: i.context })),
     waiting: waiting.map((i) => ({
       id: i.id,

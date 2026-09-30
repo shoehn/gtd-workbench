@@ -3,7 +3,7 @@ import * as api from './api';
 import seed from './store/seed.json';
 import { store } from './store';
 import type { State } from './store/types';
-import { isoWeek, parseWeek, shiftWeek, weekDays } from './week';
+import { compareStamps, isoWeek, parseWeek, shiftWeek, weekDays } from './week';
 
 const item = (id: string) => api.getItem(id)!;
 const W39 = '2026-W39';
@@ -20,6 +20,13 @@ describe('iso weeks', () => {
     expect(isoWeek('2026-01-01')).toBe('2026-W01');
     expect(shiftWeek(W39, 1)).toBe('2026-W40');
     expect(shiftWeek('2026-W01', -1)).toBe('2025-W52');
+  });
+
+  it('orders timestamps as instants, whatever their offset', () => {
+    // 06:29Z is 08:29 in Bern: before 08:30+02:00, though it sorts after it as a string.
+    expect(compareStamps('2026-09-26T06:29:00.000Z', '2026-09-26T08:30:00+02:00')).toBeLessThan(0);
+    expect(compareStamps(undefined, '2026-09-26T08:30:00+02:00')).toBeLessThan(0);
+    expect(compareStamps('2026-09-26T08:30:00+02:00', '2026-09-26T06:30:00Z')).toBe(0);
   });
 
   it('rejects weeks that do not exist', () => {
