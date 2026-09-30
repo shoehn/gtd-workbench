@@ -25,6 +25,8 @@
 
 # rendered report (quarto render docs/report/report.qmd)
 /docs/report/*.html
+# …except the published page (GitHub Pages; see AGENTS.md "Published files")
+!/docs/report/report.html
 /docs/report/*_files/
 /.quarto/
 /docs/report/.quarto/

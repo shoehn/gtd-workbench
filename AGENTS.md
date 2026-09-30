@@ -80,6 +80,15 @@ lib/capture-syntax.ts  parser for `#tag @context !prio ^date`
 - Keyboard map on desktop follows the `KEYS` boxes in the mockups; document new
   keys in SPEC §6.
 
+## Published files — do not touch unasked
+
+- `docs/report/report.html` is published as a GitHub Page and shared with an
+  audience. Do not delete, move, rename, re-render or overwrite it unless the
+  user asks for exactly that. The same goes for what it was rendered from
+  (`docs/report/report.qmd`, `docs/report/images/`): editing them is fine only
+  when asked, and never re-render the HTML as a side effect. Lint, clean-up or
+  `.gitignore` changes must leave these files as they are.
+
 ## Working style
 
 - Small PR-sized steps; each prompt in `docs/handoff/prompts/` is one step with
