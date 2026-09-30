@@ -1,0 +1,99 @@
+{
+  "contexts": [
+    "@computer",
+    "@office",
+    "@home",
+    "@calls",
+    "@errands",
+    "@workshop"
+  ],
+  "buckets": [
+    "Workshop & electronics",
+    "Teaching & research",
+    "Home & travel"
+  ],
+  "areaKinds": {},
+  "projects": [],
+  "items": [],
+  "tickler": [],
+  "externalCalendars": [],
+  "externalEvents": [],
+  "reviewTemplate": {
+    "phases": [
+      {
+        "id": "clear",
+        "name": "Get clear",
+        "steps": [
+          {
+            "id": "collect",
+            "text": "Collect loose papers and materials"
+          },
+          {
+            "id": "zero-email",
+            "text": "Get email and notes to zero"
+          },
+          {
+            "id": "mind-sweep",
+            "text": "Empty your head"
+          },
+          {
+            "id": "inbox-zero",
+            "text": "Process the inbox to zero",
+            "link": "/clarify"
+          }
+        ]
+      },
+      {
+        "id": "current",
+        "name": "Get current",
+        "steps": [
+          {
+            "id": "next",
+            "text": "Review Next Actions",
+            "link": "/next"
+          },
+          {
+            "id": "past-cal",
+            "text": "Review past calendar",
+            "link": "/calendar"
+          },
+          {
+            "id": "future-cal",
+            "text": "Review upcoming calendar",
+            "link": "/calendar"
+          },
+          {
+            "id": "waiting",
+            "text": "Review Waiting For",
+            "link": "/waiting"
+          },
+          {
+            "id": "projects",
+            "text": "Review Projects — one next action each",
+            "link": "/projects"
+          },
+          {
+            "id": "areas",
+            "text": "Review checklists and areas"
+          }
+        ]
+      },
+      {
+        "id": "creative",
+        "name": "Get creative",
+        "steps": [
+          {
+            "id": "someday",
+            "text": "Review Someday / Maybe",
+            "link": "/waiting"
+          },
+          {
+            "id": "ideas",
+            "text": "Be creative and courageous"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewRuns": []
+}

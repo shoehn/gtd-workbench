@@ -1,0 +1,11 @@
+.git
+.idea
+.next
+.quarto
+node_modules
+data
+docs
+*.tsbuildinfo
+.env*
+Dockerfile
+compose.yaml

@@ -56,6 +56,12 @@ each other, so the order can change after 02 (Clarify creates the data the other
 - Sample data comes from `docs/handoff/data/seed.json`; screens never hard-code copy that is data.
 - The "one control per decision" rule from `docs/handoff/SPEC.md` §4 is a review criterion for every PR.
 
+## Run it
+
+`pnpm dev` for development with the demo data; `docker compose up -d --build` for a
+real installation with an empty database. Details, backup and restore:
+[docs/OPERATIONS.md](docs/OPERATIONS.md).
+
 ## License
 
 MIT, see [LICENSE](LICENSE).

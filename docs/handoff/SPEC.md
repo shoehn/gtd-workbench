@@ -303,7 +303,10 @@ interface ExternalEvent { id: string; calendar: string; title: string; start: st
 Storage (`STORE=memory|sqlite`, sqlite by default in production, memory in dev and tests;
 `DATABASE_FILE`, default `data/gtd.db`): SQLite through Drizzle, one table per interface
 above plus the store-level lists (contexts, buckets, area kinds, tickler, external
-calendars, settings). Deviations from the interfaces, each for a reason:
+calendars, settings). A database that was never filled starts from the base seed
+(`seed.base.json`: contexts, buckets, review template — no demo data); memory mode and
+`db:seed` / `db:reset` use the demo seed. Deployment, backup and restore:
+`docs/OPERATIONS.md`. Deviations from the interfaces, each for a reason:
 - `Item.timeSlot` and `Item.waiting` are flattened into `time_slot_start/_end` and
   `waiting_who/_since/_follow_up`: always read with their item, and `waiting` is queried.
 - `Item.tags`, `ReviewRun.steps` and `ReviewTemplate.phases` are JSON columns: read whole,

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Quarto's rendered report and its bundled libraries (git-ignored output).
+    "docs/report/**",
   ]),
 ]);
 

@@ -5,7 +5,7 @@ import { SeedCalendarSource, type CalendarSource } from './calendar-source';
 import type { Energy, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Source, TimeBucket } from './model';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
 import seed from './store/seed.json';
-import { store } from './store';
+import { STORE_KIND, store } from './store';
 import type { ExternalCalendar, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
 import { addDays, compareStamps, isoWeek, weekDays } from './week';
@@ -13,7 +13,7 @@ import { addDays, compareStamps, isoWeek, weekDays } from './week';
 const DAY_MS = 86_400_000;
 
 /** The seed's pinned date outside production; `undefined` means the real clock. Delete to unpin. */
-const PINNED_DAY = process.env.NODE_ENV !== 'production' ? store.getState().today : undefined;
+const pinnedDay = () => (process.env.NODE_ENV !== 'production' ? store.getState().today : undefined);
 
 /**
  * The one clock. Everything time-dependent (ages, "today", focus, review due) reads this,
@@ -21,10 +21,16 @@ const PINNED_DAY = process.env.NODE_ENV !== 'production' ? store.getState().toda
  */
 export function now(): Date {
   const real = new Date();
-  if (!PINNED_DAY) return real;
-  const d = new Date(`${PINNED_DAY}T00:00:00`);
+  const day = pinnedDay();
+  if (!day) return real;
+  const d = new Date(`${day}T00:00:00`);
   d.setHours(real.getHours(), real.getMinutes(), real.getSeconds(), real.getMilliseconds());
   return d;
+}
+
+/** Which store answers, and how many items it holds (the health check). Throws if it cannot open. */
+export function storeInfo(): { store: typeof STORE_KIND; items: number } {
+  return { store: STORE_KIND, items: store.getState().items.length };
 }
 
 /** Today as a local ISO date (yyyy-mm-dd), from `now()`. */

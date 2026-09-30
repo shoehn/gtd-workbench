@@ -173,18 +173,19 @@ function load(db: Db): State | null {
 export const MIGRATIONS = path.join(process.cwd(), 'drizzle');
 
 /** Open (and migrate) the database file; a database that was never filled starts from `seed`. */
-export function openDatabase(file: string, seed: State): { db: Db; state: State } {
+export function openDatabase(file: string, seed: State): { db: Db; state: State; seeded: boolean } {
   if (file !== ':memory:') mkdirSync(path.dirname(file), { recursive: true });
   const sqlite = new Database(file);
   if (file !== ':memory:') sqlite.pragma('journal_mode = WAL');
   const db = drizzle(sqlite, { schema: t });
   migrate(db, { migrationsFolder: MIGRATIONS });
   let state = load(db);
+  const seeded = !state;
   if (!state) {
     state = structuredClone(seed);
     write(db, null, state);
   }
-  return { db, state };
+  return { db, state, seeded };
 }
 
 /** Replace everything in the database with `next` (db:seed). */
@@ -192,8 +193,10 @@ export function replaceAll(db: Db, current: State, next: State): void {
   write(db, current, next);
 }
 
-export function createSqliteStore(file: string, seed: State): Store {
-  const { db, state } = openDatabase(file, seed);
+/** `onOpen(seeded)` is told whether the file was new and got `seed`. */
+export function createSqliteStore(file: string, seed: State, onOpen?: (seeded: boolean) => void): Store {
+  const { db, state, seeded } = openDatabase(file, seed);
+  onOpen?.(seeded);
   const listeners = new Set<() => void>();
   return {
     getState: () => state,

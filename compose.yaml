@@ -1,0 +1,54 @@
+# docker compose up -d --build   — see docs/OPERATIONS.md
+services:
+  gtd:
+    build: .
+    image: gtd-workbench:latest
+    restart: unless-stopped
+    environment:
+      STORE: sqlite
+      DATABASE_FILE: /data/gtd.db
+      TZ: ${TZ:-Europe/Zurich}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - gtd-data:/data
+    # Only on the host's loopback, for a reverse proxy on the same box. With the proxy in
+    # Docker instead, drop `ports` and put both on one network.
+    ports:
+      - "127.0.0.1:${GTD_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    # Reverse proxy examples (not required, the app has no TLS or auth of its own):
+    # Traefik labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.gtd.rule=Host(`gtd.example.lan`)"
+    #   - "traefik.http.routers.gtd.tls=true"
+    #   - "traefik.http.services.gtd.loadbalancer.server.port=3000"
+    # Caddyfile:
+    #   gtd.example.lan {
+    #     reverse_proxy 127.0.0.1:3000
+    #   }
+
+  gtd-backup:
+    build: .
+    image: gtd-workbench:latest
+    restart: unless-stopped
+    depends_on:
+      gtd:
+        condition: service_healthy
+    environment:
+      DATABASE_FILE: /data/gtd.db
+      TZ: ${TZ:-Europe/Zurich}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+    volumes:
+      - gtd-data:/data
+    # A backup at start, then every 24 h. Files: /data/backups/gtd-YYYYMMDD-HHMM.db
+    command: ["sh", "-c", "while true; do node scripts/backup.mjs; sleep 86400; done"]
+    healthcheck:
+      disable: true
+
+volumes:
+  gtd-data:
