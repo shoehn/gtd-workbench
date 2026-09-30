@@ -23,6 +23,9 @@
 # sqlite store (STORE=sqlite)
 /data/
 
+# editors
+/.idea/
+
 # misc
 .DS_Store
 *.pem
