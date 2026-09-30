@@ -23,6 +23,12 @@
 # sqlite store (STORE=sqlite)
 /data/
 
+# rendered report (quarto render docs/report/report.qmd)
+/docs/report/*.html
+/docs/report/*_files/
+/.quarto/
+/docs/report/.quarto/
+
 # editors
 /.idea/
 
