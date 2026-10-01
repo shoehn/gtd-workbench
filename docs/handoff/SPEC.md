@@ -217,7 +217,8 @@ review, bins) repeat here. Everything else stays on the lists.
   the database or the logs; Settings shows name, kind, host, last sync and status.
 - Sync pulls today −7 … +60 days per source on server start, every 15 minutes and on
   "Sync now" (Settings). Recurring events are expanded for that window only (RRULE,
-  EXDATE, moved and cancelled occurrences). Events are keyed by (source, uid, recurrence
+  EXDATE, moved and cancelled occurrences — however old the series, and an occurrence moved
+  out of or into the window never hides the others). Events are keyed by (source, uid, recurrence
   id); what vanished from the feed is deleted. A failed sync keeps the last events and shows
   "Work: sync failed 3 h ago" in the calendar footer and on Settings — never a modal. A
   source removed from the environment disappears with its events.

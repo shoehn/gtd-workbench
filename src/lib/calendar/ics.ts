@@ -16,8 +16,13 @@ export interface IcsWindow {
   sourceId: string;
 }
 
-/** Stop expanding a rule after this many occurrences (a daily rule over 70 days needs 70). */
-const MAX_OCCURRENCES = 2000;
+/**
+ * Guards against absurd rules (FREQ=SECONDLY …): at most this many occurrences are looked at in
+ * or near the window, and at most MAX_STEPS slots are stepped through from the series' start
+ * (a daily series from 1990 is ~13 000 steps; an hourly one from 2015 ~100 000).
+ */
+const MAX_NEAR_WINDOW = 2000;
+const MAX_STEPS = 250_000;
 
 type Time = InstanceType<typeof ICAL.Time>;
 
@@ -99,18 +104,37 @@ export function parseIcs(text: string, w: IcsWindow): ExternalEvent[] {
       if (inWindow(sp, w)) out.push(eventOf(w, uid, isException ? event.recurrenceId.toString() : '', event.summary, event.location, sp));
       continue;
     }
+    // Walk the series by its *original* slots: a moved occurrence never ends the walk early.
+    const afterWindow = (t: Time) => (t.isDate ? dayOf(t) > w.to : instantOf(t, w.timeZone).getTime() >= windowEnd);
+    // Slots ending well before the window are only stepped over (cheap); their details (an
+    // exception may move them into the window) are read only when an exception exists.
+    const spanDays = Math.ceil(event.duration.toSeconds() / 86_400) + 1;
+    const ownExceptions = vevents.filter((c) => c.hasProperty('recurrence-id') && String(c.getFirstPropertyValue('uid')) === uid);
+    // Days an exception moves a slot away from (± a day: its RECURRENCE-ID may be in UTC).
+    const movedFrom = new Set(
+      ownExceptions.flatMap((c) => {
+        const d = dayOf(c.getFirstPropertyValue('recurrence-id') as Time);
+        return [addDays(d, -1), d, addDays(d, 1)];
+      }),
+    );
     const it = event.iterator();
-    for (let n = 0; n < MAX_OCCURRENCES; n++) {
+    for (let steps = 0, near = 0; steps < MAX_STEPS && near < MAX_NEAR_WINDOW; steps++) {
       const next = it.next();
-      if (!next) break;
+      if (!next || afterWindow(next)) break;
+      if (addDays(dayOf(next), spanDays) < w.from && !movedFrom.has(dayOf(next))) continue;
+      near++;
       const details = event.getOccurrenceDetails(next);
-      const start = details.startDate;
-      if (!start.isDate && instantOf(start, w.timeZone).getTime() >= windowEnd) break;
-      if (start.isDate && dayOf(start) > w.to) break;
       if (cancelled(details.item.component)) continue;
-      const sp = span(start, details.endDate, w.timeZone);
+      const sp = span(details.startDate, details.endDate, w.timeZone);
       if (!inWindow(sp, w)) continue;
       out.push(eventOf(w, uid, details.recurrenceId.toString(), details.item.summary, details.item.location, sp));
+    }
+    // Occurrences whose original slot is after the window but that were moved into it.
+    for (const ex of ownExceptions) {
+      const moved = new ICAL.Event(ex);
+      if (!afterWindow(moved.recurrenceId) || cancelled(ex)) continue;
+      const sp = span(moved.startDate, moved.endDate, w.timeZone);
+      if (inWindow(sp, w)) out.push(eventOf(w, uid, moved.recurrenceId.toString(), moved.summary, moved.location, sp));
     }
   }
   return out.sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id));
