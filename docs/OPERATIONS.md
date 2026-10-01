@@ -1,7 +1,8 @@
 # Operations
 
 One image, one volume, one command. The app has no auth and no TLS of its own: run it
-behind a reverse proxy on a trusted network.
+behind a reverse proxy — on a trusted network, or with a login at the proxy (see
+"Reachable from outside").
 
 ## Run
 
@@ -145,6 +146,54 @@ gtd.example.lan {
 
 With Traefik in Docker, remove `ports` from the `gtd` service, put both on one network and
 use the labels commented in `compose.yaml`.
+
+### Reachable from outside: login at the proxy
+
+The app has no login of its own. On a LAN that is fine; once it is reachable from the
+internet (needed for the phone away from home, and for sharing, which wants HTTPS), put an
+authenticating proxy in front — Authelia, Authentik, oauth2-proxy or Caddy `basic_auth`.
+The app needs no change for that: it uses relative URLs only, knows nothing about users, and
+does not read any auth header.
+
+What the proxy must get right:
+
+- **Bypass, no login** — these are fetched by clients that cannot do a login page:
+  - `POST /api/capture` — scripts, Shortcuts, n8n; it has its own bearer token.
+  - `/manifest.webmanifest`, `/icon.svg`, `/icon-192.png`, `/icon-512.png`, `/sw.js` — the
+    browser fetches the manifest without cookies; behind a login it gets a redirect and the
+    app is neither installable nor a share target. They contain no data.
+- **Everything else behind the login**, `/share` included: a share comes from the installed
+  app with the login cookie. If the session has expired, the share ends on the login page
+  and its content is lost — choose a session that lasts (Authelia: "remember me").
+- **`/api/health`** needs no bypass: the container healthcheck calls it on 127.0.0.1. Bypass
+  it only for an outside monitor; it reveals the item count.
+- **Pass `Host` (or `X-Forwarded-Host`) through unchanged.** Server actions — every write in
+  the app — compare the browser's `Origin` with it and refuse a mismatch. Caddy, Traefik and
+  nginx with `proxy_set_header Host $host` do this.
+
+Authelia, for example (the order matters, the first match wins):
+
+```yaml
+access_control:
+  rules:
+    - domain: gtd.example.com
+      resources:
+        - '^/api/capture$'
+      methods: [POST]
+      policy: bypass
+    - domain: gtd.example.com
+      resources:
+        - '^/manifest\.webmanifest$'
+        - '^/icon(-\d+)?\.(svg|png)$'
+        - '^/sw\.js$'
+      policy: bypass
+    - domain: gtd.example.com
+      policy: two_factor
+```
+
+Then check from outside: `curl -s -o /dev/null -w '%{http_code}' https://gtd.example.com/inbox`
+answers with the proxy's redirect (302/401), `…/manifest.webmanifest` with 200, and the
+capture `curl` above with 201.
 
 ## Health
 

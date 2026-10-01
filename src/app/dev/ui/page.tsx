@@ -1,4 +1,6 @@
-// Primitive gallery — every variant once. Delete once the screens exist.
+// Primitive gallery — every variant once, for checking tokens and themes in development.
+// Not part of the app: a 404 in production.
+import { notFound } from 'next/navigation';
 import { Page } from '@/components/shell/Page';
 import { Btn } from '@/components/ui/Btn';
 import { Card } from '@/components/ui/Card';
@@ -14,6 +16,7 @@ import { Tag } from '@/components/ui/Tag';
 const COLS = '32px minmax(0, 1fr) 96px 72px';
 
 export default function DevUiPage() {
+  if (process.env.NODE_ENV === 'production') notFound();
   return (
     <Page title="UI primitives" meta="dev only">
       <div className="flex flex-col gap-(--wb-panel-gap)">
