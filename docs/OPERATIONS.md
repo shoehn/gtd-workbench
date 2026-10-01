@@ -25,7 +25,7 @@ data. The log says so once:
 … info  store: sqlite /data/gtd.db — new database, base seed applied
 ```
 
-Update: `git pull && docker compose up -d --build`. Migrations run on start.
+Update: see "Releases" below — check out a release tag, build, start. Migrations run on start.
 
 ## Configuration
 
@@ -233,6 +233,32 @@ Copy backups off the box, e.g. nightly:
 ```sh
 docker compose cp gtd:/data/backups ./backups
 ```
+
+## Releases
+
+Every release has one version: `package.json` (what `/api/health` reports) and the image tag
+of both services in `compose.yaml` (`gtd-workbench:<version>`), and a git tag `v<version>`.
+`pnpm release <x.y.z>` sets all of them, commits and tags (it never pushes, and refuses a
+version that is already tagged — a release is never rebuilt under its old tag). Then
+`git push && git push origin v<x.y.z>`.
+
+On the server:
+
+```sh
+git fetch --tags && git checkout v0.1.1
+docker compose build                      # gtd-workbench:0.1.1, nothing restarts yet
+docker compose exec gtd node scripts/backup.mjs   # a backup right before, by the running version
+docker compose up -d                      # the new version starts, migrations run
+curl -s 127.0.0.1:3000/api/health         # "version":"0.1.1"
+```
+
+Images are not in your file backup, the tags are: any release can be rebuilt with
+`git checkout v<x.y.z> && docker compose build`.
+
+**Rolling back** to an older release: if the newer one added a migration (`drizzle/`
+gained a file between the two tags), the older version cannot read the database any more —
+restore the backup taken right before the upgrade (below) together with the rollback. Without
+a new migration, `git checkout v<older> && docker compose up -d` is enough.
 
 ## Restore
 

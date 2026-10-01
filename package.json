@@ -15,7 +15,8 @@
     "db:reset": "tsx scripts/db.ts reset",
     "db:generate": "drizzle-kit generate",
     "db:backup": "node scripts/backup.mjs",
-    "smoke": "bash scripts/smoke.sh"
+    "smoke": "bash scripts/smoke.sh",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
