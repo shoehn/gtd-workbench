@@ -50,7 +50,8 @@ from Next and Inbox respectively. Phone rules: §3.8.
   else, and none of them asks a question:
   - **Endpoint** `POST /api/capture`, `Authorization: Bearer $CAPTURE_TOKEN` (one token;
     rotate by restart; the endpoint is off without it). Body `{ text, source?, url?, note? }`
-    as JSON (whatever the content type), text ≤ 4 KB, body ≤ 16 KB; 201 with the item.
+    as JSON (whatever the content type), text ≤ 4 KB, note ≤ 8 KB, body ≤ 16 KB — counted
+    while the body streams in, never read whole; 201 with the item.
     `url` and `note` become the item's `reference` (the context it came with). Separate quotas,
     then 429: 60 authenticated captures a minute, 60 shares a minute, and 20 requests a
     minute with a missing or wrong token (401 until then) — those never use up the
@@ -68,7 +69,9 @@ from Next and Inbox respectively. Phone rules: §3.8.
     caches nothing): `POST /share` (multipart title / text / url, same-origin, no token;
     a form posted from another site is refused). The title is the line (else the text, else
     the link's host), the URL — also one found in the text — the item's `reference.url`.
-    Answers with `/share/done`: "Captured to inbox: …", Clarify now / Done.
+    Answers with `/share/done`: "Captured to inbox: …", Clarify now / Done. A share over
+    64 KB (counted while streaming) captures nothing and says so; a shared text longer than
+    8 KB is kept cut to 8 KB with "…".
 - List shows item, source (icon + label), captured time, age. Age ≥ 3 d turns orange. A chip
   row filters by source: all · typed · email · share (`?source=`); counts and age stay the
   whole inbox's.

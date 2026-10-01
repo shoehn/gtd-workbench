@@ -1,4 +1,4 @@
-import { captureRequest, fromShare, limiters } from '@/lib/capture-in';
+import { SHARE_MAX, captureRequest, fromShare, limiters, readLimited } from '@/lib/capture-in';
 
 /**
  * The Web Share Target (manifest: POST multipart, title / text / url). Same-origin by design,
@@ -11,9 +11,12 @@ export async function POST(req: Request) {
   // A relative Location: behind a reverse proxy req.url names the internal host.
   const back = (query: string) => new Response(null, { status: 303, headers: { Location: `/share/done?${query}` } });
   if (!limiters.share.take()) return back('error=busy');
+  // Read at most SHARE_MAX bytes while streaming, then parse that: no unbounded body in memory.
+  const bytes = await readLimited(req, SHARE_MAX);
+  if (!bytes) return back('error=large');
   let form: FormData;
   try {
-    form = await req.formData();
+    form = await new Response(bytes, { headers: { 'content-type': req.headers.get('content-type') ?? '' } }).formData();
   } catch {
     return back('error=empty');
   }

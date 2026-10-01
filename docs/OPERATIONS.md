@@ -84,7 +84,7 @@ curl -H "Authorization: Bearer $CAPTURE_TOKEN" \
 # 201 {"id":"…","text":"Call the shop","context":"@calls","source":"typed",…}
 ```
 
-Body: `text` (required, ≤ 4 KB, the rapid-log shorthand works), `source` (`typed`
+Body: `text` (required, ≤ 4 KB, the rapid-log shorthand works), `note` ≤ 8 KB, `source` (`typed`
 default, or `voice` `email` `share` `scan`), `url` and `note` (kept with the item as
 context). 401 without the token (429 past 20 such requests a minute), 429 past 60 captures a minute, 413 for a body over 16 KB.
 To rotate the token, change it and restart.

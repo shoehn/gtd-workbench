@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { POST as capturePost } from '../app/api/capture/route';
 import { POST as sharePost } from '../app/share/route';
 import * as api from './api';
-import { TEXT_MAX, createLimiter, fromShare, limiters } from './capture-in';
+import { NOTE_MAX, SHARE_MAX, TEXT_MAX, createLimiter, fromShare, limiters, readLimited } from './capture-in';
 import { store } from './store';
 import { demoSeed as seed } from './store/seed';
 import type { State } from './store/types';
@@ -30,10 +30,13 @@ const capture = (body: unknown, auth: string | null = `Bearer ${TOKEN}`) =>
     }),
   );
 
-const share = (fields: Record<string, string>, headers: Record<string, string> = { 'sec-fetch-site': 'none' }) => {
+/** A share as the browser sends it: multipart bytes with their content type. */
+const share = async (fields: Record<string, string>, headers: Record<string, string> = { 'sec-fetch-site': 'none' }) => {
   const form = new FormData();
   for (const [k, v] of Object.entries(fields)) form.set(k, v);
-  return sharePost(new Request('http://localhost/share', { method: 'POST', headers, body: form }));
+  const encoded = new Response(form);
+  const body = new Uint8Array(await encoded.arrayBuffer());
+  return sharePost(new Request('http://localhost/share', { method: 'POST', headers: { ...headers, 'content-type': encoded.headers.get('content-type')! }, body }));
 };
 
 describe('POST /api/capture', () => {
@@ -98,6 +101,42 @@ describe('POST /api/capture', () => {
     expect([l.take(), l.take(), l.take()]).toEqual([true, true, false]);
     t = 1000;
     expect(l.take()).toBe(true);
+  });
+});
+
+describe('body limits (review P2 #4)', () => {
+  /** A chunked body (no Content-Length) of `chunks` × 16 KB, counting how much was pulled. */
+  const chunked = (chunks: number) => {
+    let pulled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(c) {
+        pulled++;
+        c.enqueue(new Uint8Array(16 * 1024).fill(120));
+        if (pulled >= chunks) c.close();
+      },
+    });
+    return { req: new Request('http://localhost/x', { method: 'POST', body, duplex: 'half' } as RequestInit), pulled: () => pulled };
+  };
+
+  it('a chunked body past the limit is cut off while streaming, not read whole', async () => {
+    const { req, pulled } = chunked(64); // 1 MiB on offer
+    expect(await readLimited(req, 32 * 1024)).toBeNull();
+    expect(pulled()).toBeLessThan(6);
+  });
+
+  it('capture: a note over 8 KB is refused', async () => {
+    expect((await capture({ text: 'x', note: 'y'.repeat(NOTE_MAX + 1) })).status).toBe(413);
+  });
+
+  it('share: over 64 KB captures nothing; a long shared text is cut to 8 KB', async () => {
+    const before = api.listInbox().length;
+    expect((await share({ title: 'Big', text: 'y'.repeat(SHARE_MAX) })).headers.get('location')).toBe('/share/done?error=large');
+    expect(api.listInbox().length).toBe(before);
+    const res = await share({ title: 'Long read', text: 'z'.repeat(20_000) });
+    const id = new URLSearchParams(res.headers.get('location')!.split('?')[1]).get('item')!;
+    const body = api.getItem(id)!.reference!.body!;
+    expect(Buffer.byteLength(body)).toBeLessThanOrEqual(NOTE_MAX);
+    expect(body.endsWith('…')).toBe(true);
   });
 });
 

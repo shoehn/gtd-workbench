@@ -7,8 +7,12 @@ import { URL_IN_TEXT, referenceHost } from './reference';
 
 /** Bytes of item text a request may carry. */
 export const TEXT_MAX = 4096;
-/** Bytes a request body may have at all (text, url and note together). */
+/** Bytes of note (the context that comes with the item). */
+export const NOTE_MAX = 8 * 1024;
+/** Bytes a capture request body may have at all (text, url and note together). */
 export const BODY_MAX = 16 * 1024;
+/** Bytes a share (multipart) may have; a longer shared text is cut to NOTE_MAX. */
+export const SHARE_MAX = 64 * 1024;
 const SOURCES: readonly Source[] = ['typed', 'voice', 'email', 'share', 'scan'];
 
 export type CaptureOutcome = { item: Item } | { error: string; status: 400 | 413 };
@@ -22,6 +26,7 @@ export function captureRequest(body: unknown): CaptureOutcome {
   if (typeof source !== 'string' || !SOURCES.includes(source as Source)) return { error: `source is one of ${SOURCES.join(', ')}`, status: 400 };
   if (url !== undefined && (typeof url !== 'string' || !URL_IN_TEXT.test(url))) return { error: 'url needs a scheme (https://, obsidian://, …)', status: 400 };
   if (note !== undefined && typeof note !== 'string') return { error: 'note is a string', status: 400 };
+  if (note !== undefined && Buffer.byteLength(note) > NOTE_MAX) return { error: `note is longer than ${NOTE_MAX} bytes`, status: 413 };
   const item = api.capture(text, source as Source, { reference: contextOf(url, note) });
   return item ? { item } : { error: 'text is required', status: 400 };
 }
@@ -50,8 +55,19 @@ export function fromShare(form: { title?: string | null; text?: string | null; u
   if (url && !URL_IN_TEXT.test(url)) url = '';
   const line = title || text || (url && referenceHost(url));
   if (!line) return null;
-  const note = text && text !== line ? text : '';
-  return { text: line.slice(0, TEXT_MAX), source: 'share', ...(url && { url }), ...(note && { note }) };
+  const note = text && text !== line ? cut(text, NOTE_MAX) : '';
+  return { text: cut(line, TEXT_MAX), source: 'share', ...(url && { url }), ...(note && { note }) };
+}
+
+/** At most `max` UTF-8 bytes of `s`, ending in "…" when cut (never in the middle of a character). */
+function cut(s: string, max: number): string {
+  if (Buffer.byteLength(s) <= max) return s;
+  let out = '';
+  for (const ch of s) {
+    if (Buffer.byteLength(out + ch) > max - 3) break;
+    out += ch;
+  }
+  return `${out}…`;
 }
 
 /** Constant-time check of an `Authorization: Bearer …` header against the configured token. */
@@ -96,9 +112,37 @@ export const limiters = (g.__wbLimiters ??= {
   badToken: createLimiter(20, 60_000),
 });
 
-/** Read a request body as text, refusing more than `max` bytes. */
-export async function readBody(req: Request, max = BODY_MAX): Promise<string | null> {
+/**
+ * A request body, at most `max` bytes, counted while it streams in: a longer one (declared or
+ * chunked) is cancelled as soon as it passes the limit and answers null — never read whole.
+ */
+export async function readLimited(req: Request, max: number): Promise<Uint8Array<ArrayBuffer> | null> {
   if (Number(req.headers.get('content-length') ?? 0) > max) return null;
-  const text = await req.text();
-  return Buffer.byteLength(text) > max ? null : text;
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.byteLength;
+  }
+  return out;
+}
+
+/** A capture request body as text, ≤ `max` bytes (see readLimited). */
+export async function readBody(req: Request, max = BODY_MAX): Promise<string | null> {
+  const bytes = await readLimited(req, max);
+  return bytes && new TextDecoder().decode(bytes);
 }

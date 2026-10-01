@@ -6,6 +6,7 @@ import * as api from '@/lib/api';
 const PROBLEMS: Record<string, string> = {
   empty: 'Nothing to capture: the share had no title, text or link.',
   busy: 'Too many captures in the last minute — share again in a moment.',
+  large: 'That share is too large (over 64 KB) — nothing was captured.',
 };
 
 /** After a share (POST /share): one line saying what landed in the inbox, then back to work. */
