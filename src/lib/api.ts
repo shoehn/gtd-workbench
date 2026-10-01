@@ -1754,3 +1754,85 @@ export function weekHours(entries: CalendarEntry[]): [number, number] {
   }
   return [Math.max(0, first), Math.min(24, last)];
 }
+
+// ── Command palette ────────────────────────────────────────────────────────
+
+export interface PaletteItem {
+  id: string;
+  /** What the row says. */
+  text: string;
+  /** The list it is on, shown as its tag. */
+  list: string;
+  /** Searched too: who, project, context. */
+  detail: string;
+  href: string;
+}
+
+export interface PaletteData {
+  today: string;
+  contexts: { name: string; open: number }[];
+  projects: { id: string; title: string; status: Project['status']; href: string }[];
+  items: PaletteItem[];
+  reviewOpen: boolean;
+  canSync: boolean;
+}
+
+const PALETTE_LISTS: Partial<Record<Item['status'], string>> = {
+  inbox: 'Inbox',
+  next: 'Next Actions',
+  waiting: 'Waiting For',
+  someday: 'Someday / Maybe',
+  later: 'Later steps',
+  calendar: 'Calendar',
+  done: 'Done',
+};
+
+/** Where an item is opened from the palette: its row on its screen. */
+function paletteHref(i: Item): string | undefined {
+  const id = encodeURIComponent(i.id);
+  switch (i.status) {
+    case 'inbox':
+      return `/clarify?item=${id}`;
+    case 'next':
+      return `/next?highlight=${id}`;
+    case 'waiting':
+      return `/waiting?highlight=${id}`;
+    case 'someday':
+      return `/waiting?tab=someday&highlight=${id}`;
+    case 'later':
+    case 'done':
+      return i.projectId ? `/projects?p=${encodeURIComponent(i.projectId)}` : undefined;
+    case 'calendar': {
+      const day = i.timeSlot?.start.slice(0, 10) ?? i.day;
+      return day ? `/calendar?week=${isoWeek(day)}` : undefined;
+    }
+    default:
+      return undefined; // trash, reference (no screen yet)
+  }
+}
+
+/** Everything the palette searches, small and local, so opening it waits for nothing. */
+export function paletteData(): PaletteData {
+  const { items, projects, contexts } = store.getState();
+  const title = new Map(projects.map((p) => [p.id, p.title]));
+  const next = listNext();
+  return {
+    today: today(),
+    contexts: contexts.map((name) => ({ name, open: next.filter((i) => i.context === name).length })),
+    projects: projects.map((p) => ({
+      id: p.id,
+      title: p.title,
+      status: p.status,
+      href: p.status === 'completed' ? `/projects?filter=completed&p=${encodeURIComponent(p.id)}` : `/projects?p=${encodeURIComponent(p.id)}`,
+    })),
+    items: items.flatMap((i) => {
+      const href = paletteHref(i);
+      const list = PALETTE_LISTS[i.status];
+      if (!href || !list) return [];
+      const detail = [i.waiting?.who, i.projectId && title.get(i.projectId), i.context].filter(Boolean).join(' · ');
+      return [{ id: i.id, text: i.text, list, detail, href }];
+    }),
+    reviewOpen: !!openRun(),
+    canSync: configuredSources().length > 0,
+  };
+}

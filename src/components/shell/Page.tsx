@@ -1,5 +1,7 @@
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
+import * as api from '@/lib/api';
+import { CommandPalette } from '../palette/CommandPalette';
 import { cx } from '../ui/cx';
 import { CaptureLink, PhoneHeader } from './PhoneHeader';
 import { PhoneTabBar } from './PhoneTabBar';
@@ -76,6 +78,7 @@ export async function Page({ title, meta, tools, actions, back, toolbar, flush, 
           </div>
         )}
       </main>
+      <CommandPalette data={api.paletteData()} />
       {phone.tabBar !== false && (
         <div className="lg:hidden">
           <PhoneTabBar />

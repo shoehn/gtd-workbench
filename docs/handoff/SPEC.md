@@ -128,6 +128,7 @@ from Next and Inbox respectively. Phone rules: §3.8.
   to a week from today. `x` received offers undo for 5 s; if the project is left without a
   next action, an inline "Next action for <project>?" asks for one (skip allowed).
   `/waiting?filter=overdue` shows only overdue rows (linked from Health and project detail).
+  `?highlight=<id>` puts the cursor on that row, in whichever pane holds it (from ⌘K).
   `f` follow up creates a @calls/@computer action; `x` received (closes, optionally
   creates the next action).
 - Someday/Maybe: grouped by bucket (user-defined), in the store's bucket order, "No bucket"
@@ -269,6 +270,24 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
   overdue and the calendar's now line all count in it; one clock in `lib/clock.ts` behind
   `api.now()` / `api.today()`.
 
+### 3.10 Command palette
+- A keyboard front door, not a second UI: every entry is an existing api operation or route.
+  It searches a small index the server sends with every page, so it opens and filters
+  without waiting (no request on open).
+- Modes by the first character: plain text searches items (all lists but trash, who and
+  project included) and projects, grouped by list, ⏎ opens the row on its screen (Next with
+  `?highlight=`, Waiting / Someday with `?highlight=`, Projects with `?p=`, Calendar with the
+  week). `>` lists commands: go to each screen, Clarify inbox, start (or open) the weekly
+  review, sync calendars (when configured); with a cursor on a Next Actions row also done,
+  focus today, later (project actions only), change context…, move to project…; on a
+  Waiting For row follow up and received. `+` captures the rest of the line with the
+  rapid-log shorthand and reads back what it parsed ("→ inbox · @calls · B · fri 02.10")
+  before ⏎. `@` lists contexts with their open counts (⏎ → `/next?ctx=…`), `#` projects.
+- Empty input: the five modes as a hint line and the last 8 selections ("Recent", in memory
+  only). A dialog with `aria-activedescendant`; focus returns where it was on close.
+- No settings in the palette, no natural-language parsing beyond the capture shorthand.
+  "Toggle dark theme" joins with step 15.
+
 ## 4. The "one control per decision" rule
 
 A state is set on exactly one screen and only shown elsewhere, as a label linking to where
@@ -395,7 +414,10 @@ numbers. (A review step's `snapshot` is stored on purpose: it is the "before" of
 
 ## 6. Keyboard map (desktop)
 
-Global: `⌘K` command palette (later), `›`-field on every screen captures to inbox.
+Global: `⌘K` / `Ctrl-K` opens and closes the command palette (§3.10; on the phone the "⌘K"
+button in the header); inside it `↑ ↓` move, `⏎` runs, `esc` closes (or leaves a sub-list);
+a leading `>` lists commands, `+` captures, `@` jumps to a context, `#` to a project, plain
+text searches. `›`-field on every screen captures to inbox.
 Inbox: `j k x c ⌫`, `u` (or `⌘Z`) undo trash within 5 s, `/` focus the rapid log, `esc` leave it. Clarify: `y t m r` (step 1), `p` project picker, `a` toggle next
 action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Actions: `j k` move,
 `x f e p @`, `u` (or `⌘Z`) undo done within 5 s, `esc` cancel an edit / drop the cursor.
@@ -417,7 +439,7 @@ tracked mono section labels. Hit targets ≥ 44 px on phone, ≥ 26 px desktop b
 ## 8. Non-goals for v1
 
 Multi-user, sharing, external calendar write-back, email/voice/scan ingestion (only the
-`source` field exists), Reference screen, command palette, dark theme (tokens are ready for
+`source` field exists), Reference screen, dark theme (tokens are ready for
 it, no UI yet), AI features of any kind.
 
 Planned for v1.1:

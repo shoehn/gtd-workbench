@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { PaletteButton } from '../palette/PaletteButton';
 import { cx } from '../ui/cx';
 
 /** 36 px square header button; the ::after grows the touch target to 44 px. */
@@ -40,6 +41,7 @@ export function PhoneHeader({ title, meta, actions, back, children }: PhoneHeade
         <h1 className="m-0 min-w-0 truncate text-(length:--wb-text-title-phone) font-semibold">{title}</h1>
         {meta && <span className="min-w-0 truncate font-mono text-xs text-muted">{meta}</span>}
         <div className="grow" />
+        <PaletteButton className={PHONE_ICON_BTN} />
         {actions}
       </div>
       {children}

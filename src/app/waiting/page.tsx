@@ -89,6 +89,7 @@ export default async function WaitingPage({ searchParams }: PageProps<'/waiting'
         contexts={api.listContexts()}
         followUpContext={api.getSettings().followUpContext}
         initialPane={params.tab === 'someday' ? 'someday' : 'waiting'}
+        highlight={typeof params.highlight === 'string' ? params.highlight : undefined}
       />
     </Page>
   );

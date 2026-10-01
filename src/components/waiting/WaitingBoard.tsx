@@ -23,6 +23,7 @@ import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
 import { Kbd } from '../ui/Kbd';
 import { NextFields, defaultFields } from '../ui/NextFields';
+import { setPaletteTarget } from '../palette/target';
 import { PhoneToast } from '../ui/PhoneToast';
 import { SwipeRow } from '../ui/SwipeRow';
 import { useMoreBelow } from '../ui/useMoreBelow';
@@ -64,6 +65,8 @@ interface WaitingBoardProps {
   followUpContext: string;
   /** `?tab=someday` starts with the cursor pane on Someday/Maybe; on the phone it picks the tab. */
   initialPane: Pane;
+  /** `?highlight=<id>` puts the cursor on that row (links from the command palette). */
+  highlight?: string;
 }
 
 type Pane = 'waiting' | 'someday';
@@ -81,8 +84,13 @@ export function WaitingBoard(props: WaitingBoardProps) {
   const { waiting, onHold, someday, buckets, contexts } = props;
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [pane, setPane] = useState<Pane>(props.initialPane);
-  const [cursor, setCursor] = useState<Record<Pane, string | null>>({ waiting: null, someday: null });
+  const inSomeday = (id?: string) =>
+    !!id && (onHold.some((p) => p.id === id) || someday.some((g) => g.items.some((i) => i.id === id)));
+  const [pane, setPane] = useState<Pane>(inSomeday(props.highlight) ? 'someday' : props.initialPane);
+  const [cursor, setCursor] = useState<Record<Pane, string | null>>({
+    waiting: waiting.some((w) => w.id === props.highlight) ? props.highlight! : null,
+    someday: inSomeday(props.highlight) ? props.highlight! : null,
+  });
   // Hidden at once, before the server round trip removes them.
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
   const [undo, setUndo] = useState<{ pane: Pane; label: string; run(): Promise<void>; ids: string[] } | null>(null);
@@ -106,6 +114,12 @@ export function WaitingBoard(props: WaitingBoardProps) {
     ],
   };
   const current = entries[pane].find((e) => e.id === cursor[pane]);
+
+  // The palette (⌘K) offers follow up / received for the waiting-for under the cursor.
+  useEffect(() => {
+    setPaletteTarget(pane === 'waiting' && current ? { kind: 'waiting', id: current.id, text: current.text } : null);
+  });
+  useEffect(() => () => setPaletteTarget(null), []);
 
   function hide(id: string) {
     const list = entries[pane];

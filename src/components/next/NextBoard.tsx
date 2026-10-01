@@ -6,6 +6,7 @@ import { completeAction, editNextAction, reopenAction, toggleFocusAction, uncomp
 import type { Completed, NextEdit } from '@/lib/api';
 import type { Priority } from '@/lib/model';
 import { DRAG_ITEM } from '../calendar/blocks';
+import { setPaletteTarget } from '../palette/target';
 import { isTyping } from '../inbox/keys';
 import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
@@ -92,6 +93,14 @@ export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, h
   const rows = visible.flatMap((g) => g.rows);
   const cursorIdx = rows.findIndex((r) => r.id === cursorId);
   const cursor = rows[cursorIdx];
+
+  // The palette (⌘K) offers the cursor row's own actions.
+  useEffect(() => {
+    setPaletteTarget(
+      cursor ? { kind: 'next', id: cursor.id, text: cursor.text, context: cursor.context, ...(cursor.project && { projectId: cursor.project.id }) } : null,
+    );
+  });
+  useEffect(() => () => setPaletteTarget(null), []);
 
   function complete(id: string) {
     const row = rows.find((r) => r.id === id);
