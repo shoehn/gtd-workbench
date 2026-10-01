@@ -611,7 +611,11 @@ export function complete(id: string): Completed {
   const undo: Completed = { id, status: item.status, ...(item.priorityNo && { priorityNo: item.priorityNo }) };
   store.update((s) => {
     const it = s.items.find((i) => i.id === id)!;
-    if (it.status === 'calendar' && isRecurring(it)) s.items.push(nextOccurrence(it));
+    if (it.status === 'calendar' && isRecurring(it)) {
+      const next = nextOccurrence(it);
+      s.items.push(next);
+      it.successorId = next.id; // undo takes back exactly this one, never a look-alike
+    }
     it.status = 'done';
     it.doneAt = now().toISOString();
     renumberIn(s.items);
@@ -624,12 +628,12 @@ export function uncomplete(done: Completed): void {
   store.update((s) => {
     const it = s.items.find((i) => i.id === done.id);
     if (it?.status !== 'done') return;
-    if (done.status === 'calendar' && isRecurring(it)) {
-      // Take back the occurrence completing it created, if nothing happened to it since.
-      const successor = nextOccurrence(it);
-      s.items = s.items.filter(
-        (x) => !(x.status === 'calendar' && isRecurring(x) && x.text === it.text && x.day === successor.day),
-      );
+    // Take back the occurrence completing it created — by id, and only while it is still open
+    // (done or trashed meanwhile, it stays). Items done before the link existed have none.
+    if (it.successorId) {
+      const successorId = it.successorId;
+      s.items = s.items.filter((x) => !(x.id === successorId && x.status === 'calendar'));
+      delete it.successorId;
     }
     it.status = done.status;
     delete it.doneAt;
@@ -1080,6 +1084,7 @@ function nextOccurrence(item: Item): Item {
   if (item.timeSlot) next.timeSlot = { start: shiftStamp(item.timeSlot.start, 7), end: shiftStamp(item.timeSlot.end, 7) };
   delete next.doneAt;
   delete next.focusOn;
+  delete next.successorId;
   return next;
 }
 

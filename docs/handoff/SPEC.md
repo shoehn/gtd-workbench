@@ -200,7 +200,9 @@ review, bins) repeat here. Everything else stays on the lists.
   × deletes. No undo.
 - Recurring: an item tagged `recurring:weekly` is drawn on every later week at the same
   weekday and time with "↻" (projected, not interactive). Completing it stores the next
-  occurrence a week later; undoing the completion takes that occurrence back.
+  occurrence a week later; undoing the completion (undo or unticking) takes exactly that
+  occurrence back — by its id (`successorId`), and only while it is still open. Another item
+  with the same title and day is never touched.
 
 #### Sources (step 12)
 - Two kinds, configured in the environment only — `CAL_<ID>_URL`, `CAL_<ID>_NAME`,
@@ -384,6 +386,7 @@ interface Item {
   reference?: Reference;      // status 'reference' (§3.11); inbox: what came with it (mail body, shared URL, §3.1)
   tags: string[];
   doneAt?: string;
+  successorId?: string;       // done recurring item: the occurrence completing it created
   trashedAt?: string;         // ISO; purged by the weekly review or after 30 d
 }
 

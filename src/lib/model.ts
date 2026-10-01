@@ -27,6 +27,7 @@ export interface Item {
   reference?: Reference;      // status 'reference': what it is and where it lives; inbox: what came with it (a mail's body, a shared URL)
   tags: string[];
   doneAt?: string;
+  successorId?: string;       // a done weekly item: the next occurrence completing it created
   trashedAt?: string;         // ISO; trash is purged by the weekly review or after 30 d
 }
 

@@ -37,6 +37,7 @@ export const items = sqliteTable(
     referenceBody: text('reference_body'),
     tags: text({ mode: 'json' }).$type<string[]>().notNull(),
     doneAt: text('done_at'),
+    successorId: text('successor_id'),
     trashedAt: text('trashed_at'),
   },
   (t) => [

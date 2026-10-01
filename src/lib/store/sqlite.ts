@@ -57,6 +57,7 @@ function itemRow(i: Item, seq: number) {
     referenceBody: i.reference?.body ?? null,
     tags: i.tags,
     doneAt: i.doneAt ?? null,
+    successorId: i.successorId ?? null,
     trashedAt: i.trashedAt ?? null,
   };
 }

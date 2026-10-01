@@ -36,6 +36,13 @@
       "when": 1790854292129,
       "tag": "0004_mail_seen",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790862343714,
+      "tag": "0005_successor_id",
+      "breakpoints": true
     }
   ]
 }

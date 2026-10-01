@@ -97,6 +97,36 @@ describe('recurring', () => {
     expect(item('c5').status).toBe('calendar');
     expect(store.getState().items.filter((i) => i.text === 'Weekly review')).toHaveLength(1);
   });
+
+  it('undo takes back only the occurrence completing created — a twin with the same title and day stays', () => {
+    // A separate recurring checklist that happens to share title and day with c5's next occurrence.
+    const twin = { ...structuredClone(item('c5')), id: 'twin', day: '2026-10-04', timeSlot: undefined, capturedAt: '2026-09-20T08:00:00+02:00' };
+    delete twin.timeSlot;
+    store.update((s) => {
+      s.items.push(twin);
+    });
+    const done = api.complete('c5');
+    api.uncomplete(done);
+    expect(item('twin')).toMatchObject({ status: 'calendar', day: '2026-10-04' });
+    expect(store.getState().items.filter((i) => i.text === 'Weekly review' && i.status === 'calendar').map((i) => i.id).sort()).toEqual(['c5', 'twin']);
+  });
+
+  it('unticking later (Calendar checkbox, no undo payload) also takes back exactly that occurrence', () => {
+    api.complete('c5');
+    const successor = store.getState().items.find((i) => i.status === 'calendar' && i.text === 'Weekly review')!;
+    api.uncomplete({ id: 'c5', status: 'calendar' });
+    expect(api.getItem(successor.id)).toBeUndefined();
+    expect(item('c5')).toMatchObject({ status: 'calendar' });
+    expect(item('c5').successorId).toBeUndefined();
+  });
+
+  it('a next occurrence that was done or trashed meanwhile is left alone', () => {
+    api.complete('c5');
+    const successor = store.getState().items.find((i) => i.status === 'calendar' && i.text === 'Weekly review')!;
+    api.complete(successor.id);
+    api.uncomplete({ id: 'c5', status: 'calendar' });
+    expect(api.getItem(successor.id)?.status).toBe('done');
+  });
 });
 
 describe('time blocks', () => {
