@@ -464,7 +464,7 @@ Review: `space` tick the step under the cursor, `j k` move the cursor, `p` pause
 
 See `design/tokens.css`. Two faces (IBM Plex Sans for text, IBM Plex Mono for labels,
 counts, keys, dates), cool grey ground `#eef0f3`, panels white, ink `#171a1f`, muted
-`#5a6370`, one accent blue `#2456c4`, orange `#b8560f` reserved for "needs attention"
+`#5a6370`, one accent blue `#2456c4`, orange `#a84e0d` reserved for "needs attention"
 (overdue, stalled, deadlines, inbox age), green `#1f7a5c` only for "has next action" /
 done counters. Radius 3 px. Type 13 px body desktop, 15 px phone; 11 px mono meta; 10 px
 tracked mono section labels. Hit targets ≥ 44 px on phone, ≥ 26 px desktop buttons.
@@ -473,9 +473,9 @@ Dark theme: the same palette re-tuned, set only in the dark blocks of `tokens.cs
 a dark-specific class in a component). Rails are darker than the ground in both themes;
 `color-scheme: dark` makes native controls follow. Every colour in `src` is a token;
 `src/lib/contrast.ts` lists the foreground / background pairs the components use and
-`contrast.test.ts` checks them in both themes (text 4.5:1, focus border and now line 3:1).
-Two light pairs are known below 4.5:1 and kept as drawn: orange on the rail (inbox age,
-3.9:1) and orange on warn-tint (overdue follow-up date, 4.4:1).
+`contrast.test.ts` checks them in both themes (text 4.5:1, focus border and now line 3:1),
+with no exceptions. The root carries `color-scheme: light dark` in `system`, `light` or
+`dark` when the theme is forced.
 
 ## 8. Non-goals for v1
 

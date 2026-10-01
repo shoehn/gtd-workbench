@@ -13,28 +13,25 @@ const light = tokensOf(block(':root {'));
 const dark = { ...light, ...tokensOf(block(':root[data-theme="dark"]')) };
 const system = { ...light, ...tokensOf(block(':root:not([data-theme])')) };
 
-// Light values are the design's and stay as drawn (prompt 15); these two miss 4.5:1 there.
-const LIGHT_KNOWN = new Set(['warn/rail', 'warn/warn-tint']);
-
 describe('token contrast', () => {
   it.each(PAIRS)('dark: $fg on $bg ≥ $min ($where)', ({ fg, bg, min }) => {
     expect(contrast(dark[fg], dark[bg])).toBeGreaterThanOrEqual(min);
   });
 
-  it.each(PAIRS.filter((p) => !LIGHT_KNOWN.has(`${p.fg}/${p.bg}`)))('light: $fg on $bg ≥ $min ($where)', ({ fg, bg, min }) => {
+  it.each(PAIRS)('light: $fg on $bg ≥ $min ($where)', ({ fg, bg, min }) => {
     expect(contrast(light[fg], light[bg])).toBeGreaterThanOrEqual(min);
-  });
-
-  it('the known light misses still reach 3:1', () => {
-    for (const pair of LIGHT_KNOWN) {
-      const [fg, bg] = pair.split('/');
-      expect(contrast(light[fg], light[bg])).toBeGreaterThanOrEqual(3);
-    }
   });
 
   it('"system" in a dark OS is the same dark as data-theme="dark"', () => {
     expect(system).toEqual(dark);
-    expect(block(':root:not([data-theme])').replace(/\s+/g, ' ')).toBe(block(':root[data-theme="dark"]').replace(/\s+/g, ' ').replace(':root[data-theme="dark"]', ':root:not([data-theme])'));
+  });
+
+  it('color-scheme: light dark on the root ("system"), light or dark when forced', () => {
+    const scheme = (b: string) => block(b).match(/color-scheme:\s*([^;]+);/)?.[1];
+    expect(scheme(':root {')).toBe('light dark');
+    expect(scheme(':root[data-theme="light"]')).toBe('light');
+    expect(scheme(':root[data-theme="dark"]')).toBe('dark');
+    expect(scheme(':root:not([data-theme])')).toBeUndefined(); // "system" keeps light dark
   });
 
   it('every dark colour token has a dark value', () => {
