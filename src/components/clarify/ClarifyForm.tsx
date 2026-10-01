@@ -29,6 +29,8 @@ export interface ClarifyItem {
   priority?: Priority;
   day?: string; // ISO, from `^date` at capture
   tags: string[];
+  /** What came with it: a mail's body, a shared URL (SPEC §3.1). */
+  reference?: Reference;
 }
 
 type Answer = 'yes' | 'trash' | 'someday' | 'reference';
@@ -173,8 +175,8 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   const [followUp, setFollowUp] = useState('');
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // "No → Reference": the kind guessed from the text (a URL makes it a link).
-  const guess = guessReference(item.text);
+  // "No → Reference": what came with the item, else the kind guessed from the text (a URL makes it a link).
+  const guess = item.reference ?? guessReference(item.text);
   const [refKind, setRefKind] = useState<Reference['kind']>(guess.kind);
   const [refUrl, setRefUrl] = useState(guess.url ?? '');
   const [refBody, setRefBody] = useState('');
@@ -418,6 +420,14 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
                 <Tag key={t}>#{t}</Tag>
               ))}
             </div>
+          )}
+          {item.reference?.url && (
+            <a href={item.reference.url} target="_blank" rel="noopener noreferrer" className="w-fit font-mono text-meta break-all text-accent">
+              {item.reference.url}
+            </a>
+          )}
+          {item.reference?.body && (
+            <p className="m-0 max-h-40 overflow-y-auto border-l-2 border-line pl-2.5 text-sm whitespace-pre-wrap text-muted">{item.reference.body}</p>
           )}
         </Card>
 

@@ -4,7 +4,8 @@ services:
     build: .
     image: gtd-workbench:latest
     restart: unless-stopped
-    # Calendars (CAL_<ID>_URL / _USER / _PASS …) and other overrides; the file is optional.
+    # Calendars (CAL_<ID>_URL / _USER / _PASS …), CAPTURE_TOKEN, CAPTURE_MAIL_* and other
+    # overrides; the file is optional.
     env_file:
       - path: .env
         required: false

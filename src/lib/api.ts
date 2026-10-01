@@ -8,7 +8,7 @@ import { sourcesFromEnv, type CalendarSource } from './calendar/sources';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
 import { baseSeed } from './store/seed';
 import { STORE_KIND, createdThisBoot, store } from './store';
-import type { ExternalCalendar, TicklerEntry } from './store/types';
+import type { ExternalCalendar, MailboxStatus, MailSeen, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
 import { addDays, compareStamps, isoWeek, weekDays } from './week';
 
@@ -126,13 +126,31 @@ export function navCounts(): NavCounts {
  * Capture one line into the inbox. Never asks, never throws on input. Shorthand is parsed
  * best-effort; a `^date` is kept as `day` for Clarify to offer, not as a hard deadline.
  */
-export function capture(line: string, source: Source = 'typed'): Item | null {
+export function capture(line: string, source: Source = 'typed', extra?: CaptureExtra): Item | null {
+  const item = inboxItem(line, source, extra);
+  if (!item) return null;
+  store.update((s) => {
+    s.items.push(item);
+  });
+  firstCaptureDone = true;
+  return item;
+}
+
+/** What a channel other than the rapid log brings along (SPEC §3.1). */
+export interface CaptureExtra {
+  /** The original line when `line` was cleaned first (a mail subject without `Fwd:`). */
+  captured?: string;
+  /** Context that came with it: a shared URL, a mail's body. Kept on the item, not in its text. */
+  reference?: Reference;
+}
+
+function inboxItem(line: string, source: Source, extra?: CaptureExtra): Item | null {
   if (!line.trim()) return null;
   const { text, tags, context, priority, date } = parse(line, today(), store.getState().contexts);
-  const item: Item = {
+  return {
     id: crypto.randomUUID(),
     text: text || line.trim(),
-    captured: line,
+    captured: extra?.captured ?? line,
     source,
     capturedAt: now().toISOString(),
     status: 'inbox',
@@ -140,12 +158,72 @@ export function capture(line: string, source: Source = 'typed'): Item | null {
     ...(context && { context }),
     ...(priority && { priority }),
     ...(date && { day: date }),
+    ...(extra?.reference && { reference: extra.reference }),
   };
+}
+
+// ── Mail-in ────────────────────────────────────────────────────────────────
+
+/** One mail from the capture mailbox, already parsed (lib/mail/parse.ts). */
+export interface MailIn {
+  messageId: string;
+  /** Cleaned: without `Fwd:` / `Re:` / `AW:` / `WG:`. */
+  subject: string;
+  /** The subject as it came. */
+  captured: string;
+  /** Start of the plain-text body, ≤ 2 KB; empty for none. */
+  body: string;
+}
+
+export type MailOutcome = MailSeen['outcome'];
+
+/** How a mail was handled before, or undefined for a new one. */
+export function mailSeen(messageId: string): MailOutcome | undefined {
+  return store.getState().mailSeen.find((m) => m.messageId === messageId)?.outcome;
+}
+
+/**
+ * Capture a mail once: a Message-ID seen before is skipped; a mail with the same subject and
+ * body as an email item still in the inbox (forwarded twice) is a duplicate. Item and record
+ * are written together, so a crash can't capture it twice.
+ */
+export function captureMail(mail: MailIn): { outcome: MailOutcome | 'seen'; item?: Item } {
+  if (mailSeen(mail.messageId)) return { outcome: 'seen' };
+  const body = mail.body.trim();
+  const twin = store
+    .getState()
+    .items.find((i) => i.status === 'inbox' && i.source === 'email' && i.captured === mail.captured && (i.reference?.body ?? '') === body);
+  const item = twin ? null : inboxItem(mail.subject, 'email', { captured: mail.captured, ...(body && { reference: { kind: 'note', body } }) });
+  const outcome: MailOutcome = item ? 'captured' : 'duplicate';
   store.update((s) => {
-    s.items.push(item);
+    if (item) s.items.push(item);
+    s.mailSeen.push({ messageId: mail.messageId, at: now().toISOString(), outcome, ...(item && { itemId: item.id }) });
   });
-  firstCaptureDone = true;
-  return item;
+  if (item) firstCaptureDone = true;
+  return { outcome, ...(item && { item }) };
+}
+
+/** A mail from a sender not on CAPTURE_MAIL_FROM: counted once, never captured. */
+export function ignoreMail(messageId: string): void {
+  if (mailSeen(messageId)) return;
+  store.update((s) => {
+    s.mailSeen.push({ messageId, at: now().toISOString(), outcome: 'ignored' });
+  });
+}
+
+/** After every poll: when, and why it failed (cleared by the next good one). */
+export function recordMailPoll(error?: string): void {
+  const at = now().toISOString();
+  store.update((s) => {
+    s.mailbox = { lastPollAt: at, ...(error && { lastError: error, lastErrorAt: at }) };
+  });
+}
+
+/** The capture mailbox for Settings and /api/health. */
+export function mailboxInfo(): MailboxStatus & { captured: number; duplicates: number; ignored: number } {
+  const seen = store.getState().mailSeen;
+  const count = (o: MailOutcome) => seen.filter((m) => m.outcome === o).length;
+  return { ...store.getState().mailbox, captured: count('captured'), duplicates: count('duplicate'), ignored: count('ignored') };
 }
 
 const TRASH_KEEP_DAYS = 30;
@@ -307,7 +385,9 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
     const choice = decision.project;
     if (choice && 'id' in choice) check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`);
     if (choice && 'newTitle' in choice) checkNewTitle(state, choice.newTitle);
-    const reference = decision.reference ?? guessReference(current.text);
+    // A note keeps the context the item came with (a mail's body) unless the form gives one.
+    const chosen = decision.reference ?? current.reference ?? guessReference(current.text);
+    const reference = chosen.kind === 'note' && !chosen.body && current.reference?.body ? { ...chosen, body: current.reference.body } : chosen;
     checkReference(reference, 'clarify');
     const result: ClarifyResult = { itemId, projectCreated: false };
     store.update((s) => {

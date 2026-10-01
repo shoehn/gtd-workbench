@@ -7,6 +7,7 @@ import { captureAction, trashAction, untrashAction } from '@/lib/actions';
 import type { Item } from '@/lib/model';
 import { cx } from '../ui/cx';
 import { PhoneToast } from '../ui/PhoneToast';
+import { SourceIcon } from '../ui/SourceIcon';
 import { SwipeRow } from '../ui/SwipeRow';
 import type { InboxRow } from './InboxList';
 
@@ -63,7 +64,7 @@ export function PhoneRapidLog({ focus }: { focus: boolean }) {
 type Trashed = { id: string; status: Item['status'] }[];
 
 /** Phone inbox: two-line rows; tap or swipe → to clarify, swipe ← to trash (with undo). */
-export function PhoneInbox({ rows: allRows }: { rows: InboxRow[] }) {
+export function PhoneInbox({ rows: allRows, empty }: { rows: InboxRow[]; empty?: string }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
@@ -99,7 +100,8 @@ export function PhoneInbox({ rows: allRows }: { rows: InboxRow[] }) {
             <SwipeRow onRight={() => router.push(clarify(r.id))} onLeft={() => trash(r)} rightLabel="clarify →" leftLabel="← trash">
               <Link href={clarify(r.id)} className="flex min-h-14 flex-col justify-center gap-1 bg-panel px-4 py-3 text-ink no-underline">
                 <span>{r.text}</span>
-                <span className={cx('font-mono text-meta', r.aging ? 'text-warn' : 'text-muted')}>
+                <span className={cx('flex items-center gap-1.5 font-mono text-meta', r.aging ? 'text-warn' : 'text-muted')}>
+                  <SourceIcon source={r.source} />
                   {r.source} · {r.captured} · {r.age}
                 </span>
               </Link>
@@ -108,7 +110,7 @@ export function PhoneInbox({ rows: allRows }: { rows: InboxRow[] }) {
         ))}
       </ul>
       {rows.length === 0 ? (
-        <p className="m-0 px-4 py-8 text-center font-mono text-meta text-muted">Inbox zero.</p>
+        <p className="m-0 px-4 py-8 text-center font-mono text-meta text-muted">{empty ?? 'Inbox zero.'}</p>
       ) : (
         <p className="m-0 px-4 py-2.5 font-mono text-meta text-muted">swipe → clarify · swipe ← trash</p>
       )}

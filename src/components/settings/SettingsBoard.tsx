@@ -8,6 +8,7 @@ import {
   moveListEntryAction,
   renameListEntryAction,
   resetTemplateAction,
+  pollMailAction,
   syncCalendarsAction,
   updateSettingsAction,
   type SettingsResult,
@@ -41,6 +42,16 @@ interface SettingsBoardProps {
   }[];
   /** Any calendar configured in the environment. */
   canSync: boolean;
+  mailbox: {
+    /** `imap.example.com · INBOX → Processed`; absent = no mailbox configured. */
+    where?: string;
+    /** Why a configured mailbox is not polled (no allowed sender, no password). */
+    problem?: string;
+    lastPoll?: string;
+    error?: string;
+    captured: number;
+    ignored: number;
+  };
   timezone: string;
   /** The server's zone, shown for the empty choice. */
   serverZone: string;
@@ -65,6 +76,15 @@ export function SettingsBoard(props: SettingsBoardProps) {
   const [undo, setUndo] = useState<Undo | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [polling, setPolling] = useState(false);
+
+  function pollNow() {
+    setPolling(true);
+    startTransition(async () => {
+      await pollMailAction();
+      setPolling(false);
+    });
+  }
 
   function syncNow() {
     setSyncing(true);
@@ -247,6 +267,35 @@ export function SettingsBoard(props: SettingsBoardProps) {
           </select>
           <span className={mono}>“today”, midnight and overdue count in this zone · weeks start on Monday</span>
         </div>
+      </Card>
+
+      <Card aria-labelledby="mailbox-head" className="flex flex-col">
+        <CardTitle
+          id="mailbox-head"
+          title="Mailbox"
+          hint="mail from allowed senders lands in the inbox; the mail moves to Processed · polled every 2 min"
+          right={
+            <Btn size="sm" disabled={!props.mailbox.where || polling} onClick={pollNow}>
+              {polling ? 'Polling…' : 'Poll now'}
+            </Btn>
+          }
+        />
+        {props.mailbox.where ? (
+          <div className="flex min-h-9 flex-wrap items-center gap-x-2.5 gap-y-0.5 px-3 py-1.5">
+            <span className="grow font-mono text-meta">{props.mailbox.where}</span>
+            <span className={mono}>{props.mailbox.lastPoll ? `polled ${props.mailbox.lastPoll}` : 'never polled'}</span>
+            <span className={mono}>
+              {props.mailbox.captured} captured · {props.mailbox.ignored} ignored
+            </span>
+            {props.mailbox.error ? <Tag variant="warn">poll failed</Tag> : <Tag>read · move</Tag>}
+            {props.mailbox.error && <span className="basis-full text-xs text-warn">{props.mailbox.error}</span>}
+          </div>
+        ) : (
+          <p className={cx('m-0 px-3 py-2.5 font-mono text-meta', props.mailbox.problem ? 'text-warn' : 'text-muted')}>
+            {props.mailbox.problem ??
+              'No capture mailbox. Set CAPTURE_MAIL_HOST, _USER, _PASS and CAPTURE_MAIL_FROM in the environment — see docs/OPERATIONS.md.'}
+          </p>
+        )}
       </Card>
 
       <Card aria-labelledby="appearance-head" className="flex flex-col">

@@ -2,15 +2,19 @@ import { FirstRunCard } from '@/components/inbox/FirstRunCard';
 import { InboxList, type InboxRow } from '@/components/inbox/InboxList';
 import { PhoneInbox, PhoneRapidLog } from '@/components/inbox/PhoneInbox';
 import { RapidLog } from '@/components/inbox/RapidLog';
+import { PhoneSourceFilter, SourceFilter } from '@/components/inbox/SourceFilter';
 import Link from 'next/link';
 import { Page } from '@/components/shell/Page';
 import { Btn } from '@/components/ui/Btn';
 import * as api from '@/lib/api';
 import { fmtAge, fmtDay, fmtWeekdayTime } from '@/lib/format';
+import { sourceFilter } from '@/lib/inbox-filter';
 
 export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
   const params = await searchParams;
-  const items = api.listInbox();
+  const all = api.listInbox();
+  const source = sourceFilter(params.source);
+  const items = source ? all.filter((i) => i.source === source) : all;
   const rows: InboxRow[] = items.map((i) => ({
     id: i.id,
     text: i.text,
@@ -23,9 +27,11 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
     day: i.day && fmtDay(i.day),
     tags: i.tags,
   }));
-  const oldest = items.at(-1);
+  const empty = source && all.length ? `No ${source} items — all shows the other ${all.length}.` : undefined;
+  // Counts and age are the whole inbox's; the filter only narrows the list.
+  const oldest = all.at(-1);
   const firstRun = api.firstRun();
-  const meta = oldest ? `${items.length} open · oldest ${fmtAge(api.ageHours(oldest))}` : '0 open';
+  const meta = oldest ? `${all.length} open · oldest ${fmtAge(api.ageHours(oldest))}` : '0 open';
   const hotkey = <span className="font-mono text-meta opacity-80">c</span>;
   const clarifyCls =
     'relative inline-flex h-9 items-center rounded bg-accent px-3 text-sm font-medium text-panel no-underline after:absolute after:-inset-1';
@@ -34,21 +40,27 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
     <Page
       title="Inbox"
       meta={meta}
+      toolbar={all.length ? <SourceFilter value={source} /> : undefined}
       actions={
-        items.length ? (
+        all.length ? (
           <Btn variant="primary" href="/clarify">Clarify inbox{hotkey}</Btn>
         ) : (
           <Btn variant="primary" disabled>Clarify inbox{hotkey}</Btn>
         )
       }
       phone={{
-        meta: oldest ? `${items.length} · oldest ${fmtAge(api.ageHours(oldest))}` : '0',
-        actions: items.length ? (
+        meta: oldest ? `${all.length} · oldest ${fmtAge(api.ageHours(oldest))}` : '0',
+        actions: all.length ? (
           <Link href="/clarify" className={clarifyCls}>
             Clarify
           </Link>
         ) : null,
-        header: <PhoneRapidLog focus={params.capture === '1'} />,
+        header: (
+          <>
+            <PhoneRapidLog focus={params.capture === '1'} />
+            {all.length > 0 && <PhoneSourceFilter value={source} />}
+          </>
+        ),
       }}
     >
       {firstRun && (
@@ -56,11 +68,11 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
           <FirstRunCard />
         </div>
       )}
-      <PhoneInbox rows={rows} />
+      <PhoneInbox rows={rows} empty={empty} />
       <div className="flex h-full flex-col gap-4 max-lg:hidden">
         <RapidLog />
         {firstRun && <FirstRunCard />}
-        <InboxList rows={rows} />
+        <InboxList rows={rows} empty={empty} />
       </div>
     </Page>
   );

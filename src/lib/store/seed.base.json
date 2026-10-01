@@ -16,6 +16,7 @@
   "weekStart": "mon",
   "timezone": "Europe/Zurich",
   "theme": "system",
+  "mailSeen": [],
   "areaKinds": {},
   "projects": [],
   "items": [],

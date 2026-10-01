@@ -41,6 +41,8 @@ overrides in a `.env` file next to it — start from `.env.example`, which lists
 | `GTD_PORT` | `3000` | compose only: host port, bound to `127.0.0.1` |
 | `BACKUP_KEEP` | `14` | compose only: backups kept |
 | `BACKUP_DIR` | `<dir of DATABASE_FILE>/backups` | where `db:backup` writes |
+| `CAPTURE_TOKEN` | — (endpoint off) | Bearer token for `POST /api/capture` |
+| `CAPTURE_MAIL_*` | — (no mailbox) | the capture mailbox, see below |
 
 ## Calendars (read-only)
 
@@ -64,6 +66,73 @@ Privacy: only title, start, end, all-day flag, location and calendar name are st
 descriptions, no attendees. Credentials stay in the environment; the database and the logs
 never contain them. Nothing is written back to any calendar.
 
+## Capture from outside: endpoint, mail, share
+
+Three more ways into the inbox. All of them only capture — they never ask, and the item
+waits in the inbox for Clarify like anything typed.
+
+### Endpoint
+
+```sh
+CAPTURE_TOKEN=…            # a long random string, e.g. `openssl rand -hex 32`; unset = endpoint off
+```
+
+```sh
+curl -H "Authorization: Bearer $CAPTURE_TOKEN" \
+     -d '{"text":"Call the shop @calls"}' https://gtd.example.lan/api/capture
+# 201 {"id":"…","text":"Call the shop","context":"@calls","source":"typed",…}
+```
+
+Body: `text` (required, ≤ 4 KB, the rapid-log shorthand works), `source` (`typed`
+default, or `voice` `email` `share` `scan`), `url` and `note` (kept with the item as
+context). 401 without the token, 429 past 60 requests a minute, 413 for a body over 16 KB.
+To rotate the token, change it and restart.
+
+A shell function (needs `jq`), then `in Call the shop @calls`:
+
+```sh
+in() { curl -s -H "Authorization: Bearer $CAPTURE_TOKEN" --json "$(jq -n --arg t "$*" '{text: $t}')" https://gtd.example.lan/api/capture >/dev/null; }
+```
+
+**iOS Shortcut** ("Capture to GTD"): *Ask for Input* (Text, prompt "Capture") → *Get
+Contents of URL*: URL `https://gtd.example.lan/api/capture`, Method POST, Headers
+`Authorization: Bearer <token>`, Request Body JSON with one field `text` = *Provided Input*.
+Add it to the Home Screen or the Action Button; from the Share Sheet, turn on "Show in Share
+Sheet", accept URLs and Text, and send `text` = *Shortcut Input* (a page's title arrives
+as its URL; that is fine — Clarify shows it).
+
+### Mail
+
+A dedicated mailbox (an alias of your provider, or a separate account): forward or send to
+it, and each mail becomes one inbox item — the subject (without `Fwd:` `Re:` `AW:` `WG:`) as
+the text, the start of the body as context in Clarify. Attachments are not kept; the mail
+moves to a `Processed` folder (created on the first poll) and stays there.
+
+```sh
+CAPTURE_MAIL_HOST=imap.example.com
+CAPTURE_MAIL_PORT=993            # default 993 with TLS, 143 without
+CAPTURE_MAIL_TLS=true            # false only for a local test server
+CAPTURE_MAIL_USER=inbox@example.com
+CAPTURE_MAIL_PASS=…              # an app password where the provider offers one
+CAPTURE_MAIL_FROM=me@example.com,me@work.example   # who may capture; required
+# optional: CAPTURE_MAIL_FOLDER=INBOX, CAPTURE_MAIL_PROCESSED=Processed
+```
+
+Polled at start, every 2 minutes and on "Poll now" in Settings. Mail from any other
+sender stays in the mailbox untouched and is counted on Settings. The sender check reads
+the From header, which anyone can fake: keep the mailbox address to yourself. A mail is
+captured once — a re-poll skips Message-IDs it has seen, and forwarding the same mail again
+while the first copy is still in the inbox captures nothing. A failed poll shows on Settings
+and in `/api/health`; the next good poll clears it.
+
+### Share
+
+The app is installable (Chrome on Android and desktop: "Install app" / "Add to Home
+screen"; it needs HTTPS, so through the reverse proxy). Installed, it appears in the share
+sheet: sharing a page puts its title in the inbox with the link attached, and a one-line
+confirmation offers "Clarify now" or "Done". iOS Safari has no Web Share Target — use the
+Shortcut above.
+
 ## Reverse proxy
 
 The container listens on `127.0.0.1:${GTD_PORT}` of the host only. Caddy on the same box:
@@ -79,8 +148,10 @@ use the labels commented in `compose.yaml`.
 
 ## Health
 
-`GET /api/health` → `200 {"ok":true,"store":"sqlite","items":n,"version":"…"}`, or `500`
-with `ok: false` and the error when the database cannot be opened. The image's
+`GET /api/health` → `200 {"ok":true,"store":"sqlite","items":n,"mail":…,"version":"…"}`, or
+`500` with `ok: false` and the error when the database cannot be opened. `mail` is `null`
+without a capture mailbox, else `{"lastPollAt":"…","lastError":null}` — reported, never
+judged: a failing mailbox does not make the app unhealthy. The image's
 `HEALTHCHECK` and the compose healthcheck call it every 30 s.
 
 ## Backup

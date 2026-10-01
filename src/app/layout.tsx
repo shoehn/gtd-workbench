@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { ServiceWorker } from "@/components/shell/ServiceWorker";
 import * as api from "@/lib/api";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "@/styles/tokens.css";
@@ -20,6 +21,9 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "GTD Workbench",
   description: "Capture, clarify, organise, review.",
+  // Installable, and a share target on Android / desktop Chrome (SPEC §3.1).
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/icon-192.png" },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -30,6 +34,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" data-theme={theme === "system" ? undefined : theme} className={`${plexSans.variable} ${plexMono.variable} h-full`}>
       <body className="min-h-full bg-ground text-ink font-sans text-body antialiased">
         {children}
+        <ServiceWorker />
       </body>
     </html>
   );

@@ -3,13 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { trashAction, untrashAction } from '@/lib/actions';
-import type { Item, Priority } from '@/lib/model';
+import type { Item, Priority, Source } from '@/lib/model';
 import { Card } from '../ui/Card';
 import { cx } from '../ui/cx';
 import { useMoreBelow } from '../ui/useMoreBelow';
 import { Kbd } from '../ui/Kbd';
 import { PrioChip } from '../ui/PrioChip';
 import { Row } from '../ui/Row';
+import { SourceIcon } from '../ui/SourceIcon';
 import { Tag } from '../ui/Tag';
 import { isTyping } from './keys';
 
@@ -17,7 +18,7 @@ import { isTyping } from './keys';
 export interface InboxRow {
   id: string;
   text: string;
-  source: string;
+  source: Source;
   captured: string; // `sat 09:12`
   age: string; // `2 h` | `1 d`
   aging: boolean; // ≥ 3 d
@@ -32,7 +33,8 @@ type Trashed = { id: string; status: Item['status'] }[];
 const COLS = '32px minmax(0,1fr) 96px 90px 72px';
 const UNDO_MS = 5000;
 
-export function InboxList({ rows: allRows }: { rows: InboxRow[] }) {
+/** `empty`: what to say when a filter leaves no rows (default: the inbox is empty). */
+export function InboxList({ rows: allRows, empty }: { rows: InboxRow[]; empty?: string }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [cursorId, setCursorId] = useState<string | null>(null);
@@ -171,7 +173,10 @@ export function InboxList({ rows: allRows }: { rows: InboxRow[] }) {
                   <Tag key={t}>#{t}</Tag>
                 ))}
               </span>
-              <span className="font-mono text-meta text-muted">{r.source}</span>
+              <span className="flex items-center gap-1.5 font-mono text-meta text-muted">
+                <SourceIcon source={r.source} />
+                {r.source}
+              </span>
               <span className="font-mono text-meta text-muted">{r.captured}</span>
               <span className={cx('text-right font-mono text-meta', r.aging ? 'text-warn' : 'text-muted')}>
                 {r.age}
@@ -181,7 +186,7 @@ export function InboxList({ rows: allRows }: { rows: InboxRow[] }) {
         </div>
         {rows.length === 0 && (
           <p className="absolute inset-0 m-0 flex items-center justify-center font-mono text-meta text-muted">
-            Inbox is empty — nice.
+            {empty ?? 'Inbox is empty — nice.'}
           </p>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import * as api from './api';
+import { pollMailbox } from './mail/poller';
 import type { Item, Reference } from './model';
 
 export async function captureAction(line: string): Promise<void> {
@@ -238,6 +239,13 @@ export async function cycleThemeAction(): Promise<void> {
   const { theme } = api.getSettings();
   api.updateSettings({ theme: api.THEMES[(api.THEMES.indexOf(theme) + 1) % api.THEMES.length] });
   revalidatePath('/', 'layout');
+}
+
+/** Settings → Mailbox → "Poll now". */
+export async function pollMailAction(): Promise<{ ok: boolean; error?: string }> {
+  const { ok, error } = await pollMailbox();
+  revalidatePath('/', 'layout');
+  return { ok, ...(error && { error }) };
 }
 
 export async function syncCalendarsAction(): Promise<api.SyncResult[]> {

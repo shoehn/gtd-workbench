@@ -24,7 +24,7 @@ export interface Item {
   focusOn?: string;           // ISO date the focus star was set for
   waiting?: { who: string; since: string; followUp?: string };
   bucket?: string;            // someday/maybe grouping
-  reference?: Reference;      // status 'reference': what it is and where it lives
+  reference?: Reference;      // status 'reference': what it is and where it lives; inbox: what came with it (a mail's body, a shared URL)
   tags: string[];
   doneAt?: string;
   trashedAt?: string;         // ISO; trash is purged by the weekly review or after 30 d

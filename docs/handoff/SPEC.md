@@ -23,6 +23,7 @@ phone is the same lists with one-hand capture.
 | `/review` | `Review` / `M-Review` | Weekly review checklist with timer |
 | `/settings` | — (built from the primitives) | Contexts, buckets, calendars, time zone, review checklist |
 | `/reference` | — (built from the primitives) | Reference: notes, links, file names — the index, not the archive |
+| `/share` → `/share/done` | — (built from the primitives) | Web Share Target: a share lands in the inbox, one-line confirmation (§3.1) |
 
 Reference is a sidebar entry with its count and its own screen (§3.11); on the phone it is
 reached through ⌘K. Settings
@@ -43,9 +44,34 @@ from Next and Inbox respectively. Phone rules: §3.8.
   checklist are in settings." The first capture dismisses it. No wizard, no tour.
 - Inline shorthand is parsed best-effort: `#tag`, `@context`, `!A|!B|!C`, `^date`
   (`^03.10`, `^fri`, `^tomorrow`). Unparseable tokens stay in the text.
-- Items carry `source`: typed | voice | email | share | scan. Only `typed` exists in v1;
-  the others are placeholders for integrations.
-- List shows item, source, captured time, age. Age ≥ 3 d turns orange.
+- Items carry `source`: typed | voice | email | share | scan. typed, email and share have a
+  way in; voice and scan are values only.
+- Every way in ends in `api.capture(line, source, { captured?, reference? })` and nothing
+  else, and none of them asks a question:
+  - **Endpoint** `POST /api/capture`, `Authorization: Bearer $CAPTURE_TOKEN` (one token;
+    rotate by restart; the endpoint is off without it). Body `{ text, source?, url?, note? }`
+    as JSON (whatever the content type), text ≤ 4 KB, body ≤ 16 KB; 201 with the item.
+    `url` and `note` become the item's `reference` (the context it came with). 60 requests a
+    minute for the endpoint and `/share` together, then 429.
+  - **Mail** (IMAP poll of a dedicated mailbox every 2 min, `CAPTURE_MAIL_*`): the subject
+    without `Fwd:` / `Fw:` / `Re:` / `AW:` / `WG:` is the line; `captured` keeps the subject
+    as it came. The first 2 KB of the plain-text body (an HTML-only mail reduced to its text)
+    is the item's `reference.body`, with a line naming attachments, which are never kept.
+    Only senders on `CAPTURE_MAIL_FROM` capture; others stay in the mailbox and are counted
+    once (no allowed sender = no polling). A captured mail moves to `Processed`, never
+    deleted. Never twice: a Message-ID seen before is skipped (a re-poll), and a mail with
+    the same subject and body as an email item still in the inbox is a duplicate (forwarded
+    twice) — moved, not captured. No replies, no HTML rendering, no parsing of the body.
+  - **Share** (Web Share Target; the app is installable: manifest + a service worker that
+    caches nothing): `POST /share` (multipart title / text / url, same-origin, no token;
+    a form posted from another site is refused). The title is the line (else the text, else
+    the link's host), the URL — also one found in the text — the item's `reference.url`.
+    Answers with `/share/done`: "Captured to inbox: …", Clarify now / Done.
+- List shows item, source (icon + label), captured time, age. Age ≥ 3 d turns orange. A chip
+  row filters by source: all · typed · email · share (`?source=`); counts and age stay the
+  whole inbox's.
+- Clarify's item card shows what came with the item: the URL, and the body (scrolls past
+  ten lines). Filed as a reference note, the body becomes the note.
 - Keys: `j/k` move, `x` select, `c` clarify selected (or first), `⌫` trash.
 - Trash is a status, not a delete: `⌫` shows a 5 s undo toast, and trashed items stay in the
   store until the weekly review empties the trash or 30 days after they were trashed.
@@ -257,8 +283,11 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - `/settings`, a small mono "settings" link under Weekly Review in the sidebar (desktop only
   in v1, see §2).
   One column of cards: Contexts, Someday / Maybe buckets, Calendars (read-only names; the
-  time zone), the review checklist, Appearance (the theme). No save button: a row commits on ⏎ or leaving the
-  field; every change offers undo for 5 s (`u` / `⌘Z`).
+  time zone), Mailbox, Appearance (the theme), the review checklist. No save button: a row
+  commits on ⏎ or leaving the field; every change offers undo for 5 s (`u` / `⌘Z`).
+- Mailbox: read-only like a calendar source — host · folder → Processed, last poll, captured
+  and ignored counts, "poll failed" with the error, "Poll now". Configured in the
+  environment only; without it, a line says which variables to set.
 - Contexts and buckets are lists the items point to, not loose strings. A context is `@`
   and one word; names are unique regardless of case. Renaming renames every item that uses
   it, in one transaction. Deleting is refused while open items use it ("6 actions use
@@ -352,7 +381,7 @@ interface Item {
   focusOn?: string;           // ISO date the focus star was set for
   waiting?: { who: string; since: string; followUp?: string };
   bucket?: string;            // someday/maybe grouping
-  reference?: Reference;      // status 'reference' (§3.11)
+  reference?: Reference;      // status 'reference' (§3.11); inbox: what came with it (mail body, shared URL, §3.1)
   tags: string[];
   doneAt?: string;
   trashedAt?: string;         // ISO; purged by the weekly review or after 30 d
@@ -427,7 +456,8 @@ above plus the store-level lists (area kinds, tickler, external calendars); `Set
 one JSON row in the `settings` table. Two seeds: `seed.base.json` (generic contexts and
 buckets, the review template, week start, time zone) and `seed.demo.json` (the demo's own
 contexts and buckets, projects, items, calendar, review runs). A database that was never
-filled gets the base only; memory mode and `db:seed` / `db:reset` load base + demo. Deployment, backup and restore:
+filled gets the base only; the mail poller's record of handled Message-IDs is the
+`mail_seen` table and its last poll a `mailbox` row in `settings`; memory mode and `db:seed` / `db:reset` load base + demo. Deployment, backup and restore:
 `docs/OPERATIONS.md`. Deviations from the interfaces, each for a reason:
 - `Item.timeSlot` and `Item.waiting` are flattened into `time_slot_start/_end` and
   `waiting_who/_since/_follow_up`: always read with their item, and `waiting` is queried.
@@ -479,8 +509,8 @@ with no exceptions. The root carries `color-scheme: light dark` in `system`, `li
 
 ## 8. Non-goals for v1
 
-Multi-user, sharing, external calendar write-back, email/voice/scan ingestion (only the
-`source` field exists), AI features of any kind.
+Multi-user, sharing, external calendar write-back, voice and scan ingestion (only the
+`source` values exist), attachments, AI features of any kind.
 
 Planned for v1.1:
 - Sort and group menus on the lists ("Sort ▾" on Inbox, "Group: context ▾" on Next

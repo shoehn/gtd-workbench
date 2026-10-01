@@ -11,7 +11,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { ExternalEvent, Item, Project, ReviewRun } from '../model';
 import * as t from './schema';
-import type { ExternalCalendar, State, Store } from './types';
+import type { ExternalCalendar, MailSeen, State, Store } from './types';
 
 type Db = BetterSQLite3Database<typeof t>;
 type Row = Record<string, unknown>;
@@ -158,6 +158,12 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
     { table: t.externalEvents, pk: t.externalEvents.id, key: 'id', rows: s.externalEvents.map(eventRow) },
     { table: t.externalCalendars, pk: t.externalCalendars.key, key: 'key', rows: s.externalCalendars.map(calendarRow) },
     { table: t.tickler, pk: t.tickler.id, key: 'id', rows: s.tickler.map((e, seq) => ({ id: e.id, seq, day: e.day, text: e.text })) },
+    {
+      table: t.mailSeen,
+      pk: t.mailSeen.messageId,
+      key: 'messageId',
+      rows: s.mailSeen.map((m, seq) => ({ messageId: m.messageId, seq, at: m.at, outcome: m.outcome, itemId: m.itemId ?? null })),
+    },
     { table: t.areaKinds, pk: t.areaKinds.area, key: 'area', rows: Object.entries(s.areaKinds).map(([area, kind], seq) => ({ area, seq, kind })) },
     {
       table: t.settings,
@@ -167,6 +173,7 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
         { key: 'settings', value: settingsValue(s) },
         ...(s.today ? [{ key: 'today', value: s.today }] : []),
         ...(s.externalSyncedAt ? [{ key: 'externalSyncedAt', value: s.externalSyncedAt }] : []),
+        ...(s.mailbox ? [{ key: 'mailbox', value: JSON.stringify(s.mailbox) }] : []),
       ],
     },
   ];
@@ -220,6 +227,8 @@ function load(db: Db): State | null {
     }),
     ...(settings.externalSyncedAt && { externalSyncedAt: settings.externalSyncedAt }),
     externalEvents: bySeq(db.select().from(t.externalEvents).all()).map((e) => compact(unseq(e)) as unknown as ExternalEvent),
+    mailSeen: bySeq(db.select().from(t.mailSeen).all()).map((m) => compact(unseq(m)) as unknown as MailSeen),
+    ...(settings.mailbox && { mailbox: JSON.parse(settings.mailbox) }),
     reviewTemplate: user.reviewTemplate,
     reviewRuns: bySeq(db.select().from(t.reviewRuns).all()).map((r) => compact(unseq(r)) as unknown as ReviewRun),
   };

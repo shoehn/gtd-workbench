@@ -17,6 +17,23 @@ export interface ExternalCalendar {
   lastErrorAt?: string;
 }
 
+/** A mail the poller has handled once (SPEC §3.1): never captured twice. */
+export interface MailSeen {
+  /** The Message-ID header, or `sha256:<hash of the source>` for a mail without one. */
+  messageId: string;
+  at: string;
+  /** captured → an inbox item; duplicate → the same mail is still in the inbox; ignored → sender not allowed. */
+  outcome: 'captured' | 'duplicate' | 'ignored';
+  itemId?: string;
+}
+
+/** The capture mailbox's last poll, shown on Settings and /api/health. */
+export interface MailboxStatus {
+  lastPollAt?: string;
+  lastError?: string;
+  lastErrorAt?: string;
+}
+
 export interface State {
   /** Fixed "today" (ISO date) for the seed; absent means the real date. */
   today?: string;
@@ -38,6 +55,8 @@ export interface State {
   /** ISO; when the external calendars last synced. */
   externalSyncedAt?: string;
   externalEvents: ExternalEvent[];
+  mailSeen: MailSeen[];
+  mailbox?: MailboxStatus;
   reviewTemplate: ReviewTemplate;
   /** All review runs, oldest first; at most one is open (no `outcome`). */
   reviewRuns: ReviewRun[];

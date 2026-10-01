@@ -115,9 +115,19 @@ export const areaKinds = sqliteTable('area_kinds', {
   kind: text().notNull(),
 });
 
+/** Mails the capture poller has handled, so a re-poll never captures one twice. */
+export const mailSeen = sqliteTable('mail_seen', {
+  messageId: text('message_id').primaryKey(),
+  seq: integer().notNull(),
+  at: text().notNull(),
+  outcome: text().notNull(),
+  itemId: text('item_id'),
+});
+
 /**
  * Single values: `settings` (JSON: contexts, buckets, review template, week start, time zone —
- * the user's Settings as one row), `today` (the demo's pinned date), `externalSyncedAt`.
+ * the user's Settings as one row), `today` (the demo's pinned date), `externalSyncedAt`,
+ * `mailbox` (JSON: the capture mailbox's last poll and error).
  */
 export const settings = sqliteTable('settings', {
   key: text().primaryKey(),
