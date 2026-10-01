@@ -1115,6 +1115,11 @@ interface ItemEntry extends EntryBase {
   recurring: boolean;
   /** A later occurrence of a recurring item, drawn but not stored; not interactive. */
   projected: boolean;
+  /**
+   * Done is set here (SPEC §4: Next Actions and Calendar): a calendar item, open or done —
+   * not a next action's time block, whose done belongs to Next Actions. Never when projected.
+   */
+  tickable: boolean;
   href?: string;
 }
 
@@ -1163,6 +1168,8 @@ function landscape(from: string, to: string): CalendarEntry[] {
       if (i.status === 'calendar' && isRecurring(i)) {
         for (let d = addDays(day, 7); d <= to; d = addDays(d, 7)) if (d >= from) days.push([d, true]);
       }
+      // A next action always has a context, a calendar item never: so a done item's origin shows.
+      const fromCalendar = i.status === 'calendar' || (i.status === 'done' && !i.context);
       for (const [d, projected] of days) {
         const base = {
           id: projected ? `${i.id}@${d}` : i.id,
@@ -1173,6 +1180,7 @@ function landscape(from: string, to: string): CalendarEntry[] {
           done: !projected && i.status === 'done',
           recurring: isRecurring(i),
           projected,
+          tickable: fromCalendar && !projected,
           ...(ownerHref(i) && { href: ownerHref(i) }),
         };
         if (i.timeSlot) out.push({ ...base, kind: 'timeblock', start: hhmm(i.timeSlot.start), end: hhmm(i.timeSlot.end) });

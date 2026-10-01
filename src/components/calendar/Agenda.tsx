@@ -49,7 +49,7 @@ export function Agenda({ days }: { days: AgendaDay[] }) {
     },
   );
 
-  function toggle(e: Extract<CalendarEntry, { kind: 'dayaction' }>) {
+  function toggle(e: Extract<CalendarEntry, { kind: 'dayaction' | 'timeblock' }>) {
     const on = !done.has(e.id);
     startTransition(async () => {
       setDone({ id: e.id, on });
@@ -67,21 +67,31 @@ export function Agenda({ days }: { days: AgendaDay[] }) {
           </div>
         );
       case 'timeblock': {
-        const inner = (
+        const ticked = done.has(e.id);
+        const label = (
           <>
-            <span className={cx(e.done && 'text-muted line-through')}>
+            <span className={cx(ticked && 'text-muted line-through')}>
               {e.text}
               {e.recurring && ' ↻'}
             </span>
             <span className={mono}>time block{e.recurring ? ' · repeats weekly' : ` · ${length(e.start, e.end)}`}</span>
           </>
         );
+        // A calendar item's block is done here; a next action's block links to Next Actions.
+        if (e.tickable) {
+          return (
+            <label className={cx(block, 'flex-row items-start justify-start gap-2', KIND.timeblock)}>
+              <input type="checkbox" checked={ticked} onChange={() => toggle(e)} className="m-0 size-5 shrink-0" />
+              <span className="flex flex-col gap-0.5">{label}</span>
+            </label>
+          );
+        }
         return e.href && !e.projected ? (
           <Link href={e.href} className={cx(block, KIND.timeblock)}>
-            {inner}
+            {label}
           </Link>
         ) : (
-          <div className={cx(block, KIND.timeblock)}>{inner}</div>
+          <div className={cx(block, KIND.timeblock)}>{label}</div>
         );
       }
       case 'dayaction': {

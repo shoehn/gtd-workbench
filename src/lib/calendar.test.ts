@@ -129,6 +129,25 @@ describe('recurring', () => {
   });
 });
 
+describe('ticking in the Calendar (review P2 #6)', () => {
+  const entry = (week: string, id: string) => api.weekLandscape(week).find((e) => e.id === id) as { tickable?: boolean; kind: string } | undefined;
+
+  it("a calendar item's time block is tickable; a next action's block is not (its done belongs to Next)", () => {
+    api.setTimeSlot('n2', '2026-09-21T09:00');
+    expect(entry(W39, 'c5')).toMatchObject({ kind: 'timeblock', tickable: true });
+    expect(entry(W39, 'n2')).toMatchObject({ kind: 'timeblock', tickable: false });
+  });
+
+  it('done stays tickable for a calendar item (untick), not for a next action; projected never', () => {
+    expect(api.weekLandscape('2026-W41').find((e) => e.id.startsWith('c5@'))).toMatchObject({ tickable: false, projected: true });
+    api.setTimeSlot('n2', '2026-09-21T09:00');
+    api.complete('n2');
+    api.complete('c5');
+    expect(entry(W39, 'c5')).toMatchObject({ tickable: true });
+    expect(entry(W39, 'n2')).toMatchObject({ tickable: false });
+  });
+});
+
 describe('time blocks', () => {
   it('DoD: dropping n2 on Mon 09:00 blocks its hour; n2 stays starred', () => {
     api.setTimeSlot('n2', '2026-09-21T09:00');

@@ -196,6 +196,9 @@ review, bins) repeat here. Everything else stays on the lists.
   Clicking a block opens it where it is looked after (Next Actions row, else its project).
 - Calendar items (from Clarify → Defer → Calendar) can be dragged between days in the day-only
   strip or onto a slot; removing a calendar item's block leaves it on its day.
+  A calendar item keeps its checkbox when it has a time: its block carries one (desktop and
+  phone agenda), done and undone here. A next action's block has none — its done is set on
+  Next Actions; the block links there.
 - Deadlines: a day-specific action due the day it sits on is drawn once, as the action with
   the DEADLINE tag. An action due the same day as its project shows only as the project.
   Deadlines of open items (next, later, waiting, calendar) and active projects count.

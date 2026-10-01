@@ -98,7 +98,7 @@ export function WeekGrid({ days, entries, nowMin, hours: range = DEFAULT_HOURS }
   // What is being dragged inside the grid; drags from Next Actions leave it empty.
   const dragging = useRef<{ minutes?: number } | null>(null);
 
-  function toggleDone(e: DayAction) {
+  function toggleDone(e: DayAction | Extract<Timed, { kind: 'timeblock' }>) {
     const done = !doneIds.has(e.id);
     startTransition(async () => {
       setDone({ id: e.id, done });
@@ -311,7 +311,17 @@ export function WeekGrid({ days, entries, nowMin, hours: range = DEFAULT_HOURS }
                 }}
               >
                 {timed.map((e) => (
-                  <TimedBlock key={e.id} entry={e} first={first} last={last} {...lanes.get(e.id)!} onDragStart={(ev) => e.kind === 'timeblock' && startDrag(ev, e)} onRemove={() => startTransition(() => clearTimeSlotAction(e.id))} />
+                  <TimedBlock
+                    key={e.id}
+                    entry={e}
+                    first={first}
+                    last={last}
+                    {...lanes.get(e.id)!}
+                    done={doneIds.has(e.id)}
+                    onToggle={() => e.kind === 'timeblock' && toggleDone(e)}
+                    onDragStart={(ev) => e.kind === 'timeblock' && startDrag(ev, e)}
+                    onRemove={() => startTransition(() => clearTimeSlotAction(e.id))}
+                  />
                 ))}
                 {preview?.day === d.iso && (
                   <div
@@ -340,18 +350,23 @@ interface TimedBlockProps {
   last: number;
   lane: number;
   lanes: number;
+  /** Optimistic: ticked in this view, before the server answers. */
+  done: boolean;
+  /** Tick or untick a calendar item's block (entries with `tickable`). */
+  onToggle(): void;
   onDragStart(ev: DragEvent): void;
   onRemove(): void;
 }
 
-function TimedBlock({ entry: e, first, last, lane, lanes, onDragStart, onRemove }: TimedBlockProps) {
+function TimedBlock({ entry: e, first, last, lane, lanes, done, onToggle, onDragStart, onRemove }: TimedBlockProps) {
   const start = toMin(e.start!);
   const end = toMin(e.end!);
   const top = offset(Math.max(start, first * 60), first);
   const bottom = offset(Math.min(end, last * 60), first);
   if (end <= first * 60 || start >= last * 60) return null;
   const block = e.kind === 'timeblock';
-  const open = block && !e.projected && !e.done;
+  const tickable = block && e.tickable;
+  const open = block && !e.projected && !done;
   const time = (
     <span className={cx('font-mono text-label', block ? 'text-accent' : 'text-muted')}>
       {end - start >= LONG_MIN ? `${e.start}–${e.end}` : e.start}
@@ -361,7 +376,7 @@ function TimedBlock({ entry: e, first, last, lane, lanes, onDragStart, onRemove 
     <>
       {time}
       {end - start >= LONG_MIN ? <br /> : ' '}
-      <span className={cx(block && e.done && 'text-muted line-through')}>
+      <span className={cx(block && done && 'text-muted line-through')}>
         {e.text}
         {block && e.recurring && ' ↻'}
       </span>
@@ -380,6 +395,16 @@ function TimedBlock({ entry: e, first, last, lane, lanes, onDragStart, onRemove 
         width: `calc((100% - 8px) / ${lanes}${lanes > 1 ? ' - 1px' : ''})`,
       }}
     >
+      {tickable && (
+        <input
+          type="checkbox"
+          aria-label={`Done: ${e.text}`}
+          checked={done}
+          onChange={onToggle}
+          draggable={false}
+          className="float-left m-0 mt-px mr-1 size-3.5"
+        />
+      )}
       {block && e.href && !e.projected ? (
         <Link href={e.href} draggable={false} className="text-ink no-underline hover:underline">
           {content}
