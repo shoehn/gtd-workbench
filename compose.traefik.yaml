@@ -4,6 +4,7 @@
 #   GTD_HOST=gtd.example.com                  the public host name
 #   TRAEFIK_NETWORK=proxy                     the Docker network Traefik is on (external)
 #   TRAEFIK_ENTRYPOINT=websecure              Traefik's HTTPS entrypoint
+#   TRAEFIK_HTTP_ENTRYPOINT=web               its HTTP entrypoint (redirected to HTTPS)
 #   TRAEFIK_CERTRESOLVER=letsencrypt          its certificate resolver
 #   TRAEFIK_AUTH_MIDDLEWARE=authelia@docker   the Authelia forwardAuth middleware
 # The bypasses (POST /api/capture, manifest, icons, sw.js) live in Authelia's access_control,
@@ -24,6 +25,12 @@ services:
       - traefik.http.routers.gtd.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
       - traefik.http.routers.gtd.middlewares=${TRAEFIK_AUTH_MIDDLEWARE:-authelia@docker}
       - traefik.http.services.gtd.loadbalancer.server.port=3000
+      # http:// → https://, permanent; this host only (no global redirect assumed).
+      - traefik.http.routers.gtd-http.rule=Host(`${GTD_HOST:?set GTD_HOST in .env}`)
+      - traefik.http.routers.gtd-http.entrypoints=${TRAEFIK_HTTP_ENTRYPOINT:-web}
+      - traefik.http.routers.gtd-http.middlewares=gtd-https
+      - traefik.http.middlewares.gtd-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.gtd-https.redirectscheme.permanent=true
 
 networks:
   traefik:
