@@ -663,10 +663,16 @@ export function reopen(id: string): void {
   });
 }
 
-/** Inline edit on Next Actions: text, context, project (`null` = single action). */
+/** Inline edit on Next Actions (SPEC §4): text, the step-4 fields, deadline, project. */
 export interface NextEdit {
   text?: string;
   context?: string;
+  priority?: Priority;
+  time?: TimeBucket;
+  energy?: Energy;
+  /** ISO date; `null` removes it. */
+  deadline?: string | null;
+  /** `null` = single action. */
   project?: ProjectChoice | null;
 }
 
@@ -677,6 +683,10 @@ export function editNext(id: string, edit: NextEdit): { projectId?: string } {
   check(item?.status === 'next', `item ${id} is not a next action`, 'edit');
   if (edit.text !== undefined) check(edit.text.trim(), 'text is empty', 'edit');
   if (edit.context !== undefined) check(state.contexts.includes(edit.context), `unknown context ${edit.context}`, 'edit');
+  if (edit.priority !== undefined) check(['A', 'B', 'C'].includes(edit.priority), `unknown priority ${edit.priority}`, 'edit');
+  if (edit.time !== undefined) check([15, 30, 60, 120].includes(edit.time), `unknown time ${edit.time}`, 'edit');
+  if (edit.energy !== undefined) check(['focus', 'normal', 'low'].includes(edit.energy), `unknown energy ${edit.energy}`, 'edit');
+  if (edit.deadline) check(ISO_DATE.test(edit.deadline), 'deadline is not an ISO date', 'edit');
   const choice = edit.project;
   if (choice && 'id' in choice) check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`, 'edit');
   if (choice && 'id' in choice) checkTakesNextAction(choice.id, 'edit');
@@ -687,6 +697,17 @@ export function editNext(id: string, edit: NextEdit): { projectId?: string } {
     const it = s.items.find((i) => i.id === id)!;
     if (edit.text !== undefined) it.text = edit.text.trim();
     if (edit.context !== undefined) it.context = edit.context;
+    if (edit.priority !== undefined && edit.priority !== it.priority) {
+      // Last in its new priority; renumbering below closes the gap it leaves.
+      it.priority = edit.priority;
+      const no = nextPriorityNo(s.items, edit.priority);
+      if (no === undefined) delete it.priorityNo;
+      else it.priorityNo = no;
+    }
+    if (edit.time !== undefined) it.time = edit.time;
+    if (edit.energy !== undefined) it.energy = edit.energy;
+    if (edit.deadline === null) delete it.deadline;
+    else if (edit.deadline !== undefined) it.deadline = edit.deadline;
     if (choice === null) {
       delete it.projectId;
       projectId = undefined;

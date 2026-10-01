@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useOptimistic, useRef, useState, useTransition, type ReactNode } from 'react';
 import { completeAction, editNextAction, reopenAction, toggleFocusAction, uncompleteAction } from '@/lib/actions';
 import type { Completed, NextEdit } from '@/lib/api';
-import type { Priority } from '@/lib/model';
+import type { Energy, Priority, TimeBucket } from '@/lib/model';
+import { fmtMins } from '@/lib/format';
 import { DRAG_ITEM } from '../calendar/blocks';
 import { setPaletteTarget } from '../palette/target';
 import { isTyping } from '../inbox/keys';
@@ -27,8 +28,11 @@ export interface NextRow {
   priorityNo?: number;
   project?: { id: string; title: string };
   time?: string; // `30m`
-  energy?: string;
+  /** The raw values, for the inline editors. */
+  minutes?: TimeBucket;
+  energy?: Energy;
   due?: string; // `03.10`
+  deadline?: string; // ISO
   dueSoon: boolean; // ≤ 7 days
   focused: boolean;
 }
@@ -61,7 +65,7 @@ interface NextBoardProps {
   todayLine: string;
 }
 
-type Editing = { id: string; field: 'text' | 'context' | 'project' };
+type Editing = { id: string; field: 'text' | 'context' | 'project' | 'priority' | 'time' | 'energy' | 'deadline' };
 
 const COLS = '24px 24px 36px minmax(0,1fr) 220px 52px 60px 76px';
 const FADE_MS = 400;
@@ -439,7 +443,19 @@ function ActionRow({ row: r, isCursor, fading, starred, editing, contexts, proje
           <path d={STAR} />
         </svg>
       </button>
-      {r.priority ? <PrioChip priority={r.priority} no={r.priorityNo} /> : <span />}
+      {editing === 'priority' ? (
+        <ChoiceEdit
+          label="Priority"
+          value={r.priority ?? 'B'}
+          options={PRIORITIES.map((p) => [p, p])}
+          onSave={(priority) => (priority !== r.priority ? onSave({ priority }) : onCancel())}
+          onCancel={onCancel}
+        />
+      ) : (
+        <button type="button" aria-label={`Priority of “${r.text}”: ${r.priority ?? 'none'} — change`} onClick={() => onEdit('priority')} className={cellBtn}>
+          {r.priority ? <PrioChip priority={r.priority} no={r.priorityNo} /> : '—'}
+        </button>
+      )}
       <span className="flex min-w-0 items-center gap-2" onDoubleClick={() => onEdit('text')}>
         {editing === 'text' ? (
           <TextEdit text={r.text} onSave={(text) => (text.trim() && text.trim() !== r.text ? onSave({ text }) : onCancel())} onCancel={onCancel} />
@@ -469,14 +485,109 @@ function ActionRow({ row: r, isCursor, fading, starred, editing, contexts, proje
       ) : (
         <span className="text-xs text-muted">— (single action)</span>
       )}
-      <span className={mono}>{r.time ?? '—'}</span>
-      <span className={mono}>{r.energy ?? '—'}</span>
-      <span className={cx('font-mono text-meta', r.dueSoon ? 'text-warn' : 'text-muted')}>{r.due ?? '—'}</span>
+      {editing === 'time' ? (
+        <ChoiceEdit
+          label="Time"
+          value={r.minutes ?? 30}
+          options={TIMES.map((t) => [t, fmtMins(t)])}
+          onSave={(time) => (time !== r.minutes ? onSave({ time }) : onCancel())}
+          onCancel={onCancel}
+        />
+      ) : (
+        <button type="button" aria-label={`Time of “${r.text}”: ${r.time ?? 'none'} — change`} onClick={() => onEdit('time')} className={cx(cellBtn, mono)}>
+          {r.time ?? '—'}
+        </button>
+      )}
+      {editing === 'energy' ? (
+        <ChoiceEdit
+          label="Energy"
+          value={r.energy ?? 'normal'}
+          options={ENERGIES.map((e) => [e, e])}
+          onSave={(energy) => (energy !== r.energy ? onSave({ energy }) : onCancel())}
+          onCancel={onCancel}
+        />
+      ) : (
+        <button type="button" aria-label={`Energy of “${r.text}”: ${r.energy ?? 'none'} — change`} onClick={() => onEdit('energy')} className={cx(cellBtn, mono)}>
+          {r.energy ?? '—'}
+        </button>
+      )}
+      {editing === 'deadline' ? (
+        <DateEdit
+          value={r.deadline}
+          onSave={(deadline) => (deadline !== (r.deadline ?? null) ? onSave({ deadline }) : onCancel())}
+          onCancel={onCancel}
+        />
+      ) : (
+        <button
+          type="button"
+          aria-label={`Deadline of “${r.text}”: ${r.due ?? 'none'} — change`}
+          onClick={() => onEdit('deadline')}
+          className={cx(cellBtn, 'font-mono text-meta', r.dueSoon ? 'text-warn' : 'text-muted')}
+        >
+          {r.due ?? '—'}
+        </button>
+      )}
     </Row>
   );
 }
 
 const editCls = 'h-7 min-w-0 rounded border border-accent bg-panel px-2 text-ink shadow-ring outline-none';
+/** A cell that opens its inline editor: reads as the value, with a hover hint. */
+const cellBtn = 'w-fit cursor-pointer rounded text-left hover:underline';
+const PRIORITIES: Priority[] = ['A', 'B', 'C'];
+const TIMES: TimeBucket[] = [15, 30, 60, 120];
+const ENERGIES: Energy[] = ['focus', 'normal', 'low'];
+
+/** One of a few values: picking saves; Esc or leaving cancels. */
+function ChoiceEdit<T extends string | number>({ label, value, options, onSave, onCancel }: {
+  label: string;
+  value: T;
+  options: [T, string][];
+  onSave(value: T): void;
+  onCancel(): void;
+}) {
+  const parse = (v: string) => options.find(([o]) => String(o) === v)![0];
+  return (
+    <select
+      aria-label={label}
+      defaultValue={String(value)}
+      autoFocus
+      onChange={(e) => onSave(parse(e.target.value))}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onSave(parse(e.currentTarget.value));
+        else if (e.key === 'Escape') onCancel();
+      }}
+      onBlur={onCancel}
+      className={cx(editCls, 'relative z-10 w-fit px-1 font-mono text-meta')}
+    >
+      {options.map(([o, text]) => (
+        <option key={String(o)} value={String(o)}>{text}</option>
+      ))}
+    </select>
+  );
+}
+
+/** A hard deadline: Enter or leaving saves, an emptied field removes it, Esc cancels. */
+function DateEdit({ value, onSave, onCancel }: { value?: string; onSave(deadline: string | null): void; onCancel(): void }) {
+  const cancelled = useRef(false);
+  return (
+    <input
+      type="date"
+      aria-label="Deadline"
+      defaultValue={value ?? ''}
+      autoFocus
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        else if (e.key === 'Escape') {
+          cancelled.current = true;
+          onCancel();
+        }
+      }}
+      onBlur={(e) => !cancelled.current && onSave(e.currentTarget.value || null)}
+      className={cx(editCls, 'relative z-10 w-34 justify-self-end px-1 font-mono text-meta')}
+    />
+  );
+}
 
 /** Enter saves, Esc cancels; leaving the field saves too. */
 function TextEdit({ text, onSave, onCancel }: { text: string; onSave(text: string): void; onCancel(): void }) {

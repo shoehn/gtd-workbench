@@ -32,8 +32,10 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
         priorityNo: i.priorityNo,
         project: project && { id: project.id, title: project.title },
         time: i.time && fmtMins(i.time),
+        minutes: i.time,
         energy: i.energy,
         due: i.deadline && fmtDate(i.deadline),
+        deadline: i.deadline,
         dueSoon: !!i.deadline && daysBetween(today, i.deadline) <= DUE_SOON_DAYS,
         focused: api.isFocused(i),
       };

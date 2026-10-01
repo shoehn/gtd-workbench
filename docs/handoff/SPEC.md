@@ -121,7 +121,9 @@ from Next and Inbox respectively. Phone rules: §3.8.
   (within the 5 s undo window it is the same as the footer undo and keeps its number;
   after that it is numbered last in its priority).
 - Inline edit: text (`e` or double-click), context (`@`), project (`p`, the Clarify picker;
-  Enter on an empty field = single action). Enter saves, Esc cancels.
+  Enter on an empty field = single action), and a click on the priority chip, time, energy
+  or due cell (a select; due is a date, emptied = no deadline). A new priority numbers the
+  action last in it. Enter saves, Esc cancels.
 - Row: done checkbox · focus star · priority chip (A1, B3, C) · text · project link ·
   time · energy · due. "Single action" rows show no project.
 - **Focus star = today's pick.** Set only here (or by time-blocking an action on today in the calendar).

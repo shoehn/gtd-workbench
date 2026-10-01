@@ -161,3 +161,29 @@ describe('today and health', () => {
     expect(api.todayLandscape('2026-09-27').map((e) => e.kind)).toEqual(['timeblock', 'info']);
   });
 });
+
+describe('inline edit of the step-4 fields (review P2 #9, SPEC §4)', () => {
+  it('priority: re-numbered last in the new priority; the old one closes the gap', () => {
+    const lastA = Math.max(...store.getState().items.filter((i) => i.status === 'next' && i.priority === 'A').map((i) => i.priorityNo ?? 0));
+    api.editNext('n3', { priority: 'A' });
+    expect(api.getItem('n3')).toMatchObject({ priority: 'A', priorityNo: lastA + 1 });
+    const bs = store.getState().items.filter((i) => i.status === 'next' && i.priority === 'B').map((i) => i.priorityNo).sort();
+    expect(bs).toEqual(bs.map((_, n) => n + 1));
+    api.editNext('n3', { priority: 'C' });
+    expect(api.getItem('n3')!.priorityNo).toBeUndefined();
+  });
+
+  it('time, energy and deadline; null clears the deadline', () => {
+    api.editNext('n3', { time: 120, energy: 'focus', deadline: '2026-10-09' });
+    expect(api.getItem('n3')).toMatchObject({ time: 120, energy: 'focus', deadline: '2026-10-09' });
+    api.editNext('n3', { deadline: null });
+    expect(api.getItem('n3')!.deadline).toBeUndefined();
+  });
+
+  it('refuses values outside the lists', () => {
+    expect(() => api.editNext('n3', { priority: 'D' as never })).toThrow(/priority/);
+    expect(() => api.editNext('n3', { time: 45 as never })).toThrow(/time/);
+    expect(() => api.editNext('n3', { energy: 'high' as never })).toThrow(/energy/);
+    expect(() => api.editNext('n3', { deadline: '09.10' })).toThrow(/deadline/);
+  });
+});
