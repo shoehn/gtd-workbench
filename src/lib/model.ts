@@ -24,9 +24,17 @@ export interface Item {
   focusOn?: string;           // ISO date the focus star was set for
   waiting?: { who: string; since: string; followUp?: string };
   bucket?: string;            // someday/maybe grouping
+  reference?: Reference;      // status 'reference': what it is and where it lives
   tags: string[];
   doneAt?: string;
   trashedAt?: string;         // ISO; trash is purged by the weekly review or after 30 d
+}
+
+/** A reference entry (SPEC §3.11): kept, not acted on. The app is the index, not the archive. */
+export interface Reference {
+  kind: 'note' | 'link' | 'file';
+  url?: string;               // link: any scheme (https, obsidian://, a document system's URL)
+  body?: string;              // note: the text kept here; file: the path or file name
 }
 
 export interface Project {

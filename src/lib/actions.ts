@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import * as api from './api';
-import type { Item } from './model';
+import type { Item, Reference } from './model';
 
 export async function captureAction(line: string): Promise<void> {
   api.capture(line);
@@ -241,4 +241,24 @@ export async function syncCalendarsAction(): Promise<api.SyncResult[]> {
 
 export async function resetTemplateAction(): Promise<SettingsResult> {
   return settle(() => api.resetTemplate());
+}
+
+export async function addReferenceAction(text: string, reference: Reference, projectId?: string): Promise<void> {
+  api.addReference(text, reference, projectId);
+  revalidatePath('/', 'layout');
+}
+
+export async function editReferenceAction(id: string, edit: api.ReferenceEdit): Promise<void> {
+  api.editReference(id, edit);
+  revalidatePath('/', 'layout');
+}
+
+export async function toReferenceAction(id: string): Promise<void> {
+  api.toReference(id);
+  revalidatePath('/', 'layout');
+}
+
+export async function toSomedayAction(id: string): Promise<void> {
+  api.toSomeday(id);
+  revalidatePath('/', 'layout');
 }

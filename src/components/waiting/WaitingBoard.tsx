@@ -12,6 +12,7 @@ import {
   followUpAction,
   receivedAction,
   setBucketAction,
+  toReferenceAction,
   uncompleteAction,
   undropProjectAction,
   untrashAction,
@@ -117,7 +118,15 @@ export function WaitingBoard(props: WaitingBoardProps) {
 
   // The palette (⌘K) offers follow up / received for the waiting-for under the cursor.
   useEffect(() => {
-    setPaletteTarget(pane === 'waiting' && current ? { kind: 'waiting', id: current.id, text: current.text } : null);
+    setPaletteTarget(
+      !current
+        ? null
+        : pane === 'waiting'
+          ? { kind: 'waiting', id: current.id, text: current.text }
+          : current.kind === 'item'
+            ? { kind: 'someday', id: current.id, text: current.text }
+            : null,
+    );
   });
   useEffect(() => () => setPaletteTarget(null), []);
 
@@ -163,6 +172,11 @@ export function WaitingBoard(props: WaitingBoardProps) {
         router.push(`/clarify?item=${encodeURIComponent(e.id)}`);
       }
     });
+  }
+
+  function toReference(id: string) {
+    hide(id);
+    startTransition(() => toReferenceAction(id));
   }
 
   function drop(e: Entry) {
@@ -217,6 +231,9 @@ export function WaitingBoard(props: WaitingBoardProps) {
           if (!current) break;
           if (pane === 'waiting') received(waitingRows.find((w) => w.id === current.id)!);
           else activate(current);
+          break;
+        case 'r':
+          if (pane === 'someday' && current?.kind === 'item') toReference(current.id);
           break;
         case 'Backspace':
         case 'Delete':
@@ -456,6 +473,7 @@ export function WaitingBoard(props: WaitingBoardProps) {
                   cursor={isCursor('someday', i.id)}
                   onPick={() => pick('someday', i.id)}
                   onActivate={() => activate({ kind: 'item', id: i.id, text: i.text })}
+                  onToReference={() => toReference(i.id)}
                   onDrop={() => drop({ kind: 'item', id: i.id, text: i.text })}
                   label={i.text}
                   bucket={
@@ -515,6 +533,7 @@ function SomedayRow({
   onPick,
   onActivate,
   onDrop,
+  onToReference,
 }: {
   id: string;
   cursor: boolean;
@@ -524,6 +543,8 @@ function SomedayRow({
   onPick(): void;
   onActivate(): void;
   onDrop(): void;
+  /** Items only: keep it as reference instead (SPEC §3.11). */
+  onToReference?(): void;
 }) {
   return (
     <div
@@ -537,6 +558,11 @@ function SomedayRow({
       {children}
       <div className="flex items-center gap-1.5 max-lg:gap-2.5">
         {bucket}
+        {onToReference && (
+          <button type="button" className={cx(rowBtn, 'px-2 text-muted max-lg:h-11 max-lg:px-3')} onClick={onToReference} aria-label={`Keep “${text}” as reference`}>
+            → Reference
+          </button>
+        )}
         <button type="button" className={cx(rowBtn, 'px-2 text-ink max-lg:h-11 max-lg:px-4')} onClick={onActivate}>
           Activate
         </button>

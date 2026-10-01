@@ -13,7 +13,8 @@ import { cx } from '../ui/cx';
 import { Kbd } from '../ui/Kbd';
 import { PhoneToast } from '../ui/PhoneToast';
 import { PrioChip } from '../ui/PrioChip';
-import { ProjectPicker, type PickerProject } from '../ui/ProjectPicker';
+import { ProjectEdit } from '../ui/ProjectEdit';
+import type { PickerProject } from '../ui/ProjectPicker';
 import { Row } from '../ui/Row';
 import { SwipeRow } from '../ui/SwipeRow';
 
@@ -517,56 +518,3 @@ function ContextEdit({ context, contexts, onSave, onCancel }: { context: string;
 }
 
 /** Clarify's project picker in place: pick saves, Enter on an empty field makes it a single action. */
-function ProjectEdit({
-  projects,
-  current,
-  onSave,
-  onCancel,
-}: {
-  projects: PickerProject[];
-  current?: { id: string; title: string };
-  onSave(project: NextEdit['project']): void;
-  onCancel(): void;
-}) {
-  const [query, setQuery] = useState(current?.title ?? '');
-  const input = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    input.current?.focus();
-    input.current?.select();
-  }, []);
-  return (
-    <div
-      className="relative z-10 min-w-0 self-start"
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) onCancel();
-      }}
-      // Esc cancels the edit outright (the picker alone would first clear its text).
-      onKeyDownCapture={(e) => {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          onCancel();
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !query.trim()) {
-          e.preventDefault();
-          onSave(null);
-        }
-      }}
-    >
-      <ProjectPicker
-        projects={projects}
-        query={query}
-        picked={null}
-        onQuery={setQuery}
-        onPick={(p) => {
-          if (!p) return;
-          if ('newTitle' in p) onSave({ newTitle: p.newTitle });
-          else if (p.id !== current?.id) onSave({ id: p.id });
-          else onCancel();
-        }}
-        inputRef={input}
-      />
-    </div>
-  );
-}

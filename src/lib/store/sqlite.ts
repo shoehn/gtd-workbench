@@ -52,6 +52,9 @@ function itemRow(i: Item, seq: number) {
     waitingSince: i.waiting?.since ?? null,
     waitingFollowUp: i.waiting?.followUp ?? null,
     bucket: i.bucket ?? null,
+    referenceKind: i.reference?.kind ?? null,
+    referenceUrl: i.reference?.url ?? null,
+    referenceBody: i.reference?.body ?? null,
     tags: i.tags,
     doneAt: i.doneAt ?? null,
     trashedAt: i.trashedAt ?? null,
@@ -59,10 +62,14 @@ function itemRow(i: Item, seq: number) {
 }
 
 function rowItem(r: typeof t.items.$inferSelect): Item {
-  const { timeSlotStart, timeSlotEnd, waitingWho, waitingSince, waitingFollowUp, ...rest } = unseq(r);
+  const { timeSlotStart, timeSlotEnd, waitingWho, waitingSince, waitingFollowUp, referenceKind, referenceUrl, referenceBody, ...rest } =
+    unseq(r);
   const item = compact(rest) as unknown as Item;
   item.tags = r.tags;
   if (timeSlotStart && timeSlotEnd) item.timeSlot = { start: timeSlotStart, end: timeSlotEnd };
+  if (referenceKind) {
+    item.reference = compact({ kind: referenceKind, url: referenceUrl, body: referenceBody }) as Item['reference'];
+  }
   if (waitingWho !== null) item.waiting = compact({ who: waitingWho, since: waitingSince ?? '', followUp: waitingFollowUp }) as Item['waiting'];
   return item;
 }

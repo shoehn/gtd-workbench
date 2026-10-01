@@ -11,6 +11,8 @@ import {
   receivedAction,
   startReviewAction,
   syncCalendarsAction,
+  toReferenceAction,
+  toSomedayAction,
   toggleFocusAction,
 } from '@/lib/actions';
 import type { PaletteData } from '@/lib/api';
@@ -208,6 +210,14 @@ export function CommandPalette({ data }: { data: PaletteData }) {
         { id: 'row-follow', label: `Follow up: ${t.text}`, tag: 'this row', group: 'This waiting-for', run: act(() => followUpAction(t.id)) },
         { id: 'row-received', label: `Received: ${t.text}`, tag: 'this row', group: 'This waiting-for', run: act(() => receivedAction(t.id)) },
       );
+    }
+    if (target?.kind === 'someday') {
+      const t = target;
+      list.push({ id: 'row-toref', label: `→ Reference: ${t.text}`, tag: 'this row', group: 'This idea', run: act(() => toReferenceAction(t.id)) });
+    }
+    if (target?.kind === 'reference') {
+      const t = target;
+      list.push({ id: 'row-tosomeday', label: `→ Someday: ${t.text}`, tag: 'this row', group: 'This reference', run: act(() => toSomedayAction(t.id)) });
     }
     list.push(
       data.reviewOpen

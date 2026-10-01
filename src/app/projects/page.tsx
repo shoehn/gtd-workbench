@@ -206,5 +206,8 @@ function detail(p: Project, today: string): DetailData {
       overdue: overdue(i.waiting!.followUp),
     })),
     waitingHref: waiting.some((i) => overdue(i.waiting!.followUp)) ? '/waiting?filter=overdue' : '/waiting',
+    references: items
+      .filter((i) => i.status === 'reference' && i.reference)
+      .map((i) => ({ id: i.id, text: i.text, reference: i.reference!, line: api.referenceLine(i.reference!) })),
   };
 }

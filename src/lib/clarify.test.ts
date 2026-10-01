@@ -177,6 +177,8 @@ describe('similar', () => {
   it('finds list entries sharing two significant words', () => {
     expect(api.similar('Fwd: Offer for the new dining table — decide by Oct 3')).toEqual([
       { kind: 'project', id: 'p-table', title: 'Dining table decided and ordered' },
+      // reference entries count as "already on your lists" too
+      { kind: 'item', id: 'r1', title: 'Table offer from the furniture shop', status: 'reference' },
     ]);
   });
 

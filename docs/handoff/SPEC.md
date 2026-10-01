@@ -22,8 +22,10 @@ phone is the same lists with one-hand capture.
 | `/calendar` | `Calendar` / `M-Calendar` | Hard landscape: week view / agenda |
 | `/review` | `Review` / `M-Review` | Weekly review checklist with timer |
 | `/settings` | — (built from the primitives) | Contexts, buckets, calendars, time zone, review checklist |
+| `/reference` | — (built from the primitives) | Reference: notes, links, file names — the index, not the archive |
 
-Reference is a sidebar entry but not a screen in v1 (link goes to Projects). Settings
+Reference is a sidebar entry with its count and its own screen (§3.11); on the phone it is
+reached through ⌘K. Settings
 (`/settings`) is desktop-only in v1: the sidebar links to it, the phone tab bar does not (the
 page still works at phone width). Desktop shell:
 224 px sidebar (Collect / Do / Horizons groups + Weekly Review at the bottom), 48 px top bar
@@ -50,7 +52,9 @@ from Next and Inbox respectively. Phone rules: §3.8.
 
 ### 3.2 Clarify — the four steps, always in this order, all visible at once (no wizard)
 1. **Is it actionable?** Yes / No→Trash / No→Someday-Maybe / No→Reference.
-   A "No" ends the item here; steps 2–4 are skipped. Keys `y t m r`.
+   A "No" ends the item here; steps 2–4 are skipped. Keys `y t m r`. No→Reference asks one
+   optional thing more, inline: the kind (note / link with its URL / file with its name;
+   suggested from the text — a URL makes it a link) and, in step 3, a project it belongs to.
 2. **What is it?** One text field, prefilled with the captured text. Rewrite only if the
    words don't say what it is. The original capture text stays attached to the item.
    Label of the field: *outcome* (kept on purpose — every item is goal-oriented).
@@ -288,6 +292,21 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - No settings in the palette, no natural-language parsing beyond the capture shorthand.
   "Toggle dark theme" joins with step 15.
 
+### 3.11 Reference
+- Kept, not acted on. An item with `status: 'reference'` and a `reference` (note / link /
+  file); it may belong to a project and carry tags, never a context, priority or dates. The
+  app is the index: no upload, no preview, no full text of what a link points to.
+- `/reference`: a search field (text, note, URL and its host, tags, project; as you type, in
+  `?q=`), chips for kind and with project / loose, two-line rows (text + kind; host of the
+  link, start of the note or the file name; the project at the right). A link opens in a new
+  tab (any scheme), a note expands in place. Edit, project (the Clarify picker), → Someday
+  and trash (5 s undo) per row — on desktop shown on hover, focus or the cursor row.
+- Clarify "No → Reference" files it (§3.2). On a project, the Reference box lists its
+  entries and "+ reference" adds a note to it.
+- Someday ↔ Reference: "→ Reference" on a Someday row (`r`), "→ Someday" on a reference
+  row, both also in ⌘K for the row under the cursor. The entry keeps what it was (bucket,
+  link) for the way back.
+
 ## 4. The "one control per decision" rule
 
 A state is set on exactly one screen and only shown elsewhere, as a label linking to where
@@ -329,9 +348,16 @@ interface Item {
   focusOn?: string;           // ISO date the focus star was set for
   waiting?: { who: string; since: string; followUp?: string };
   bucket?: string;            // someday/maybe grouping
+  reference?: Reference;      // status 'reference' (§3.11)
   tags: string[];
   doneAt?: string;
   trashedAt?: string;         // ISO; purged by the weekly review or after 30 d
+}
+
+interface Reference {
+  kind: 'note' | 'link' | 'file';
+  url?: string;               // link: any scheme — https, obsidian://, a document system's URL
+  body?: string;              // note: the text kept; file: a path or file name (no upload)
 }
 
 interface Project {
@@ -423,7 +449,9 @@ action, `2 w n k` (step 4), `⏎` file and next, `s` skip, `⌫` trash. Next Act
 `x f e p @`, `u` (or `⌘Z`) undo done within 5 s, `esc` cancel an edit / drop the cursor.
 Waiting: `j k` move in the current pane, `Tab` switch pane (only while a row cursor is
 active, `esc` drops it and Tab moves focus again), `f` follow up and `x` received (Waiting
-For), `x` activate and `⌫` drop (Someday/Maybe), `u` (or `⌘Z`) undo within 5 s.
+For), `x` activate, `r` → Reference and `⌫` drop (Someday/Maybe), `u` (or `⌘Z`) undo within 5 s.
+Reference: `j k` move, `⏎` open the link (new tab) or show the note, `e` edit, `p` project,
+`⌫` trash, `u` (or `⌘Z`) undo within 5 s.
 Review: `space` tick the step under the cursor, `j k` move the cursor, `p` pause / resume,
 `⌘⏎` finish.
 
@@ -439,7 +467,7 @@ tracked mono section labels. Hit targets ≥ 44 px on phone, ≥ 26 px desktop b
 ## 8. Non-goals for v1
 
 Multi-user, sharing, external calendar write-back, email/voice/scan ingestion (only the
-`source` field exists), Reference screen, dark theme (tokens are ready for
+`source` field exists), dark theme (tokens are ready for
 it, no UI yet), AI features of any kind.
 
 Planned for v1.1:

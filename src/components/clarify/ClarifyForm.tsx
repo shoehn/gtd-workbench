@@ -6,7 +6,8 @@ import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactN
 import { clarifyAction } from '@/lib/actions';
 import type { Decision, Route, Similar } from '@/lib/api';
 import { fmtDate, fmtDay, fmtTime } from '@/lib/format';
-import type { Energy, Priority, Source, TimeBucket } from '@/lib/model';
+import type { Energy, Priority, Reference, Source, TimeBucket } from '@/lib/model';
+import { URL_IN_TEXT, guessReference } from '@/lib/reference';
 import { isTyping } from '../inbox/keys';
 import { Btn } from '../ui/Btn';
 import { Card } from '../ui/Card';
@@ -172,6 +173,11 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   const [followUp, setFollowUp] = useState('');
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "No → Reference": the kind guessed from the text (a URL makes it a link).
+  const guess = guessReference(item.text);
+  const [refKind, setRefKind] = useState<Reference['kind']>(guess.kind);
+  const [refUrl, setRefUrl] = useState(guess.url ?? '');
+  const [refBody, setRefBody] = useState('');
   // Phone: steps 1–2 fold once answered; "Edit" opens them again. Time / energy / deadline fold too.
   const [unfold, setUnfold] = useState<{ 1?: boolean; 2?: boolean }>({});
   const [moreFields, setMoreFields] = useState(false);
@@ -183,6 +189,8 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   const focusAfterRender = useRef<'who' | 'day' | null>(null);
 
   const notActionable = answer !== null && answer !== 'yes';
+  // "No → Reference" may still name a project (step 3) and says what kind of entry it is.
+  const asReference = answer === 'reference';
   const later = !notActionable && picked !== null && !asNext;
   const step4Dim = notActionable || later;
   const existing = picked && 'id' in picked ? picked : null;
@@ -198,6 +206,17 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   /** The decision the form currently describes, or why it can't be filed yet. */
   function decide(): Decision | string {
     if (!answer) return 'step 1: is it actionable?';
+    if (answer === 'reference') {
+      if (query.trim() && !picked) return 'step 3: pick a project (⏎) or clear it (esc)';
+      if (refKind === 'link' && !URL_IN_TEXT.test(refUrl)) return 'reference: a link needs a URL (https://, obsidian://, …)';
+      if (refKind === 'file' && !refBody.trim()) return 'reference: a file needs a path or file name';
+      const project = existing ? { id: existing.id } : picked && 'newTitle' in picked ? { newTitle: picked.newTitle } : undefined;
+      return {
+        kind: 'reference',
+        reference: refKind === 'link' ? { kind: 'link', url: refUrl } : refKind === 'file' ? { kind: 'file', body: refBody } : { kind: 'note' },
+        ...(project && { project }),
+      };
+    }
     if (answer !== 'yes') return { kind: answer };
     if (!text.trim()) return 'step 2: outcome is empty';
     if (query.trim() && !picked) return 'step 3: pick a project (⏎) or clear it (esc)';
@@ -234,7 +253,7 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
     if (typeof decision === 'string') return decision;
     if (decision.kind === 'trash') return 'will move to trash';
     if (decision.kind === 'someday') return 'will create: 1 someday / maybe item';
-    if (decision.kind === 'reference') return 'will file: 1 reference item';
+    if (decision.kind === 'reference') return `will file: 1 reference ${refKind}${projectTitle ? ` · ${projectTitle}` : ''}`;
     const parts = picked && 'newTitle' in picked ? ['1 project'] : [];
     if (decision.kind === 'later') {
       parts.push('1 later step');
@@ -252,6 +271,7 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   function resultRows(): [string, ReactNode][] {
     if (notActionable) {
       const list = { trash: 'Trash', someday: 'Someday / Maybe', reference: 'Reference' }[answer];
+      if (answer === 'reference') return [['item', item.text], ['list', `Reference · ${refKind}`], ['project', projectTitle ?? '— loose']];
       return [['item', item.text], ['list', list]];
     }
     const rows: [string, ReactNode][] = [];
@@ -329,7 +349,7 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
           setAnswer('reference');
           break;
         case 'p':
-          if (notActionable) return;
+          if (notActionable && !asReference) return;
           pickerRef.current?.focus();
           break;
         case 'a':
@@ -410,6 +430,35 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
                 <Toggle key={n.value} pressed={answer === n.value} label={n.label} k={n.key} onClick={() => setAnswer(n.value)} />
               ))}
             </div>
+            {asReference && (
+              <div role="group" aria-label="Kind of reference" className="flex flex-wrap items-center gap-2">
+                <span className={labelCls}>Kind</span>
+                {(['note', 'link', 'file'] as const).map((k) => (
+                  <Btn key={k} size="sm" variant={refKind === k ? 'primary' : 'outline'} aria-pressed={refKind === k} onClick={() => setRefKind(k)}>
+                    {k}
+                  </Btn>
+                ))}
+                {refKind === 'link' && (
+                  <input
+                    aria-label="URL"
+                    value={refUrl}
+                    placeholder="https://… or obsidian://…"
+                    onChange={(e) => setRefUrl(e.target.value.trim())}
+                    className={cx(controlCls, 'min-w-48 grow font-mono text-xs lg:h-7')}
+                  />
+                )}
+                {refKind === 'file' && (
+                  <input
+                    aria-label="Path or file name"
+                    value={refBody}
+                    placeholder="path or file name"
+                    onChange={(e) => setRefBody(e.target.value)}
+                    className={cx(controlCls, 'min-w-48 grow font-mono text-xs lg:h-7')}
+                  />
+                )}
+                <span className="text-meta text-muted">optional: a project in step 3</span>
+              </div>
+            )}
           </Step>
 
           {fold2 && <Folded text={text || '—'} onEdit={() => setUnfold((u) => ({ ...u, 2: true }))} />}
@@ -437,9 +486,16 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
             </span>
           </Step>
 
-          <Step n={3} title="Project" hint="Leave empty for a single action." dim={notActionable} top className={cx(notActionable && 'max-lg:hidden')}>
+          <Step
+            n={3}
+            title="Project"
+            hint={asReference ? 'Optional: the project this reference belongs to.' : 'Leave empty for a single action.'}
+            dim={notActionable && !asReference}
+            top
+            className={cx(notActionable && !asReference && 'max-lg:hidden')}
+          >
             <ProjectPicker projects={projects} query={query} picked={picked} onQuery={setQuery} onPick={pick} inputRef={pickerRef} />
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <div className={cx('flex flex-wrap items-center gap-x-2.5 gap-y-1', asReference && 'hidden')}>
               <input
                 id="isnext"
                 type="checkbox"

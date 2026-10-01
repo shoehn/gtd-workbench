@@ -22,6 +22,7 @@ import { cx } from '../ui/cx';
 import { NextFields, defaultFields } from '../ui/NextFields';
 import { PrioChip } from '../ui/PrioChip';
 import { Row } from '../ui/Row';
+import { ReferenceBox, type ProjectReference } from './ReferenceBox';
 import { SectionHead } from '../ui/SectionHead';
 
 /** A project's detail, already formatted on the server. */
@@ -46,6 +47,7 @@ export interface DetailData {
   waiting: { id: string; text: string; who: string; since: string; followUp?: string; overdue: boolean }[];
   /** `/waiting?filter=overdue` when one of them is overdue, else `/waiting`. */
   waitingHref: string;
+  references: ProjectReference[];
 }
 
 type Drag = { kind: 'next' | 'later'; id: string } | null;
@@ -277,10 +279,7 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
             {p.waitingHref.includes('overdue') ? 'Overdue waiting-for →' : 'All waiting-for →'}
           </Link>
         </Card>
-        <Card className="flex flex-col gap-2 px-3 py-2.5">
-          <SectionHead className="m-0">Reference</SectionHead>
-          <span className="text-xs text-muted">no files yet</span>
-        </Card>
+        <ReferenceBox projectId={p.id} entries={p.references} />
         <Card className="flex flex-col gap-1.5 px-3 py-2.5">
           <SectionHead className="m-0">Horizon</SectionHead>
           <dl className="m-0 grid grid-cols-[40px_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">

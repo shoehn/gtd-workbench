@@ -5,7 +5,9 @@ import { useSyncExternalStore } from 'react';
 /** The row under a board's cursor: the palette offers that row's own actions. */
 export type PaletteTarget =
   | { kind: 'next'; id: string; text: string; context: string; projectId?: string }
-  | { kind: 'waiting'; id: string; text: string };
+  | { kind: 'waiting'; id: string; text: string }
+  | { kind: 'someday'; id: string; text: string }
+  | { kind: 'reference'; id: string; text: string };
 
 let target: PaletteTarget | null = null;
 const listeners = new Set<() => void>();

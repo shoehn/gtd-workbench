@@ -1,8 +1,9 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
 import { parse } from './capture-syntax';
-import type { Energy, ExternalEvent, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, TimeBucket } from './model';
+import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
+import { URL_IN_TEXT, guessReference, referenceHost } from './reference';
 import { sourcesFromEnv, type CalendarSource } from './calendar/sources';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
 import { baseSeed } from './store/seed';
@@ -100,6 +101,7 @@ export interface NavCounts {
   next: number;
   calendar: number;
   waiting: number;
+  reference: number;
   projects: number;
   someday: number;
 }
@@ -114,6 +116,7 @@ export function navCounts(): NavCounts {
     next: count('next'),
     calendar: count('calendar'),
     waiting: count('waiting'),
+    reference: count('reference'),
     projects: listProjects().length,
     someday: count('someday'),
   };
@@ -232,7 +235,8 @@ export type Decision =
   /** Step 1 answered "No". */
   | { kind: 'trash' }
   | { kind: 'someday' }
-  | { kind: 'reference' }
+  /** Optional: the kind (default guessed from the text) and a project it belongs to. */
+  | { kind: 'reference'; reference?: Reference; project?: ProjectChoice }
   /** Actionable, in a project, not its next action: a later step; step 4 is skipped. */
   | { kind: 'later'; text: string; project: ProjectChoice }
   /** Actionable: a single action (no project) or one more next action of the project. */
@@ -299,7 +303,30 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   const current = state.items.find((i) => i.id === itemId);
   check(current?.status === 'inbox', `item ${itemId} is not in the inbox`);
 
-  if (decision.kind === 'trash' || decision.kind === 'someday' || decision.kind === 'reference') {
+  if (decision.kind === 'reference') {
+    const choice = decision.project;
+    if (choice && 'id' in choice) check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`);
+    if (choice && 'newTitle' in choice) checkNewTitle(state, choice.newTitle);
+    const reference = decision.reference ?? guessReference(current.text);
+    checkReference(reference, 'clarify');
+    const result: ClarifyResult = { itemId, projectCreated: false };
+    store.update((s) => {
+      const item = s.items.find((i) => i.id === itemId)!;
+      item.status = 'reference';
+      item.reference = cleanReference(reference);
+      delete item.day;
+      delete item.context;
+      delete item.priority;
+      if (choice) {
+        item.projectId = 'id' in choice ? choice.id : addProject(s, choice.newTitle, 'inbox');
+        result.projectId = item.projectId;
+        result.projectCreated = 'newTitle' in choice;
+      }
+    });
+    return result;
+  }
+
+  if (decision.kind === 'trash' || decision.kind === 'someday') {
     store.update((s) => {
       const item = s.items.find((i) => i.id === itemId)!;
       item.status = decision.kind;
@@ -1785,6 +1812,7 @@ const PALETTE_LISTS: Partial<Record<Item['status'], string>> = {
   later: 'Later steps',
   calendar: 'Calendar',
   done: 'Done',
+  reference: 'Reference',
 };
 
 /** Where an item is opened from the palette: its row on its screen. */
@@ -1806,8 +1834,10 @@ function paletteHref(i: Item): string | undefined {
       const day = i.timeSlot?.start.slice(0, 10) ?? i.day;
       return day ? `/calendar?week=${isoWeek(day)}` : undefined;
     }
+    case 'reference':
+      return `/reference?highlight=${id}`;
     default:
-      return undefined; // trash, reference (no screen yet)
+      return undefined; // trash
   }
 }
 
@@ -1835,4 +1865,101 @@ export function paletteData(): PaletteData {
     reviewOpen: !!openRun(),
     canSync: configuredSources().length > 0,
   };
+}
+
+// ── Reference ──────────────────────────────────────────────────────────────
+
+export { guessReference, referenceHost, referenceLine } from './reference';
+
+/** Reference entries, newest first. */
+export function listReference(): Item[] {
+  return store.getState().items.filter((i) => i.status === 'reference').sort(byNewest);
+}
+
+/** Does every word of `query` occur in the entry's text, body, URL (host too), tags or project? */
+export function matchesReference(i: Item, query: string): boolean {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const r = i.reference;
+  const project = i.projectId ? getProject(i.projectId)?.title : '';
+  const hay = [i.text, r?.body, r?.url, r?.url && referenceHost(r.url), i.tags.join(' '), project].join(' ').toLowerCase();
+  return words.every((w) => hay.includes(w));
+}
+
+function checkReference(r: Reference, scope: string) {
+  check(['note', 'link', 'file'].includes(r.kind), `unknown kind ${r.kind}`, scope);
+  if (r.kind === 'link') check(r.url && URL_IN_TEXT.test(r.url), 'a link needs a URL with a scheme (https://, obsidian://, …)', scope);
+  if (r.kind === 'file') check(r.body?.trim(), 'a file needs a path or file name', scope);
+}
+
+function cleanReference(r: Reference): Reference {
+  return {
+    kind: r.kind,
+    ...(r.kind === 'link' && r.url && { url: r.url.trim() }),
+    ...(r.kind !== 'link' && r.body?.trim() && { body: r.body.trim() }),
+  };
+}
+
+/** "+ reference" on a project (a note), or any entry made in place. */
+export function addReference(text: string, reference: Reference, projectId?: string): Item {
+  check(text.trim(), 'text is empty', 'addReference');
+  checkReference(reference, 'addReference');
+  if (projectId) check(getProject(projectId), `unknown project ${projectId}`, 'addReference');
+  const item: Item = {
+    id: crypto.randomUUID(),
+    text: text.trim(),
+    captured: text.trim(),
+    source: 'typed',
+    capturedAt: now().toISOString(),
+    status: 'reference',
+    reference: cleanReference(reference),
+    tags: [],
+    ...(projectId && { projectId }),
+  };
+  store.update((s) => {
+    s.items.push(item);
+  });
+  return item;
+}
+
+export interface ReferenceEdit {
+  text?: string;
+  reference?: Reference;
+  /** `null` = loose (no project). */
+  project?: ProjectChoice | null;
+}
+
+/** Edit an entry in place: its text, kind and URL / body, or its project. */
+export function editReference(id: string, edit: ReferenceEdit): void {
+  const state = store.getState();
+  check(state.items.find((i) => i.id === id)?.status === 'reference', `item ${id} is not a reference entry`, 'editReference');
+  if (edit.text !== undefined) check(edit.text.trim(), 'text is empty', 'editReference');
+  if (edit.reference) checkReference(edit.reference, 'editReference');
+  const choice = edit.project;
+  if (choice && 'id' in choice) check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`, 'editReference');
+  if (choice && 'newTitle' in choice) checkNewTitle(state, choice.newTitle, 'editReference');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    if (edit.text !== undefined) it.text = edit.text.trim();
+    if (edit.reference) it.reference = cleanReference(edit.reference);
+    if (choice === null) delete it.projectId;
+    else if (choice) it.projectId = 'id' in choice ? choice.id : addProject(s, choice.newTitle);
+  });
+}
+
+/** Someday → Reference: kept, no longer an idea to activate. Its bucket stays for the way back. */
+export function toReference(id: string): void {
+  check(getItem(id)?.status === 'someday', `item ${id} is not someday`, 'toReference');
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === id)!;
+    it.status = 'reference';
+    it.reference ??= guessReference(it.text);
+  });
+}
+
+/** Reference → Someday: an idea again. What it pointed to stays on the item. */
+export function toSomeday(id: string): void {
+  check(getItem(id)?.status === 'reference', `item ${id} is not a reference entry`, 'toSomeday');
+  store.update((s) => {
+    s.items.find((i) => i.id === id)!.status = 'someday';
+  });
 }
