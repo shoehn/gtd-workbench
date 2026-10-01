@@ -24,6 +24,7 @@ export default async function SettingsPage() {
         timezone={settings.timezone}
         serverZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
         zones={Intl.supportedValuesOf('timeZone')}
+        theme={settings.theme}
         template={settings.reviewTemplate}
         stepLinks={api.STEP_LINKS}
       />

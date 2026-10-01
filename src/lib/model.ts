@@ -74,7 +74,10 @@ export interface Settings {
   reviewTemplate: ReviewTemplate;
   weekStart: 'mon';
   timezone: string;           // IANA, e.g. 'Europe/Zurich'
+  theme: Theme;               // 'system' follows the OS
 }
+
+export type Theme = 'system' | 'light' | 'dark';
 
 export interface ExternalEvent {
   id: string; calendar: string; title: string;

@@ -15,6 +15,7 @@
   ],
   "weekStart": "mon",
   "timezone": "Europe/Zurich",
+  "theme": "system",
   "areaKinds": {},
   "projects": [],
   "items": [],

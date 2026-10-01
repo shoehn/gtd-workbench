@@ -166,4 +166,12 @@ describe('clock', () => {
     expect(api.timeZone()).toBe('Pacific/Kiritimati');
     expect(() => api.updateSettings({ timezone: 'Mars/Olympus' })).toThrow(/unknown time zone/);
   });
+
+  it('theme defaults to system, saves, and refuses a third theme', () => {
+    expect(api.getSettings().theme).toBe('system');
+    api.updateSettings({ theme: 'dark' });
+    expect(api.getSettings().theme).toBe('dark');
+    expect(() => api.updateSettings({ theme: 'sepia' as never })).toThrow(/unknown theme/);
+    expect(api.getSettings().theme).toBe('dark');
+  });
 });

@@ -25,6 +25,8 @@
   --wb-warn: #b8560f;          /* overdue, stalled, deadlines, inbox age ≥3d, A-priority chip */
   --wb-warn-tint: #fdf4ec;     /* overdue waiting-for row */
   --wb-ok: #1f7a5c;            /* has-next-action dot, completed counters */
+  --wb-scrim: rgba(23, 26, 31, 0.2);              /* behind a dialog (⌘K) */
+  --wb-shadow-popover: 0 8px 30px rgba(23, 26, 31, 0.18);
 
   /* type */
   --wb-font-sans: 'IBM Plex Sans', system-ui, sans-serif;
@@ -54,14 +56,31 @@
   --wb-hit-phone: 44px;
 }
 
-/* Dark theme: tokens are prepared, no UI switch in v1. */
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="dark"] {
-    --wb-ground: #15171b; --wb-panel: #1e2126; --wb-rail: #191c21; --wb-line: #2c3037;
+/* Dark theme (Settings → theme). `data-theme="dark"` forces it; without the attribute
+   ("system") it follows the OS, live; `data-theme="light"` keeps the light values above.
+   The two blocks carry the same values — contrast.test.ts checks that, and every pair. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --wb-ground: #15171b; --wb-panel: #1e2126; --wb-rail: #101215; --wb-line: #2c3037;
     --wb-line-soft: #24272d; --wb-control: #3a3f48; --wb-muted-bg: #2a2e35;
     --wb-ink: #e8eaee; --wb-muted: #9aa3ae; --wb-disabled: #3a3f48;
     --wb-accent: #7ea2ff; --wb-accent-hover: #9db8ff; --wb-accent-tint: #1d2740;
+    --wb-accent-ring: rgba(126, 162, 255, 0.25);
     --wb-warn: #e08a3c; --wb-warn-tint: #2e2218; --wb-ok: #4fb08a;
+    --wb-scrim: rgba(0, 0, 0, 0.55);
+    --wb-shadow-popover: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --wb-ground: #15171b; --wb-panel: #1e2126; --wb-rail: #101215; --wb-line: #2c3037;
+    --wb-line-soft: #24272d; --wb-control: #3a3f48; --wb-muted-bg: #2a2e35;
+    --wb-ink: #e8eaee; --wb-muted: #9aa3ae; --wb-disabled: #3a3f48;
+    --wb-accent: #7ea2ff; --wb-accent-hover: #9db8ff; --wb-accent-tint: #1d2740;
+    --wb-accent-ring: rgba(126, 162, 255, 0.25);
+    --wb-warn: #e08a3c; --wb-warn-tint: #2e2218; --wb-ok: #4fb08a;
+    --wb-scrim: rgba(0, 0, 0, 0.55);
+    --wb-shadow-popover: 0 8px 30px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -78,7 +97,7 @@
   --color-accent: var(--wb-accent);   --color-accent-hover: var(--wb-accent-hover);
   --color-accent-tint: var(--wb-accent-tint);
   --color-warn: var(--wb-warn);       --color-warn-tint: var(--wb-warn-tint);
-  --color-ok: var(--wb-ok);
+  --color-ok: var(--wb-ok);           --color-scrim: var(--wb-scrim);
   --font-sans: var(--wb-font-sans);   --font-mono: var(--wb-font-mono);
   --text-body: 13px;  --text-body--line-height: 1.4;
   --text-meta: 11px;  --text-meta--line-height: 1.4;
@@ -86,5 +105,6 @@
   --text-title: 14px; --text-title--line-height: 1.4;
   --radius: var(--wb-radius);         --radius-chip: var(--wb-radius-chip);
   --shadow-ring: 0 0 0 3px var(--wb-accent-ring);
+  --shadow-popover: var(--wb-shadow-popover);
 }
 */

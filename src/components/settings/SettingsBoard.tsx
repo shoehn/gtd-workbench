@@ -13,7 +13,7 @@ import {
   type SettingsResult,
 } from '@/lib/actions';
 import type { SettingsList } from '@/lib/api';
-import type { ReviewTemplate } from '@/lib/model';
+import type { ReviewTemplate, Theme } from '@/lib/model';
 import { isTyping } from '../inbox/keys';
 import { Btn } from '../ui/Btn';
 import { Card } from '../ui/Card';
@@ -45,6 +45,7 @@ interface SettingsBoardProps {
   /** The server's zone, shown for the empty choice. */
   serverZone: string;
   zones: string[];
+  theme: Theme;
   template: ReviewTemplate;
   stepLinks: readonly string[];
 }
@@ -245,6 +246,33 @@ export function SettingsBoard(props: SettingsBoardProps) {
             ))}
           </select>
           <span className={mono}>“today”, midnight and overdue count in this zone · weeks start on Monday</span>
+        </div>
+      </Card>
+
+      <Card aria-labelledby="appearance-head" className="flex flex-col">
+        <CardTitle id="appearance-head" title="Appearance" hint="also from the palette: Toggle dark theme" />
+        <div className="flex flex-wrap items-center gap-2.5 px-3 py-2">
+          <label htmlFor="theme" className="text-sm">
+            Theme
+          </label>
+          <select
+            id="theme"
+            value={props.theme}
+            onChange={(e) => {
+              const before = props.theme;
+              const next = e.target.value as Theme;
+              change('theme', () => updateSettingsAction({ theme: next }), {
+                label: `Theme ${next}`,
+                run: () => updateSettingsAction({ theme: before }),
+              });
+            }}
+            className="h-(--wb-hit-phone) rounded border border-control bg-panel px-1.5 font-mono text-meta text-ink lg:h-7"
+          >
+            <option value="system">system</option>
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
+          <span className={mono}>system follows the device</span>
         </div>
       </Card>
 

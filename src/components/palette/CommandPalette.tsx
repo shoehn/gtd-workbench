@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import {
   captureAction,
   completeAction,
+  cycleThemeAction,
   demoteAction,
   editNextAction,
   followUpAction,
@@ -226,6 +227,7 @@ export function CommandPalette({ data }: { data: PaletteData }) {
       ...(data.canSync
         ? [{ id: 'cmd-sync', label: 'Sync calendars', tag: 'command', group: 'Commands', run: act(() => syncCalendarsAction()), recent: true }]
         : []),
+      { id: 'cmd-theme', label: 'Toggle dark theme', tag: 'system → dark → light', group: 'Commands', run: act(() => cycleThemeAction()), recent: true },
       ...SCREENS.map(([label, href]) => ({ id: `go-${href}`, label: `Go to ${label}`, tag: href, group: 'Go to', run: go(href), recent: true })),
     );
     return list;
@@ -260,12 +262,12 @@ export function CommandPalette({ data }: { data: PaletteData }) {
     : 'text search · > commands · + capture · @ context · # project';
 
   return (
-    <div className="fixed inset-0 z-30 flex items-start justify-center bg-ink/20 pt-[12vh] max-lg:px-3 max-lg:pt-16" onMouseDown={(e) => e.target === e.currentTarget && close()}>
+    <div className="fixed inset-0 z-30 flex items-start justify-center bg-scrim pt-[12vh] max-lg:px-3 max-lg:pt-16" onMouseDown={(e) => e.target === e.currentTarget && close()}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded border border-line bg-panel shadow-[0_8px_30px_rgba(23,26,31,0.18)]"
+        className="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded border border-line bg-panel shadow-popover"
       >
         <div className="flex items-center gap-2 border-b border-line px-3">
           <span aria-hidden="true" className="font-mono text-accent">

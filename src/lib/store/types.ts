@@ -27,6 +27,8 @@ export interface State {
   weekStart: Settings['weekStart'];
   /** IANA time zone for "today", midnight and overdue; empty = the server's (TZ). */
   timezone: string;
+  /** Colour theme; `system` follows the OS (prefers-color-scheme). */
+  theme: Settings['theme'];
   /** Areas counted as "work" or "home" by the Projects filter chips; others count as neither. */
   areaKinds: Record<string, 'work' | 'home'>;
   projects: Project[];

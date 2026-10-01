@@ -14,7 +14,7 @@
   --color-accent: var(--wb-accent);   --color-accent-hover: var(--wb-accent-hover);
   --color-accent-tint: var(--wb-accent-tint);
   --color-warn: var(--wb-warn);       --color-warn-tint: var(--wb-warn-tint);
-  --color-ok: var(--wb-ok);
+  --color-ok: var(--wb-ok);           --color-scrim: var(--wb-scrim);
   --font-sans: var(--wb-font-sans);   --font-mono: var(--wb-font-mono);
   --text-body: 13px;  --text-body--line-height: 1.4;
   --text-meta: 11px;  --text-meta--line-height: 1.4;
@@ -22,4 +22,5 @@
   --text-title: 14px; --text-title--line-height: 1.4;
   --radius: var(--wb-radius);         --radius-chip: var(--wb-radius-chip);
   --shadow-ring: 0 0 0 3px var(--wb-accent-ring);
+  --shadow-popover: var(--wb-shadow-popover);
 }

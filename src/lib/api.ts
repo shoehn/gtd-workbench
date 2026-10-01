@@ -1,7 +1,7 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
 import { parse } from './capture-syntax';
-import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, TimeBucket } from './model';
+import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
 import { URL_IN_TEXT, guessReference, referenceHost } from './reference';
 import { sourcesFromEnv, type CalendarSource } from './calendar/sources';
@@ -1542,8 +1542,12 @@ export function getSettings(): Settings {
     reviewTemplate: s.reviewTemplate,
     weekStart: s.weekStart,
     timezone: s.timezone,
+    theme: s.theme,
   };
 }
+
+/** In the order the palette's "Toggle dark theme" cycles them. */
+export const THEMES: readonly Theme[] = ['system', 'dark', 'light'];
 
 /** The routes a review step may link to (the template editor's select). */
 export const STEP_LINKS = ['/inbox', '/clarify', '/next', '/calendar', '/waiting', '/waiting?tab=someday', '/projects'] as const;
@@ -1569,19 +1573,21 @@ function checkTemplate(t: ReviewTemplate) {
  * through the list operations below, which also update the items that use them.
  */
 export function updateSettings(
-  patch: Partial<Pick<Settings, 'reviewTemplate' | 'timezone' | 'weekStart' | 'followUpContext'>>,
+  patch: Partial<Pick<Settings, 'reviewTemplate' | 'timezone' | 'weekStart' | 'followUpContext' | 'theme'>>,
 ): void {
   if (patch.reviewTemplate) checkTemplate(patch.reviewTemplate);
   if (patch.followUpContext !== undefined) {
     check(store.getState().contexts.includes(patch.followUpContext), `unknown context ${patch.followUpContext}`, 'settings');
   }
   if (patch.timezone !== undefined) check(!patch.timezone || isTimeZone(patch.timezone), `unknown time zone ${patch.timezone}`, 'settings');
+  if (patch.theme !== undefined) check(THEMES.includes(patch.theme), `unknown theme ${patch.theme}`, 'settings');
   if (patch.weekStart !== undefined) check(patch.weekStart === 'mon', 'the week starts on Monday', 'settings');
   store.update((s) => {
     if (patch.reviewTemplate) s.reviewTemplate = structuredClone(patch.reviewTemplate);
     if (patch.timezone !== undefined) s.timezone = patch.timezone;
     if (patch.weekStart) s.weekStart = patch.weekStart;
     if (patch.followUpContext) s.followUpContext = patch.followUpContext;
+    if (patch.theme) s.theme = patch.theme;
   });
 }
 

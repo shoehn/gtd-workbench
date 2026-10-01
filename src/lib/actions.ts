@@ -233,6 +233,13 @@ export async function updateSettingsAction(patch: Parameters<typeof api.updateSe
   return settle(() => api.updateSettings(patch));
 }
 
+/** The palette's "Toggle dark theme": system → dark → light → system. */
+export async function cycleThemeAction(): Promise<void> {
+  const { theme } = api.getSettings();
+  api.updateSettings({ theme: api.THEMES[(api.THEMES.indexOf(theme) + 1) % api.THEMES.length] });
+  revalidatePath('/', 'layout');
+}
+
 export async function syncCalendarsAction(): Promise<api.SyncResult[]> {
   const results = await api.syncCalendars();
   revalidatePath('/', 'layout');

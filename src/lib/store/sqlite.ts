@@ -117,6 +117,7 @@ function settingsValue(s: State): string {
     reviewTemplate: s.reviewTemplate,
     weekStart: s.weekStart,
     timezone: s.timezone,
+    theme: s.theme,
   });
 }
 
@@ -197,7 +198,7 @@ function load(db: Db): State | null {
   if (!settings.settings) return null;
   const user = JSON.parse(settings.settings) as Pick<
     State,
-    'contexts' | 'followUpContext' | 'buckets' | 'reviewTemplate' | 'weekStart' | 'timezone'
+    'contexts' | 'followUpContext' | 'buckets' | 'reviewTemplate' | 'weekStart' | 'timezone' | 'theme'
   >;
   return {
     ...(settings.today && { today: settings.today }),
@@ -207,6 +208,7 @@ function load(db: Db): State | null {
     buckets: user.buckets,
     weekStart: user.weekStart,
     timezone: user.timezone,
+    theme: user.theme ?? 'system', // rows written before the setting existed
     areaKinds: Object.fromEntries(bySeq(db.select().from(t.areaKinds).all()).map((a) => [a.area, a.kind as 'work' | 'home'])),
     projects: bySeq(db.select().from(t.projects).all()).map((p) => compact(unseq(p)) as unknown as Project),
     items: bySeq(db.select().from(t.items).all()).map(rowItem),

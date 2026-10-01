@@ -257,7 +257,7 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - `/settings`, a small mono "settings" link under Weekly Review in the sidebar (desktop only
   in v1, see §2).
   One column of cards: Contexts, Someday / Maybe buckets, Calendars (read-only names; the
-  time zone), the review checklist. No save button: a row commits on ⏎ or leaving the
+  time zone), the review checklist, Appearance (the theme). No save button: a row commits on ⏎ or leaving the
   field; every change offers undo for 5 s (`u` / `⌘Z`).
 - Contexts and buckets are lists the items point to, not loose strings. A context is `@`
   and one word; names are unique regardless of case. Renaming renames every item that uses
@@ -273,6 +273,10 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - Time zone (Settings.timezone, else the server's `TZ`): "today", midnight (focus stars),
   overdue and the calendar's now line all count in it; one clock in `lib/clock.ts` behind
   `api.now()` / `api.today()`.
+- Theme (Settings.theme): `system` (default) follows the device, live; `light` and `dark`
+  force one. The server renders it as `data-theme` on `<html>` (every page is rendered per
+  request), so a reload never flashes the other theme; `system` renders no attribute and the
+  `prefers-color-scheme` block in `tokens.css` applies. Also the palette's "Toggle dark theme".
 
 ### 3.10 Command palette
 - A keyboard front door, not a second UI: every entry is an existing api operation or route.
@@ -282,15 +286,15 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
   project included) and projects, grouped by list, ⏎ opens the row on its screen (Next with
   `?highlight=`, Waiting / Someday with `?highlight=`, Projects with `?p=`, Calendar with the
   week). `>` lists commands: go to each screen, Clarify inbox, start (or open) the weekly
-  review, sync calendars (when configured); with a cursor on a Next Actions row also done,
+  review, sync calendars (when configured), "Toggle dark theme" (system → dark → light); with a cursor on a Next Actions row also done,
   focus today, later (project actions only), change context…, move to project…; on a
   Waiting For row follow up and received. `+` captures the rest of the line with the
   rapid-log shorthand and reads back what it parsed ("→ inbox · @calls · B · fri 02.10")
   before ⏎. `@` lists contexts with their open counts (⏎ → `/next?ctx=…`), `#` projects.
 - Empty input: the five modes as a hint line and the last 8 selections ("Recent", in memory
   only). A dialog with `aria-activedescendant`; focus returns where it was on close.
-- No settings in the palette, no natural-language parsing beyond the capture shorthand.
-  "Toggle dark theme" joins with step 15.
+- No settings in the palette except the theme toggle, no natural-language parsing beyond
+  the capture shorthand.
 
 ### 3.11 Reference
 - Kept, not acted on. An item with `status: 'reference'` and a `reference` (note / link /
@@ -400,6 +404,7 @@ interface Settings {
   reviewTemplate: ReviewTemplate;
   weekStart: 'mon';
   timezone: string;           // IANA; empty = the server's TZ
+  theme: 'system' | 'light' | 'dark';  // default 'system'
 }
 
 interface ExternalEvent {
@@ -464,11 +469,18 @@ counts, keys, dates), cool grey ground `#eef0f3`, panels white, ink `#171a1f`, m
 done counters. Radius 3 px. Type 13 px body desktop, 15 px phone; 11 px mono meta; 10 px
 tracked mono section labels. Hit targets ≥ 44 px on phone, ≥ 26 px desktop buttons.
 
+Dark theme: the same palette re-tuned, set only in the dark blocks of `tokens.css` (never
+a dark-specific class in a component). Rails are darker than the ground in both themes;
+`color-scheme: dark` makes native controls follow. Every colour in `src` is a token;
+`src/lib/contrast.ts` lists the foreground / background pairs the components use and
+`contrast.test.ts` checks them in both themes (text 4.5:1, focus border and now line 3:1).
+Two light pairs are known below 4.5:1 and kept as drawn: orange on the rail (inbox age,
+3.9:1) and orange on warn-tint (overdue follow-up date, 4.4:1).
+
 ## 8. Non-goals for v1
 
 Multi-user, sharing, external calendar write-back, email/voice/scan ingestion (only the
-`source` field exists), dark theme (tokens are ready for
-it, no UI yet), AI features of any kind.
+`source` field exists), AI features of any kind.
 
 Planned for v1.1:
 - Sort and group menus on the lists ("Sort ▾" on Inbox, "Group: context ▾" on Next
