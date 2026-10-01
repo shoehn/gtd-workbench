@@ -55,3 +55,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# docker compose: the server's own override (see compose.traefik.yaml)
+/compose.override.yaml

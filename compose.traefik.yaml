@@ -1,0 +1,31 @@
+# Traefik in Docker, login by Authelia (docs/OPERATIONS.md "Reachable from outside").
+# On the server: cp compose.traefik.yaml compose.override.yaml — `docker compose` then reads
+# both. Everything server-specific comes from .env, so this file holds no host or name:
+#   GTD_HOST=gtd.example.com                  the public host name
+#   TRAEFIK_NETWORK=proxy                     the Docker network Traefik is on (external)
+#   TRAEFIK_ENTRYPOINT=websecure              Traefik's HTTPS entrypoint
+#   TRAEFIK_CERTRESOLVER=letsencrypt          its certificate resolver
+#   TRAEFIK_AUTH_MIDDLEWARE=authelia@docker   the Authelia forwardAuth middleware
+# The bypasses (POST /api/capture, manifest, icons, sw.js) live in Authelia's access_control,
+# not here: Traefik asks Authelia about every request, Authelia answers "bypass" for those.
+services:
+  gtd:
+    # Traefik reaches it over the Docker network; nothing on the host's ports.
+    ports: !reset []
+    networks:
+      - default
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-proxy}
+      - traefik.http.routers.gtd.rule=Host(`${GTD_HOST:?set GTD_HOST in .env}`)
+      - traefik.http.routers.gtd.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.gtd.tls=true
+      - traefik.http.routers.gtd.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.routers.gtd.middlewares=${TRAEFIK_AUTH_MIDDLEWARE:-authelia@docker}
+      - traefik.http.services.gtd.loadbalancer.server.port=3000
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK:-proxy}
+    external: true

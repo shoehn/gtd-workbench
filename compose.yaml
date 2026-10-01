@@ -26,12 +26,8 @@ services:
       timeout: 5s
       start_period: 20s
       retries: 3
-    # Reverse proxy examples (not required, the app has no TLS or auth of its own):
-    # Traefik labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.gtd.rule=Host(`gtd.example.lan`)"
-    #   - "traefik.http.routers.gtd.tls=true"
-    #   - "traefik.http.services.gtd.loadbalancer.server.port=3000"
+    # Reverse proxy (the app has no TLS or auth of its own):
+    # Traefik in Docker: compose.traefik.yaml, copied to compose.override.yaml on the server.
     # Caddyfile:
     #   gtd.example.lan {
     #     reverse_proxy 127.0.0.1:3000

@@ -144,8 +144,20 @@ gtd.example.lan {
 }
 ```
 
-With Traefik in Docker, remove `ports` from the `gtd` service, put both on one network and
-use the labels commented in `compose.yaml`.
+With **Traefik in Docker** (and Authelia as its forwardAuth middleware), use
+`compose.traefik.yaml`: it takes the `gtd` service off the host's ports, puts it on
+Traefik's network and adds the router labels. On the server:
+
+```sh
+cp compose.traefik.yaml compose.override.yaml   # git-ignored; docker compose reads it by itself
+# in .env: GTD_HOST, and TRAEFIK_NETWORK / _ENTRYPOINT / _CERTRESOLVER / _AUTH_MIDDLEWARE
+#          where yours differ from proxy / websecure / letsencrypt / authelia@docker
+docker compose config >/dev/null && docker compose up -d --build
+```
+
+`docker compose config` fails with a clear message while `GTD_HOST` is unset. Without a
+certificate resolver (a wildcard certificate in Traefik's file provider), delete the
+`certresolver` label in your copy.
 
 ### Reachable from outside: login at the proxy
 
