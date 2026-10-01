@@ -92,6 +92,17 @@ export function WaitingBoard(props: WaitingBoardProps) {
     waiting: waiting.some((w) => w.id === props.highlight) ? props.highlight! : null,
     someday: inSomeday(props.highlight) ? props.highlight! : null,
   });
+  // The board stays mounted when ⌘K navigates to another `?highlight=`: follow it.
+  const [shownHighlight, setShownHighlight] = useState(props.highlight);
+  if (props.highlight !== shownHighlight) {
+    const id = props.highlight;
+    setShownHighlight(id);
+    if (id && (inSomeday(id) || waiting.some((w) => w.id === id))) {
+      const to: Pane = inSomeday(id) ? 'someday' : 'waiting';
+      setPane(to);
+      setCursor((c) => ({ ...c, [to]: id }));
+    }
+  }
   // Hidden at once, before the server round trip removes them.
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
   const [undo, setUndo] = useState<{ pane: Pane; label: string; run(): Promise<void>; ids: string[] } | null>(null);

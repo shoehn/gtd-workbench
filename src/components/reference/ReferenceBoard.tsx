@@ -85,6 +85,15 @@ export function ReferenceBoard({ rows: all, projects, highlight }: { rows: Refer
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
   const [cursorId, setCursorId] = useState<string | null>(highlight ?? null);
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set(highlight ? [highlight] : []));
+  // The board stays mounted when ⌘K navigates to another `?highlight=`: follow it.
+  const [shownHighlight, setShownHighlight] = useState(highlight);
+  if (highlight !== shownHighlight) {
+    setShownHighlight(highlight);
+    if (highlight) {
+      setCursorId(highlight);
+      setOpen((prev) => new Set(prev).add(highlight));
+    }
+  }
   const [editing, setEditing] = useState<{ id: string; what: 'entry' | 'project' } | null>(null);
   const [undo, setUndo] = useState<{ entries: Trashed; text: string } | null>(null);
 

@@ -72,6 +72,12 @@ const mono = 'font-mono text-meta text-muted';
 export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, highlight, today, health, todayLine }: NextBoardProps) {
   const [, startTransition] = useTransition();
   const [cursorId, setCursorId] = useState<string | null>(highlight ?? null);
+  // The board stays mounted when ⌘K navigates to another `?highlight=`: follow it.
+  const [shownHighlight, setShownHighlight] = useState(highlight);
+  if (highlight !== shownHighlight) {
+    setShownHighlight(highlight);
+    if (highlight) setCursorId(highlight);
+  }
   // Done rows fade for 400 ms, then hide until the server's list no longer has them.
   const [fading, setFading] = useState<ReadonlySet<string>>(new Set());
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
