@@ -34,7 +34,6 @@ export interface NextRow {
   due?: string; // `03.10`
   deadline?: string; // ISO
   dueSoon: boolean; // ≤ 7 days
-  focused: boolean;
 }
 
 export interface NextGroup {
@@ -89,8 +88,10 @@ export function NextBoard({ groups, hiddenByFilter, focus, contexts, projects, h
   const [editing, setEditing] = useState<Editing | null>(null);
   // A completion still fading out; `u` cancels it before it reaches the server.
   const pending = useRef<{ id: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+  // From the whole day's Focus list, not the (possibly filtered) rows: a filter hides rows,
+  // never stars.
   const [starred, toggleStarred] = useOptimistic(
-    new Set(groups.flatMap((g) => g.rows).filter((r) => r.focused).map((r) => r.id)) as ReadonlySet<string>,
+    new Set(focus.filter((f) => !f.done).map((f) => f.id)) as ReadonlySet<string>,
     (cur, id: string) => {
       const next = new Set(cur);
       if (!next.delete(id)) next.add(id);

@@ -37,7 +37,6 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
         due: i.deadline && fmtDate(i.deadline),
         deadline: i.deadline,
         dueSoon: !!i.deadline && daysBetween(today, i.deadline) <= DUE_SOON_DAYS,
-        focused: api.isFocused(i),
       };
     }),
   }));
