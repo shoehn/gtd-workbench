@@ -83,9 +83,18 @@ export function createLimiter(limit: number, windowMs: number, clock: () => numb
   };
 }
 
-const g = globalThis as typeof globalThis & { __wbCaptureLimiter?: ReturnType<typeof createLimiter> };
-/** 60 a minute, shared by /api/capture and /share. */
-export const captureLimiter = (g.__wbCaptureLimiter ??= createLimiter(60, 60_000));
+type Limiter = ReturnType<typeof createLimiter>;
+const g = globalThis as typeof globalThis & { __wbLimiters?: { capture: Limiter; share: Limiter; badToken: Limiter } };
+/**
+ * Separate quotas, so one kind of traffic can't use up another's: authenticated captures
+ * (60 a minute), shares (60 a minute), and requests with a missing or wrong token (20 a
+ * minute — they never count against the real captures).
+ */
+export const limiters = (g.__wbLimiters ??= {
+  capture: createLimiter(60, 60_000),
+  share: createLimiter(60, 60_000),
+  badToken: createLimiter(20, 60_000),
+});
 
 /** Read a request body as text, refusing more than `max` bytes. */
 export async function readBody(req: Request, max = BODY_MAX): Promise<string | null> {

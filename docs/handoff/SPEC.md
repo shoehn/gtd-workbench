@@ -51,8 +51,10 @@ from Next and Inbox respectively. Phone rules: §3.8.
   - **Endpoint** `POST /api/capture`, `Authorization: Bearer $CAPTURE_TOKEN` (one token;
     rotate by restart; the endpoint is off without it). Body `{ text, source?, url?, note? }`
     as JSON (whatever the content type), text ≤ 4 KB, body ≤ 16 KB; 201 with the item.
-    `url` and `note` become the item's `reference` (the context it came with). 60 requests a
-    minute for the endpoint and `/share` together, then 429.
+    `url` and `note` become the item's `reference` (the context it came with). Separate quotas,
+    then 429: 60 authenticated captures a minute, 60 shares a minute, and 20 requests a
+    minute with a missing or wrong token (401 until then) — those never use up the
+    captures' quota.
   - **Mail** (IMAP poll of a dedicated mailbox every 2 min, `CAPTURE_MAIL_*`): the subject
     without `Fwd:` / `Fw:` / `Re:` / `AW:` / `WG:` is the line; `captured` keeps the subject
     as it came. The first 2 KB of the plain-text body (an HTML-only mail reduced to its text)

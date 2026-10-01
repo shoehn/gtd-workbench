@@ -1,4 +1,4 @@
-import { captureLimiter, captureRequest, fromShare } from '@/lib/capture-in';
+import { captureRequest, fromShare, limiters } from '@/lib/capture-in';
 
 /**
  * The Web Share Target (manifest: POST multipart, title / text / url). Same-origin by design,
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   if (site && site !== 'none' && site !== 'same-origin') return new Response('cross-site share refused', { status: 403 });
   // A relative Location: behind a reverse proxy req.url names the internal host.
   const back = (query: string) => new Response(null, { status: 303, headers: { Location: `/share/done?${query}` } });
-  if (!captureLimiter.take()) return back('error=busy');
+  if (!limiters.share.take()) return back('error=busy');
   let form: FormData;
   try {
     form = await req.formData();

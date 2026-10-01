@@ -1,4 +1,4 @@
-import { bearerOk, captureLimiter, captureRequest, readBody } from '@/lib/capture-in';
+import { bearerOk, captureRequest, limiters, readBody } from '@/lib/capture-in';
 
 /**
  * POST /api/capture — one line into the inbox from anywhere: a shell alias, a Shortcut, an
@@ -8,12 +8,14 @@ import { bearerOk, captureLimiter, captureRequest, readBody } from '@/lib/captur
 export async function POST(req: Request) {
   const token = process.env.CAPTURE_TOKEN;
   if (!token) return Response.json({ error: 'the capture endpoint is off: set CAPTURE_TOKEN' }, { status: 404 });
-  if (!captureLimiter.take()) {
-    return Response.json({ error: 'too many requests: 60 a minute' }, { status: 429, headers: { 'Retry-After': String(captureLimiter.retryAfter()) } });
-  }
+  const tooMany = (limiter: typeof limiters.capture, error: string) =>
+    Response.json({ error }, { status: 429, headers: { 'Retry-After': String(limiter.retryAfter()) } });
+  // Wrong tokens are throttled on their own quota: they can't use up the real captures'.
   if (!bearerOk(req.headers.get('authorization'), token)) {
+    if (!limiters.badToken.take()) return tooMany(limiters.badToken, 'too many requests without a valid token');
     return Response.json({ error: 'missing or wrong bearer token' }, { status: 401, headers: { 'WWW-Authenticate': 'Bearer' } });
   }
+  if (!limiters.capture.take()) return tooMany(limiters.capture, 'too many requests: 60 a minute');
   const raw = await readBody(req);
   if (raw === null) return Response.json({ error: 'body is too large' }, { status: 413 });
   let body: unknown;

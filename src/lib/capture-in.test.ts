@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { POST as capturePost } from '../app/api/capture/route';
 import { POST as sharePost } from '../app/share/route';
 import * as api from './api';
-import { TEXT_MAX, captureLimiter, createLimiter, fromShare } from './capture-in';
+import { TEXT_MAX, createLimiter, fromShare, limiters } from './capture-in';
 import { store } from './store';
 import { demoSeed as seed } from './store/seed';
 import type { State } from './store/types';
@@ -14,7 +14,7 @@ beforeEach(() => {
     for (const key of Object.keys(s) as (keyof State)[]) delete s[key];
     Object.assign(s, structuredClone(seed));
   });
-  captureLimiter.reset();
+  for (const l of Object.values(limiters)) l.reset();
   process.env.CAPTURE_TOKEN = TOKEN;
 });
 afterEach(() => {
@@ -73,6 +73,23 @@ describe('POST /api/capture', () => {
     const res = await capture({ text: 'one too many' });
     expect(res.status).toBe(429);
     expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0);
+  });
+
+  it('requests without a valid token never use up the quota of the real captures (review P2 #3)', async () => {
+    for (let i = 0; i < 60; i++) await capture({ text: 'x' }, 'Bearer wrong');
+    expect((await capture({ text: 'still welcome' })).status).toBe(201);
+  });
+
+  it('wrong tokens are throttled on their own: 20 a minute, then 429', async () => {
+    for (let i = 0; i < 20; i++) expect((await capture({ text: 'x' }, null)).status).toBe(401);
+    const res = await capture({ text: 'x' }, null);
+    expect(res.status).toBe(429);
+    expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0);
+  });
+
+  it('shares have their own quota: 60 captures do not block a share', async () => {
+    for (let i = 0; i < 60; i++) await capture({ text: `item ${i}` });
+    expect((await share({ title: 'Glaze recipes' })).headers.get('location')).toMatch(/^\/share\/done\?item=/);
   });
 
   it('the limiter frees up as the window moves', () => {
