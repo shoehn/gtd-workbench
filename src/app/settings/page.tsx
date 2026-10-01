@@ -13,6 +13,7 @@ export default async function SettingsPage() {
         followUpContext={settings.followUpContext}
         buckets={usage('bucket', settings.buckets)}
         calendars={api.listExternalCalendars().map((c) => ({
+          key: c.sourceId ?? `demo:${c.name}`,
           name: c.name,
           via: c.via,
           ...(c.sourceId && { host: c.host ?? '' }),

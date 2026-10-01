@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
+    "dev:demo": "DEMO_DATE=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

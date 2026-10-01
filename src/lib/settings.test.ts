@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as api from './api';
 import { instantAt, wallClock } from './clock';
 import { store } from './store';
@@ -139,6 +139,18 @@ describe('review template', () => {
 });
 
 describe('clock', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('the demo date is opt-in: tests and DEMO_DATE=1 only, never production', () => {
+    expect(api.today()).toBe('2026-09-26'); // vitest runs as NODE_ENV=test
+    vi.stubEnv('NODE_ENV', 'development');
+    expect(api.today()).not.toBe('2026-09-26');
+    vi.stubEnv('DEMO_DATE', '1');
+    expect(api.today()).toBe('2026-09-26');
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(api.today()).not.toBe('2026-09-26');
+  });
+
   it('reads the wall clock in a zone', () => {
     const t = new Date('2026-09-26T22:30:00Z');
     expect(wallClock(t, 'Europe/Zurich')).toMatchObject({ day: '2026-09-27', hour: 0, minute: 30 });

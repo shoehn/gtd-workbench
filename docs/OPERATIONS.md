@@ -129,7 +129,8 @@ Needs Docker and Chrome on the machine that runs it.
 
 | Command | What |
 |---|---|
-| `pnpm dev` | memory store with the demo data; a restart resets it |
+| `pnpm dev` | memory store with the demo data on today's real date; a restart resets it |
+| `pnpm dev:demo` | the same on the demo's pinned date (sat 26.09), as in the mockups and screenshots |
 | `STORE=sqlite pnpm dev` | the SQLite file `data/gtd.db` |
 | `pnpm db:reset` | delete `data/gtd.db`, migrate, fill with the demo data |
 | `pnpm db:seed` | replace the contents of `data/gtd.db` with the demo data |

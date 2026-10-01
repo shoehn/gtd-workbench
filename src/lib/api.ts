@@ -13,8 +13,14 @@ import { addDays, compareStamps, isoWeek, weekDays } from './week';
 
 const DAY_MS = 86_400_000;
 
-/** The seed's pinned date outside production; `undefined` means the real clock. Delete to unpin. */
-const pinnedDay = () => (process.env.NODE_ENV !== 'production' ? store.getState().today : undefined);
+/**
+ * The demo's pinned date — only in tests and with DEMO_DATE=1 (`pnpm dev:demo`), never in
+ * production; everywhere else, including plain `pnpm dev` with real calendars, the real clock.
+ */
+const pinnedDay = () =>
+  process.env.NODE_ENV !== 'production' && (process.env.NODE_ENV === 'test' || process.env.DEMO_DATE === '1')
+    ? store.getState().today
+    : undefined;
 
 /** The zone "today", midnight and overdue are counted in: Settings.timezone, else the server's TZ. */
 export function timeZone(): string | undefined {

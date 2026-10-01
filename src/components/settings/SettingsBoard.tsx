@@ -29,6 +29,8 @@ interface SettingsBoardProps {
   followUpContext: string;
   buckets: { name: string; used: number }[];
   calendars: {
+    /** Unique: the source id, or `demo:<name>` (two calendars may share a name). */
+    key: string;
     name: string;
     via: string;
     /** Configured source (env); demo calendars have none and are never synced. */
@@ -200,7 +202,7 @@ export function SettingsBoard(props: SettingsBoardProps) {
         {props.calendars.length ? (
           <ul className="m-0 list-none p-0">
             {props.calendars.map((c) => (
-              <li key={c.name} className="flex min-h-9 flex-wrap items-center gap-x-2.5 gap-y-0.5 border-b border-line-soft px-3 py-1.5 last:border-b-0">
+              <li key={c.key} className="flex min-h-9 flex-wrap items-center gap-x-2.5 gap-y-0.5 border-b border-line-soft px-3 py-1.5 last:border-b-0">
                 <span className="grow">{c.name}</span>
                 <span className={mono}>{c.via}</span>
                 {c.host && <span className={mono}>{c.host}</span>}
