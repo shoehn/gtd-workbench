@@ -57,3 +57,13 @@ export function isTimeZone(timeZone: string): boolean {
     return false;
   }
 }
+
+/** `instant` as an ISO string on the wall clock of `timeZone`, with its offset: `2026-09-26T10:00:00+02:00`. */
+export function zonedIso(instant: Date, timeZone?: string): string {
+  const w = wallClock(instant, timeZone);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const offsetMin = Math.round(offsetAt(instant.getTime(), timeZone) / 60_000);
+  const sign = offsetMin < 0 ? '-' : '+';
+  const abs = Math.abs(offsetMin);
+  return `${w.day}T${pad(w.hour)}:${pad(w.minute)}:${pad(w.second)}${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}

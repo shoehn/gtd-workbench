@@ -5,7 +5,7 @@ import { WeekGrid } from '@/components/calendar/WeekGrid';
 import { Page } from '@/components/shell/Page';
 import { Btn } from '@/components/ui/Btn';
 import * as api from '@/lib/api';
-import { daysBetween, fmtDate, fmtDay } from '@/lib/format';
+import { daysBetween, fmtClock, fmtDate, fmtDay } from '@/lib/format';
 import { addDays, isoWeek, parseWeek, shiftWeek, weekDays } from '@/lib/week';
 
 /** The phone agenda runs this many days from the chosen day. */
@@ -39,6 +39,8 @@ export default async function CalendarPage({ searchParams }: PageProps<'/calenda
   const week = parseWeek(params.week) ?? isoWeek(today);
   const days = weekDays(week);
   const now = api.now();
+  const entries = api.weekLandscape(week);
+  const syncedAt = api.calendarSyncedAt();
   // Phone: the agenda starts at the chosen day of the strip, else today (in this week), else Monday.
   const day = typeof params.day === 'string' && days.includes(params.day) ? params.day : days.includes(today) ? today : days[0];
   const agendaEntries = api.landscapeBetween(day, addDays(day, AGENDA_DAYS - 1));
@@ -108,7 +110,8 @@ export default async function CalendarPage({ searchParams }: PageProps<'/calenda
             date: Number(iso.slice(8)),
             today: iso === today,
           }))}
-          entries={api.weekLandscape(week)}
+          entries={entries}
+          hours={api.weekHours(entries)}
           nowMin={days.includes(today) ? api.minutesOfDay(now) : undefined}
         />
         <CalendarRail
@@ -119,8 +122,9 @@ export default async function CalendarPage({ searchParams }: PageProps<'/calenda
             text: d.text,
             href: d.href,
           }))}
-          syncedAt={api.calendarSyncedAt()?.slice(11, 16)}
+          syncedAt={syncedAt && fmtClock(syncedAt, api.timeZone())}
           calendars={api.listExternalCalendars()}
+          failures={api.calendarFailures().map((f) => `${f.name}: sync failed ${f.hoursAgo ? `${f.hoursAgo} h ago` : 'just now'}`)}
         />
       </div>
     </Page>

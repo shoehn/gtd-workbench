@@ -15,6 +15,13 @@
       "when": 1790782936496,
       "tag": "0001_settings_row",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790844236046,
+      "tag": "0002_calendar_sources",
+      "breakpoints": true
     }
   ]
 }

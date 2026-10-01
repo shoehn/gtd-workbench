@@ -11,7 +11,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { ExternalEvent, Item, Project, ReviewRun } from '../model';
 import * as t from './schema';
-import type { State, Store } from './types';
+import type { ExternalCalendar, State, Store } from './types';
 
 type Db = BetterSQLite3Database<typeof t>;
 type Row = Record<string, unknown>;
@@ -114,7 +114,31 @@ function settingsValue(s: State): string {
 }
 
 function eventRow(e: ExternalEvent, seq: number) {
-  return { id: e.id, seq, calendar: e.calendar, title: e.title, start: e.start, end: e.end, allDay: e.allDay };
+  return {
+    id: e.id,
+    seq,
+    calendar: e.calendar,
+    title: e.title,
+    start: e.start,
+    end: e.end,
+    allDay: e.allDay,
+    location: e.location ?? null,
+    sourceId: e.sourceId ?? null,
+  };
+}
+
+function calendarRow(c: ExternalCalendar, seq: number) {
+  return {
+    key: c.sourceId ?? `demo:${c.name}`,
+    name: c.name,
+    seq,
+    via: c.via,
+    sourceId: c.sourceId ?? null,
+    host: c.host ?? null,
+    lastSyncAt: c.lastSyncAt ?? null,
+    lastError: c.lastError ?? null,
+    lastErrorAt: c.lastErrorAt ?? null,
+  };
 }
 
 /** Every table's rows for a state, keyed by the table's primary key. */
@@ -124,7 +148,7 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
     { table: t.projects, pk: t.projects.id, key: 'id', rows: s.projects.map(projectRow) },
     { table: t.reviewRuns, pk: t.reviewRuns.id, key: 'id', rows: s.reviewRuns.map(runRow) },
     { table: t.externalEvents, pk: t.externalEvents.id, key: 'id', rows: s.externalEvents.map(eventRow) },
-    { table: t.externalCalendars, pk: t.externalCalendars.name, key: 'name', rows: s.externalCalendars.map((c, seq) => ({ name: c.name, seq, via: c.via })) },
+    { table: t.externalCalendars, pk: t.externalCalendars.key, key: 'key', rows: s.externalCalendars.map(calendarRow) },
     { table: t.tickler, pk: t.tickler.id, key: 'id', rows: s.tickler.map((e, seq) => ({ id: e.id, seq, day: e.day, text: e.text })) },
     { table: t.areaKinds, pk: t.areaKinds.area, key: 'area', rows: Object.entries(s.areaKinds).map(([area, kind], seq) => ({ area, seq, kind })) },
     {
@@ -180,9 +204,13 @@ function load(db: Db): State | null {
     projects: bySeq(db.select().from(t.projects).all()).map((p) => compact(unseq(p)) as unknown as Project),
     items: bySeq(db.select().from(t.items).all()).map(rowItem),
     tickler: bySeq(db.select().from(t.tickler).all()).map(({ id, day, text }) => ({ id, day, text })),
-    externalCalendars: bySeq(db.select().from(t.externalCalendars).all()).map(({ name, via }) => ({ name, via })),
+    externalCalendars: bySeq(db.select().from(t.externalCalendars).all()).map((c) => {
+      const rest: Partial<typeof c> = unseq(c);
+      delete rest.key;
+      return compact(rest) as unknown as ExternalCalendar;
+    }),
     ...(settings.externalSyncedAt && { externalSyncedAt: settings.externalSyncedAt }),
-    externalEvents: bySeq(db.select().from(t.externalEvents).all()).map(unseq),
+    externalEvents: bySeq(db.select().from(t.externalEvents).all()).map((e) => compact(unseq(e)) as unknown as ExternalEvent),
     reviewTemplate: user.reviewTemplate,
     reviewRuns: bySeq(db.select().from(t.reviewRuns).all()).map((r) => compact(unseq(r)) as unknown as ReviewRun),
   };

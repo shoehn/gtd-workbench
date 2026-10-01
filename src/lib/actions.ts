@@ -233,6 +233,12 @@ export async function updateSettingsAction(patch: Parameters<typeof api.updateSe
   return settle(() => api.updateSettings(patch));
 }
 
+export async function syncCalendarsAction(): Promise<api.SyncResult[]> {
+  const results = await api.syncCalendars();
+  revalidatePath('/', 'layout');
+  return results;
+}
+
 export async function resetTemplateAction(): Promise<SettingsResult> {
   return settle(() => api.resetTemplate());
 }

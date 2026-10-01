@@ -4,6 +4,10 @@ services:
     build: .
     image: gtd-workbench:latest
     restart: unless-stopped
+    # Calendars (CAL_<ID>_URL / _USER / _PASS …) and other overrides; the file is optional.
+    env_file:
+      - path: .env
+        required: false
     environment:
       STORE: sqlite
       DATABASE_FILE: /data/gtd.db

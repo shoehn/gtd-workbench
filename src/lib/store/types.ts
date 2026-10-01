@@ -3,8 +3,19 @@ import type { ExternalEvent, Item, Project, ReviewRun, ReviewTemplate, Settings 
 /** Day-specific information (SPEC §3.6, kind 4). */
 export interface TicklerEntry { id: string; day: string; text: string }
 
-/** An external calendar the appointments are synced from, e.g. `Work` via `Exchange`. */
-export interface ExternalCalendar { name: string; via: string }
+/** An external calendar the appointments are synced from, e.g. `Work` via `ics`. */
+export interface ExternalCalendar {
+  name: string;
+  /** How it is read: `ics`, `CalDAV` (demo calendars name their server, e.g. `Exchange`). */
+  via: string;
+  /** Configured sources only (env `CAL_<ID>_URL`); absent = demo data, never synced. */
+  sourceId?: string;
+  /** Host of the URL, shown on Settings; never the credentials. */
+  host?: string;
+  lastSyncAt?: string;
+  lastError?: string;
+  lastErrorAt?: string;
+}
 
 export interface State {
   /** Fixed "today" (ISO date) for the seed; absent means the real date. */

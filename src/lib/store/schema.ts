@@ -82,12 +82,21 @@ export const externalEvents = sqliteTable('external_events', {
   start: text().notNull(),
   end: text().notNull(),
   allDay: integer('all_day', { mode: 'boolean' }).notNull(),
+  location: text(),
+  sourceId: text('source_id'),
 });
 
+/** Keyed by source id (synced) or `demo:<name>`: two calendars may share a name. */
 export const externalCalendars = sqliteTable('external_calendars', {
-  name: text().primaryKey(),
+  key: text().primaryKey(),
+  name: text().notNull(),
   seq: integer().notNull(),
   via: text().notNull(),
+  sourceId: text('source_id'),
+  host: text(),
+  lastSyncAt: text('last_sync_at'),
+  lastError: text('last_error'),
+  lastErrorAt: text('last_error_at'),
 });
 
 export const tickler = sqliteTable('tickler', {

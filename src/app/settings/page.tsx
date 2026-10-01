@@ -1,6 +1,7 @@
 import { SettingsBoard } from '@/components/settings/SettingsBoard';
 import { Page } from '@/components/shell/Page';
 import * as api from '@/lib/api';
+import { fmtWeekdayTime } from '@/lib/format';
 
 export default async function SettingsPage() {
   const settings = api.getSettings();
@@ -11,7 +12,14 @@ export default async function SettingsPage() {
         contexts={usage('context', settings.contexts)}
         followUpContext={settings.followUpContext}
         buckets={usage('bucket', settings.buckets)}
-        calendars={api.listExternalCalendars()}
+        calendars={api.listExternalCalendars().map((c) => ({
+          name: c.name,
+          via: c.via,
+          ...(c.sourceId && { host: c.host ?? '' }),
+          ...(c.lastSyncAt && { lastSync: fmtWeekdayTime(c.lastSyncAt, api.timeZone()) }),
+          ...(c.lastError && { error: c.lastError }),
+        }))}
+        canSync={api.configuredSources().length > 0}
         timezone={settings.timezone}
         serverZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
         zones={Intl.supportedValuesOf('timeZone')}

@@ -46,6 +46,18 @@ describe('sqlite store', () => {
     expect(b.items.some((i) => i.id === 'i1')).toBe(false);
   });
 
+  it('two calendars may share a name (a synced "Work" next to the demo one)', () => {
+    const file = tempFile();
+    const a = createSqliteStore(file, seed as State);
+    a.update((s) => {
+      s.externalCalendars.push({ name: 'Work', via: 'ics', sourceId: 'work', host: 'calendar.example.com', lastSyncAt: '2026-09-26T08:00:00.000Z' });
+      s.externalEvents.push({ id: 'work|x|', calendar: 'Work', title: 'Synced', start: '2026-09-28', end: '2026-09-29', allDay: true, sourceId: 'work', location: 'Studio' });
+    });
+    const b = createSqliteStore(file, seed as State).getState();
+    expect(b.externalCalendars.filter((c) => c.name === 'Work')).toHaveLength(2);
+    expect(b).toEqual(a.getState());
+  });
+
   it('a failing update leaves memory and file as they were', () => {
     const file = tempFile();
     const a = createSqliteStore(file, seed as State);

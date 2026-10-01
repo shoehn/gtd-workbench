@@ -8,6 +8,7 @@ import {
   moveListEntryAction,
   renameListEntryAction,
   resetTemplateAction,
+  syncCalendarsAction,
   updateSettingsAction,
   type SettingsResult,
 } from '@/lib/actions';
@@ -27,7 +28,17 @@ interface SettingsBoardProps {
   /** Where `f` on a waiting-for files the follow-up action. */
   followUpContext: string;
   buckets: { name: string; used: number }[];
-  calendars: { name: string; via: string }[];
+  calendars: {
+    name: string;
+    via: string;
+    /** Configured source (env); demo calendars have none and are never synced. */
+    host?: string;
+    /** `wed 09:14`, or absent. */
+    lastSync?: string;
+    error?: string;
+  }[];
+  /** Any calendar configured in the environment. */
+  canSync: boolean;
   timezone: string;
   /** The server's zone, shown for the empty choice. */
   serverZone: string;
@@ -50,6 +61,15 @@ export function SettingsBoard(props: SettingsBoardProps) {
   const [, startTransition] = useTransition();
   const [undo, setUndo] = useState<Undo | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  function syncNow() {
+    setSyncing(true);
+    startTransition(async () => {
+      await syncCalendarsAction();
+      setSyncing(false);
+    });
+  }
 
   /** Run a change; on success offer its inverse for 5 s, on refusal show why next to `where`. */
   function change(where: string, run: () => Promise<SettingsResult>, inverse?: Undo, href?: string) {
@@ -167,19 +187,36 @@ export function SettingsBoard(props: SettingsBoardProps) {
       <ListCard title="Someday / Maybe buckets" hint="groups on Someday / Maybe, in this order" placeholder="+ bucket" {...list('bucket', props.buckets)} />
 
       <Card aria-labelledby="calendars-head" className="flex flex-col">
-        <CardTitle id="calendars-head" title="Calendars" hint="appointments come in read-only; nothing is written back" />
+        <CardTitle
+          id="calendars-head"
+          title="Calendars"
+          hint="appointments come in read-only; nothing is written back · synced every 15 min"
+          right={
+            <Btn size="sm" disabled={!props.canSync || syncing} onClick={syncNow}>
+              {syncing ? 'Syncing…' : 'Sync now'}
+            </Btn>
+          }
+        />
         {props.calendars.length ? (
           <ul className="m-0 list-none p-0">
             {props.calendars.map((c) => (
-              <li key={c.name} className="flex min-h-9 items-center gap-2.5 border-b border-line-soft px-3 last:border-b-0">
+              <li key={c.name} className="flex min-h-9 flex-wrap items-center gap-x-2.5 gap-y-0.5 border-b border-line-soft px-3 py-1.5 last:border-b-0">
                 <span className="grow">{c.name}</span>
                 <span className={mono}>{c.via}</span>
-                <Tag>read-only</Tag>
+                {c.host && <span className={mono}>{c.host}</span>}
+                <span className={mono}>{c.host ? (c.lastSync ? `synced ${c.lastSync}` : 'never synced') : 'demo data'}</span>
+                {c.error ? <Tag variant="warn">sync failed</Tag> : <Tag>read-only</Tag>}
+                {c.error && <span className="basis-full text-xs text-warn">{c.error}</span>}
               </li>
             ))}
           </ul>
         ) : (
           <p className={cx(mono, 'm-0 px-3 py-2.5')}>No external calendars.</p>
+        )}
+        {!props.canSync && (
+          <p className={cx(mono, 'm-0 border-t border-line-soft px-3 py-2')}>
+            Add one with CAL_&lt;NAME&gt;_URL (an .ics link, or CalDAV with _USER / _PASS) in the environment — see docs/OPERATIONS.md.
+          </p>
         )}
         <div className="flex flex-wrap items-center gap-2.5 border-t border-line-soft px-3 py-2">
           <label htmlFor="timezone" className="text-sm">

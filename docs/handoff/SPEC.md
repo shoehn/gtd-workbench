@@ -151,7 +151,7 @@ Week view desktop (Mon–Sun, "day only" strip on top of each day, hours 08–18
 on phone. Nothing is written back to external calendars. Recurring checklists (weekly
 review, bins) repeat here. Everything else stays on the lists.
 - Route `/calendar?week=2026-W39` (ISO week; invalid or missing = the current week).
-  ‹ Today › step through weeks. A warn line marks now in today's column (08–18 only).
+  ‹ Today › step through weeks. A warn line marks now in today's column (within the grid's hours).
 - Time blocks: dropping a Next Actions row (or a block) on the grid snaps to 15 min. A new
   block lasts the action's time estimate (1 h without one); a moved block keeps its length.
   Overlapping blocks sit side by side. A block on today stars the next action for today; a
@@ -170,6 +170,24 @@ review, bins) repeat here. Everything else stays on the lists.
 - Recurring: an item tagged `recurring:weekly` is drawn on every later week at the same
   weekday and time with "↻" (projected, not interactive). Completing it stores the next
   occurrence a week later; undoing the completion takes that occurrence back.
+
+#### Sources (step 12)
+- Two kinds, configured in the environment only — `CAL_<ID>_URL`, `CAL_<ID>_NAME`,
+  `CAL_<ID>_KIND` (`ics` | `caldav`), `CAL_<ID>_USER`, `CAL_<ID>_PASS`: a published `.ics`
+  link (Outlook / Exchange / Google "publish calendar", `webcal://` too) and a CalDAV
+  calendar collection (one REPORT with a time range, basic auth). Credentials never go into
+  the database or the logs; Settings shows name, kind, host, last sync and status.
+- Sync pulls today −7 … +60 days per source on server start, every 15 minutes and on
+  "Sync now" (Settings). Recurring events are expanded for that window only (RRULE,
+  EXDATE, moved and cancelled occurrences). Events are keyed by (source, uid, recurrence
+  id); what vanished from the feed is deleted. A failed sync keeps the last events and shows
+  "Work: sync failed 3 h ago" in the calendar footer and on Settings — never a modal. A
+  source removed from the environment disappears with its events.
+- Times are converted to the app's zone. All-day events sit in the day-only strip on each
+  of their days; a timed event past midnight is split at midnight; the time grid widens to
+  whole hours around anything outside 08–18.
+- Stored per event: title, start, end, all day, location, calendar — no description, no
+  attendees. Nothing is ever written back.
 
 ### 3.7 Weekly Review
 - A checklist template shipped with the app (Get clear 4 steps / Get current 6 / Get
@@ -339,7 +357,18 @@ interface Settings {
   timezone: string;           // IANA; empty = the server's TZ
 }
 
-interface ExternalEvent { id: string; calendar: string; title: string; start: string; end: string; allDay: boolean }
+interface ExternalEvent {
+  id: string;                 // synced: `<source>|<uid>|<recurrence id>`
+  calendar: string; title: string;
+  start: string; end: string; // timed: ISO with offset in the app's zone; all day: yyyy-mm-dd, end exclusive
+  allDay: boolean;
+  location?: string;
+  sourceId?: string;          // absent = demo data
+}
+
+// Store-level, with the sync status of configured sources (env `CAL_<ID>_URL`):
+interface ExternalCalendar { name: string; via: string; sourceId?: string; host?: string;
+  lastSyncAt?: string; lastError?: string; lastErrorAt?: string }
 ```
 
 Storage (`STORE=memory|sqlite`, sqlite by default in production, memory in dev and tests;

@@ -17,6 +17,8 @@ interface CalendarRailProps {
   /** `09:14`; absent when never synced. */
   syncedAt?: string;
   calendars: { name: string; via: string }[];
+  /** `Work: sync failed 3 h ago` — never a modal, never blocking. */
+  failures: string[];
 }
 
 const LEGEND: [CalendarEntry['kind'], string][] = [
@@ -37,7 +39,7 @@ const HOW: [string, string?][] = [
 
 const head = 'font-mono text-label tracking-[0.1em] text-muted';
 
-export function CalendarRail({ deadlines, syncedAt, calendars }: CalendarRailProps) {
+export function CalendarRail({ deadlines, syncedAt, calendars, failures }: CalendarRailProps) {
   return (
     <aside aria-label="Calendar sources" className="flex min-w-0 flex-col gap-3">
       <Card className="flex flex-col gap-2 px-3 py-2.5">
@@ -92,6 +94,11 @@ export function CalendarRail({ deadlines, syncedAt, calendars }: CalendarRailPro
         {syncedAt ? `synced ${syncedAt}` : 'not synced yet'} · {calendars.length} calendars
         <br />
         {calendars.map((c) => `${c.name} (${c.via})`).join(' · ')}
+        {failures.map((f) => (
+          <span key={f} className="block text-warn">
+            {f}
+          </span>
+        ))}
       </p>
     </aside>
   );

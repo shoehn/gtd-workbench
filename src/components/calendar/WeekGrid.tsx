@@ -31,13 +31,15 @@ interface WeekGridProps {
   entries: CalendarEntry[];
   /** Minutes since midnight when today is in this week; draws the now line. */
   nowMin?: number;
+  /** First and last hour of the time grid (default 08–18; wider when appointments are). */
+  hours?: [number, number];
 }
 
 type Timed = Extract<CalendarEntry, { kind: 'appointment' | 'timeblock' }>;
 type DayAction = Extract<CalendarEntry, { kind: 'dayaction' }>;
 
-const FIRST_HOUR = 8;
-const LAST_HOUR = 18;
+/** The grid shows 08–18 unless the week's appointments start earlier or end later. */
+const DEFAULT_HOURS: [number, number] = [8, 18];
 const HOUR_PX = 48;
 const SNAP_MIN = 15;
 const MIN_BLOCK_PX = 44;
@@ -47,7 +49,7 @@ const GRID_COLS = 'grid-cols-[48px_repeat(7,minmax(0,1fr))]';
 
 const toMin = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 const toHm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
-const offset = (min: number) => ((min - FIRST_HOUR * 60) * HOUR_PX) / 60;
+const offset = (min: number, first: number) => ((min - first * 60) * HOUR_PX) / 60;
 const hourLines = (color: string) =>
   `repeating-linear-gradient(to bottom, ${color} 0, ${color} 1px, transparent 1px, transparent ${HOUR_PX}px)`;
 const label = 'font-mono text-label tracking-[0.1em]';
@@ -78,7 +80,8 @@ function layOut(timed: Timed[]): Map<string, { lane: number; lanes: number }> {
   return out;
 }
 
-export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
+export function WeekGrid({ days, entries, nowMin, hours: range = DEFAULT_HOURS }: WeekGridProps) {
+  const [first, last] = range;
   const [, startTransition] = useTransition();
   const [doneIds, setDone] = useOptimistic(
     new Set(entries.filter((e) => 'done' in e && e.done).map((e) => e.id)) as ReadonlySet<string>,
@@ -117,8 +120,8 @@ export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
   /** The snapped start (minutes) under the pointer, keeping a block of `length` inside the grid. */
   function slotAt(ev: DragEvent<HTMLElement>, length = SNAP_MIN) {
     const y = ev.clientY - ev.currentTarget.getBoundingClientRect().top;
-    const min = Math.round((FIRST_HOUR * 60 + (y / HOUR_PX) * 60) / SNAP_MIN) * SNAP_MIN;
-    return Math.max(FIRST_HOUR * 60, Math.min(LAST_HOUR * 60 - length, min));
+    const min = Math.round((first * 60 + (y / HOUR_PX) * 60) / SNAP_MIN) * SNAP_MIN;
+    return Math.max(first * 60, Math.min(last * 60 - length, min));
   }
 
   function overSlot(ev: DragEvent<HTMLElement>, day: string) {
@@ -166,7 +169,7 @@ export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
     }
   }
 
-  const hours = Array.from({ length: LAST_HOUR - FIRST_HOUR + 1 }, (_, n) => FIRST_HOUR + n);
+  const hours = Array.from({ length: last - first + 1 }, (_, n) => first + n);
 
   return (
     <Card aria-label="Week view" className={cx('grid min-h-0 grid-rows-[40px_96px_minmax(0,1fr)]', GRID_COLS)}>
@@ -283,10 +286,10 @@ export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
       })}
 
       <div className="col-span-8 min-h-0 overflow-y-auto">
-        <div className={cx('grid', GRID_COLS)} style={{ height: (LAST_HOUR - FIRST_HOUR) * HOUR_PX + 16 }}>
+        <div className={cx('grid', GRID_COLS)} style={{ height: (last - first) * HOUR_PX + 16 }}>
           <div aria-hidden="true" className="relative border-r border-line-soft font-mono text-label text-muted">
             {hours.map((h) => (
-              <span key={h} className="absolute right-1.5" style={{ top: (h - FIRST_HOUR) * HOUR_PX }}>
+              <span key={h} className="absolute right-1.5" style={{ top: (h - first) * HOUR_PX }}>
                 {String(h).padStart(2, '0')}
               </span>
             ))}
@@ -297,7 +300,7 @@ export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
             return (
               <div
                 key={d.iso}
-                aria-label={`${d.weekday} ${d.date}, ${toHm(FIRST_HOUR * 60)}–${toHm(LAST_HOUR * 60)}`}
+                aria-label={`${d.weekday} ${d.date}, ${toHm(first * 60)}–${toHm(last * 60)}`}
                 onDragOver={(ev) => overSlot(ev, d.iso)}
                 onDragLeave={(ev) => left(ev) && setPreview(null)}
                 onDrop={(ev) => dropOnSlot(ev, d.iso)}
@@ -308,19 +311,19 @@ export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
                 }}
               >
                 {timed.map((e) => (
-                  <TimedBlock key={e.id} entry={e} {...lanes.get(e.id)!} onDragStart={(ev) => e.kind === 'timeblock' && startDrag(ev, e)} onRemove={() => startTransition(() => clearTimeSlotAction(e.id))} />
+                  <TimedBlock key={e.id} entry={e} first={first} last={last} {...lanes.get(e.id)!} onDragStart={(ev) => e.kind === 'timeblock' && startDrag(ev, e)} onRemove={() => startTransition(() => clearTimeSlotAction(e.id))} />
                 ))}
                 {preview?.day === d.iso && (
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-x-1 rounded-chip border border-dashed border-accent bg-accent-tint/70 px-1.5 font-mono text-label text-accent"
-                    style={{ top: offset(preview.min), height: preview.length ? (preview.length * HOUR_PX) / 60 : 2 }}
+                    style={{ top: offset(preview.min, first), height: preview.length ? (preview.length * HOUR_PX) / 60 : 2 }}
                   >
                     {preview.length ? toHm(preview.min) : null}
                   </div>
                 )}
-                {d.today && nowMin !== undefined && nowMin >= FIRST_HOUR * 60 && nowMin <= LAST_HOUR * 60 && (
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 h-0 border-t-2 border-warn" style={{ top: offset(nowMin) }} />
+                {d.today && nowMin !== undefined && nowMin >= first * 60 && nowMin <= last * 60 && (
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 h-0 border-t-2 border-warn" style={{ top: offset(nowMin, first) }} />
                 )}
               </div>
             );
@@ -333,18 +336,20 @@ export function WeekGrid({ days, entries, nowMin }: WeekGridProps) {
 
 interface TimedBlockProps {
   entry: Timed;
+  first: number;
+  last: number;
   lane: number;
   lanes: number;
   onDragStart(ev: DragEvent): void;
   onRemove(): void;
 }
 
-function TimedBlock({ entry: e, lane, lanes, onDragStart, onRemove }: TimedBlockProps) {
+function TimedBlock({ entry: e, first, last, lane, lanes, onDragStart, onRemove }: TimedBlockProps) {
   const start = toMin(e.start!);
   const end = toMin(e.end!);
-  const top = offset(Math.max(start, FIRST_HOUR * 60));
-  const bottom = offset(Math.min(end, LAST_HOUR * 60));
-  if (end <= FIRST_HOUR * 60 || start >= LAST_HOUR * 60) return null;
+  const top = offset(Math.max(start, first * 60), first);
+  const bottom = offset(Math.min(end, last * 60), first);
+  if (end <= first * 60 || start >= last * 60) return null;
   const block = e.kind === 'timeblock';
   const open = block && !e.projected && !e.done;
   const time = (

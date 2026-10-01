@@ -1,9 +1,9 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
 import { parse } from './capture-syntax';
-import { SeedCalendarSource, type CalendarSource } from './calendar-source';
-import type { Energy, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, TimeBucket } from './model';
+import type { Energy, ExternalEvent, Item, Priority, Project, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
+import { sourcesFromEnv, type CalendarSource } from './calendar/sources';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
 import { baseSeed } from './store/seed';
 import { STORE_KIND, createdThisBoot, store } from './store';
@@ -906,14 +906,33 @@ export function undropProject(id: string): void {
 
 // ── Calendar ───────────────────────────────────────────────────────────────
 
-const calendarSource: CalendarSource = new SeedCalendarSource(() => store.getState());
-
 export function listExternalCalendars(): ExternalCalendar[] {
-  return calendarSource.calendars();
+  return store.getState().externalCalendars;
 }
 
+/** The latest successful sync of a configured calendar (else the demo's stamp). */
 export function calendarSyncedAt(): string | undefined {
-  return calendarSource.syncedAt();
+  const synced = store.getState().externalCalendars.map((c) => c.lastSyncAt).filter((t): t is string => !!t);
+  return synced.sort(compareStamps).at(-1) ?? store.getState().externalSyncedAt;
+}
+
+/**
+ * The pieces of an appointment per day in [from, to]: an all-day event on each of its days; a
+ * timed event that runs past midnight as start–24:00, whole days in between, then 00:00–end.
+ */
+function appointmentDays(e: ExternalEvent, from: string, to: string): { day: string; start?: string; end?: string }[] {
+  const first = e.start.slice(0, 10);
+  const last = e.allDay ? addDays(e.end > first ? e.end : addDays(first, 1), -1) : e.end.slice(0, 10);
+  const out: { day: string; start?: string; end?: string }[] = [];
+  for (let day = first < from ? from : first; day <= last && day <= to; day = addDays(day, 1)) {
+    if (e.allDay) out.push({ day });
+    else if (first === last) out.push({ day, start: hhmm(e.start), end: hhmm(e.end) });
+    else if (day === first) out.push({ day, start: hhmm(e.start), end: '24:00' });
+    else if (day === last) {
+      if (hhmm(e.end) > '00:00') out.push({ day, start: '00:00', end: hhmm(e.end) });
+    } else out.push({ day });
+  }
+  return out;
 }
 
 const RECURRING_WEEKLY = 'recurring:weekly';
@@ -1004,15 +1023,17 @@ function landscape(from: string, to: string): CalendarEntry[] {
   const inRange = (day: string | undefined): day is string => !!day && day >= from && day <= to;
   const out: CalendarEntry[] = [];
 
-  for (const e of calendarSource.events(from, to)) {
-    out.push({
-      kind: 'appointment',
-      id: e.id,
-      day: e.start.slice(0, 10),
-      text: e.title,
-      calendar: e.calendar,
-      ...(!e.allDay && { start: hhmm(e.start), end: hhmm(e.end) }),
-    });
+  for (const e of store.getState().externalEvents) {
+    for (const [n, part] of appointmentDays(e, from, to).entries()) {
+      out.push({
+        kind: 'appointment',
+        id: n ? `${e.id}@${part.day}` : e.id,
+        day: part.day,
+        text: e.title,
+        calendar: e.calendar,
+        ...(part.start && { start: part.start, end: part.end }),
+      });
+    }
   }
 
   const projectDeadline = new Map(projects.filter((p) => p.status === 'active' && p.deadline).map((p) => [p.id, p.deadline]));
@@ -1624,3 +1645,106 @@ export function firstRun(): boolean {
   return !firstCaptureDone && createdThisBoot() && store.getState().items.length === 0;
 }
 let firstCaptureDone = false;
+
+// ── Calendar sync ──────────────────────────────────────────────────────────
+
+/** Days fetched around today: a week back (for the review of the past week), two months ahead. */
+const SYNC_DAYS_BACK = 7;
+const SYNC_DAYS_AHEAD = 60;
+
+export interface SyncResult {
+  source: string;
+  ok: boolean;
+  events?: number;
+  error?: string;
+}
+
+/** The sources configured in the environment (`CAL_<ID>_URL` …). */
+export function configuredSources(): CalendarSource[] {
+  return sourcesFromEnv().sources;
+}
+
+/** Write one source's outcome: its events replace the earlier ones; a failure keeps them. */
+function applySync(src: CalendarSource, at: string, events: ExternalEvent[] | null, error?: string) {
+  store.update((s) => {
+    let cal = s.externalCalendars.find((c) => c.sourceId === src.id);
+    if (!cal) {
+      cal = { name: src.name, via: src.kind, sourceId: src.id, host: src.host };
+      s.externalCalendars.push(cal);
+    }
+    Object.assign(cal, { name: src.name, via: src.kind, host: src.host });
+    if (events) {
+      cal.lastSyncAt = at;
+      delete cal.lastError;
+      delete cal.lastErrorAt;
+      // Keyed by (source, uid, recurrence id): unchanged rows stay, gone ones go.
+      s.externalEvents = s.externalEvents.filter((e) => e.sourceId !== src.id).concat(events);
+    } else {
+      cal.lastError = error;
+      cal.lastErrorAt = at;
+    }
+  });
+}
+
+let running: Promise<SyncResult[]> | null = null;
+
+/**
+ * Pull every source for today −7 … +60 days. Sources are read only — nothing is written
+ * back. Overlapping calls share one run. Called without `sources`, it syncs the configured ones
+ * and drops calendars (and their events) that are no longer configured.
+ */
+export function syncCalendars(sources?: CalendarSource[]): Promise<SyncResult[]> {
+  running ??= (async () => {
+    const list = sources ?? configuredSources();
+    const day = today();
+    const window = { from: addDays(day, -SYNC_DAYS_BACK), to: addDays(day, SYNC_DAYS_AHEAD), timeZone: timeZone() };
+    const results: SyncResult[] = [];
+    for (const src of list) {
+      const at = now().toISOString();
+      try {
+        const events = await src.fetchEvents(window);
+        applySync(src, at, events);
+        results.push({ source: src.name, ok: true, events: events.length });
+      } catch (e) {
+        const error = (e instanceof Error ? e.message : String(e)).slice(0, 300);
+        applySync(src, at, null, error);
+        results.push({ source: src.name, ok: false, error });
+      }
+    }
+    if (!sources) {
+      const ids = new Set(list.map((s) => s.id));
+      const gone = store.getState().externalCalendars.filter((c) => c.sourceId && !ids.has(c.sourceId));
+      if (gone.length) {
+        store.update((s) => {
+          s.externalCalendars = s.externalCalendars.filter((c) => !c.sourceId || ids.has(c.sourceId));
+          s.externalEvents = s.externalEvents.filter((e) => !e.sourceId || ids.has(e.sourceId));
+        });
+      }
+    }
+    return results;
+  })().finally(() => {
+    running = null;
+  });
+  return running;
+}
+
+/** Calendars whose last sync failed, for the calendar footer: "Work: sync failed 3 h ago". */
+export function calendarFailures(): { name: string; hoursAgo: number; error: string }[] {
+  const nowMs = now().getTime();
+  return store
+    .getState()
+    .externalCalendars.filter((c) => c.lastError && c.lastErrorAt)
+    .map((c) => ({ name: c.name, hoursAgo: Math.max(0, Math.floor((nowMs - Date.parse(c.lastErrorAt!)) / 3_600_000)), error: c.lastError! }));
+}
+
+/** Hours of the week grid: 08–18, widened to whole hours around anything timed outside it. */
+export function weekHours(entries: CalendarEntry[]): [number, number] {
+  let first = 8;
+  let last = 18;
+  for (const e of entries) {
+    if (!('start' in e) || !e.start || !e.end) continue;
+    first = Math.min(first, Math.floor(minutesOf(e.start) / 60));
+    last = Math.max(last, Math.ceil(minutesOf(e.end) / 60));
+  }
+  return [Math.max(0, first), Math.min(24, last)];
+}

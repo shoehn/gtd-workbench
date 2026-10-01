@@ -42,6 +42,28 @@ overrides in a `.env` file next to it — start from `.env.example`, which lists
 | `BACKUP_KEEP` | `14` | compose only: backups kept |
 | `BACKUP_DIR` | `<dir of DATABASE_FILE>/backups` | where `db:backup` writes |
 
+## Calendars (read-only)
+
+Each external calendar is a group of variables; the `<ID>` is any name in capitals:
+
+```sh
+# a published .ics link (Outlook / Exchange / Google "publish calendar"; webcal:// works)
+CAL_WORK_URL=https://calendar.example.com/published/work.ics
+# a CalDAV calendar: the calendar collection's own URL, with basic auth
+CAL_HOME_URL=https://dav.example.com/calendars/me/home/
+CAL_HOME_USER=me
+CAL_HOME_PASS=…            # an app password where the server offers one
+# optional: CAL_<ID>_NAME (shown name), CAL_<ID>_KIND=ics|caldav (default: caldav when a user is set)
+```
+
+Put them in `.env` next to `compose.yaml`; the `gtd` service reads that file. The app syncs today −7 … +60 days at start, every 15
+minutes and on "Sync now" in Settings. A failed sync shows as a warning in the calendar
+footer and on Settings; the last good events stay.
+
+Privacy: only title, start, end, all-day flag, location and calendar name are stored — no
+descriptions, no attendees. Credentials stay in the environment; the database and the logs
+never contain them. Nothing is written back to any calendar.
+
 ## Reverse proxy
 
 The container listens on `127.0.0.1:${GTD_PORT}` of the host only. Caddy on the same box:

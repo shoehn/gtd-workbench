@@ -28,6 +28,12 @@ export function fmtWeekdayTime(iso: string, timeZone?: string): string {
   return `${WEEKDAYS[parts(w.day).date.getDay()]} ${pad(w.hour)}:${pad(w.minute)}`;
 }
 
+/** `09:14`, on the wall clock of `timeZone`. */
+export function fmtClock(iso: string, timeZone?: string): string {
+  const w = wallClock(new Date(iso), timeZone);
+  return `${String(w.hour).padStart(2, '0')}:${String(w.minute).padStart(2, '0')}`;
+}
+
 /** `2 h` below a day, `1 d` from there. */
 export function fmtAge(hours: number): string {
   return hours < 24 ? `${hours} h` : `${Math.floor(hours / 24)} d`;

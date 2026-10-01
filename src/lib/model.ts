@@ -68,4 +68,10 @@ export interface Settings {
   timezone: string;           // IANA, e.g. 'Europe/Zurich'
 }
 
-export interface ExternalEvent { id: string; calendar: string; title: string; start: string; end: string; allDay: boolean }
+export interface ExternalEvent {
+  id: string; calendar: string; title: string;
+  start: string; end: string;   // timed: ISO with offset, in the app's zone; all day: yyyy-mm-dd, end exclusive
+  allDay: boolean;
+  location?: string;
+  sourceId?: string;            // the synced source it came from; absent = demo data
+}
