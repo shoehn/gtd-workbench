@@ -401,6 +401,8 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
         item.projectId = 'id' in choice ? choice.id : addProject(s, choice.newTitle, 'inbox');
         result.projectId = item.projectId;
         result.projectCreated = 'newTitle' in choice;
+      } else {
+        delete item.projectId; // step 3 empty = loose, whatever the item carried in
       }
     });
     return result;
@@ -451,7 +453,9 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
 
     const item = s.items.find((i) => i.id === itemId)!;
     item.text = text;
+    // Step 3 decides: a project, or none — an old one the item carried in does not survive.
     if (projectId) item.projectId = projectId;
+    else delete item.projectId;
     // The `^date` from capture was only an offer; Clarify decides where a day belongs.
     delete item.day;
 

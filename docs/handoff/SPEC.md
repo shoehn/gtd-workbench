@@ -92,7 +92,8 @@ from Next and Inbox respectively. Phone rules: §3.8.
 3. **Project.** A picker: typing searches existing projects; the first result is
    "+ New project: …", except when the typed text already is a project's title (ignoring
    case and spacing): then that project leads and no "+ New" is offered — no two open
-   projects share a title. Empty = single action. **The item is always the thing in step 2,
+   projects share a title. Empty = single action — an item that carries a project in (back
+   from Someday/Maybe) starts with it picked, and clearing it really clears it. **The item is always the thing in step 2,
    the project always the thing in step 3** — there is no "this item is the project" mode.
    Below it: checkbox "Make this the project's next action" (default on only when the
    project has no next action). Ticking never demotes anything: it adds a next action

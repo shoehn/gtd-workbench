@@ -190,3 +190,32 @@ describe('similar', () => {
     expect(api.similar('Replace the kitchen tap cartridge', 'i4')).toEqual([]);
   });
 });
+
+describe('no project in step 3 means no project (review P2 #8)', () => {
+  // An inbox item can still carry a project: a project's reference → Someday → Activate.
+  const withOldProject = () =>
+    store.update((s) => {
+      s.items.find((i) => i.id === 'i1')!.projectId = 'p-table';
+    });
+
+  it('a single action drops the old project', () => {
+    withOldProject();
+    api.clarify('i1', { kind: 'action', text: 'Call the dentist', route: { to: 'next', context: '@calls', priority: 'B', time: 15, energy: 'low' } });
+    expect(api.getItem('i1')!.projectId).toBeUndefined();
+  });
+
+  it('a loose reference drops it too; naming a project still sets it', () => {
+    withOldProject();
+    api.clarify('i1', { kind: 'reference', reference: { kind: 'note' } });
+    expect(api.getItem('i1')!.projectId).toBeUndefined();
+  });
+
+  it('the reproduction: reference of a project → Someday → Activate → Clarify as single action', () => {
+    const ref = api.addReference('Oak samples', { kind: 'note' }, 'p-table');
+    api.toSomeday(ref.id);
+    api.activate(ref.id);
+    expect(api.getItem(ref.id)).toMatchObject({ status: 'inbox', projectId: 'p-table' });
+    api.clarify(ref.id, { kind: 'action', text: 'Order oak samples', route: { to: 'done' } });
+    expect(api.getItem(ref.id)!.projectId).toBeUndefined();
+  });
+});

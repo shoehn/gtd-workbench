@@ -90,6 +90,7 @@ export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'
           day: item.day,
           tags: item.tags,
           reference: item.reference,
+          projectId: item.projectId,
         }}
         after={after}
         contexts={api.listContexts()}

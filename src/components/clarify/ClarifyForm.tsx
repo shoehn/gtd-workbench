@@ -31,6 +31,8 @@ export interface ClarifyItem {
   tags: string[];
   /** What came with it: a mail's body, a shared URL (SPEC §3.1). */
   reference?: Reference;
+  /** A project it carries in (e.g. back from Someday): step 3 starts with it, and may clear it. */
+  projectId?: string;
 }
 
 type Answer = 'yes' | 'trash' | 'someday' | 'reference';
@@ -159,8 +161,12 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [text, setText] = useState(item.text);
   const [query, setQuery] = useState('');
-  const [picked, setPicked] = useState<Picked>(null);
-  const [asNext, setAsNext] = useState(true);
+  const carried = projects.find((p) => p.id === item.projectId);
+  const [picked, setPicked] = useState<Picked>(
+    carried ? { id: carried.id, title: carried.title, nextActions: carried.nextActions, active: carried.active } : null,
+  );
+  // As pick() would set it for the carried project.
+  const [asNext, setAsNext] = useState(carried ? carried.active && carried.nextActions === 0 : true);
   // A day captured with `^date` is an offer for the calendar (SPEC §3.2).
   const [routeTo, setRouteTo] = useState<RouteTo | null>(item.day ? 'calendar' : null);
   const [context, setContext] = useState(item.context ?? contexts[0]);
