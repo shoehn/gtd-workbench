@@ -12,7 +12,7 @@ export interface PickerProject {
 }
 
 /** What step 3 has settled on; `null` = single action. */
-export type Picked = { id: string; title: string; nextActions: number } | { newTitle: string } | null;
+export type Picked = { id: string; title: string; nextActions: number; active: boolean } | { newTitle: string } | null;
 
 type Result = { kind: 'new'; title: string } | { kind: 'project'; project: PickerProject };
 
@@ -63,7 +63,7 @@ export function ProjectPicker({ projects, query, picked, onQuery, onPick, inputR
       onPick({ newTitle: r.title });
     } else {
       onQuery(r.project.title);
-      onPick({ id: r.project.id, title: r.project.title, nextActions: r.project.nextActions });
+      onPick({ id: r.project.id, title: r.project.title, nextActions: r.project.nextActions, active: r.project.active });
     }
   }
 

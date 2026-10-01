@@ -128,7 +128,8 @@ export function CommandPalette({ data }: { data: PaletteData }) {
         }));
     }
     if (sub?.kind === 'project') {
-      const projects = data.projects.filter((p) => p.status !== 'completed');
+      // A next action moves only into an active project (a parked one takes none, SPEC §3.4).
+      const projects = data.projects.filter((p) => p.status === 'active');
       const listed = q ? rank(q, projects, (p) => p.title) : projects;
       return [
         ...(q ? [] : [{ id: 'proj-none', label: 'No project (single action)', tag: '', group: `Move “${sub.target.text}” to`, run: act(() => editNextAction(sub.target.id, { project: null })) }]),

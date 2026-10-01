@@ -57,7 +57,7 @@ export default async function NextActionsPage({ searchParams }: PageProps<'/next
         hiddenByFilter={all.length - shown.length}
         focus={api.focusToday().map((i) => ({ id: i.id, text: i.text, done: i.status === 'done' }))}
         contexts={contexts}
-        projects={api.listPickerProjects()}
+        projects={api.listPickerProjects().filter((p) => p.active)}
         highlight={typeof params.highlight === 'string' ? params.highlight : undefined}
         today={<TodayCard day={fmtDay(today)} entries={landscape} />}
         todayLine={landscape

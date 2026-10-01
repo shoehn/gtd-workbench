@@ -106,3 +106,33 @@ describe('filter param', () => {
     expect(projectsHref('stalled', 'p-table')).toBe('/projects?filter=stalled&p=p-table');
   });
 });
+
+describe('a parked project takes no next action (review P2 #7)', () => {
+  beforeEach(() => api.moveProjectToSomeday('p-table'));
+  const route = { to: 'next', context: '@home', priority: 'B', time: 30, energy: 'low' } as const;
+
+  it('promote, + action and moving a next action in are refused until it is activated', () => {
+    expect(() => api.promote('l1', fields)).toThrow(/on hold.*activate it first/);
+    expect(() => api.addAction('p-table', 'Measure the alcove', fields)).toThrow(/on hold/);
+    expect(() => api.editNext('n2', { project: { id: 'p-table' } })).toThrow(/on hold/);
+    expect(item('l1').status).toBe('later');
+    api.activateProject('p-table');
+    api.promote('l1', fields);
+    expect(item('l1').status).toBe('next');
+  });
+
+  it('Clarify: a next action into it is refused; a later step is fine', () => {
+    expect(() => api.clarify('i1', { kind: 'action', text: 'Ask about oak', project: { id: 'p-table' }, route })).toThrow(/on hold/);
+    expect(item('i1').status).toBe('inbox');
+    api.clarify('i1', { kind: 'later', text: 'Ask about oak', project: { id: 'p-table' } });
+    expect(item('i1')).toMatchObject({ status: 'later', projectId: 'p-table' });
+  });
+
+  it('a completed project is refused the same way', () => {
+    api.activateProject('p-table');
+    store.update((s) => {
+      s.projects.find((p) => p.id === 'p-table')!.status = 'completed';
+    });
+    expect(() => api.addAction('p-table', 'x', fields)).toThrow(/completed — activate it first/);
+  });
+});

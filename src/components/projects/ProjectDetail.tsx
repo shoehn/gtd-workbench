@@ -82,7 +82,8 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
     });
 
   function dropZone(zone: 'next' | 'later') {
-    const accepts = drag && drag.kind !== zone;
+    // A parked project takes no next action: nothing is dropped into its next actions.
+    const accepts = drag && drag.kind !== zone && (zone === 'later' || active);
     return {
       onDragOver(e: DragEvent) {
         if (!accepts) return;
@@ -238,9 +239,11 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
             ) : (
               <div key={l.id} className="flex min-h-6.5 items-center gap-2.5" {...dragHandlers('later', l.id)}>
                 <span className="grow">{l.text}</span>
-                <button type="button" className={smallBtn} aria-label={`Make “${l.text}” a next action`} onClick={() => setPromoting(l.id)}>
-                  ↑ next
-                </button>
+                {active && (
+                  <button type="button" className={smallBtn} aria-label={`Make “${l.text}” a next action`} onClick={() => setPromoting(l.id)}>
+                    ↑ next
+                  </button>
+                )}
               </div>
             ),
           )}

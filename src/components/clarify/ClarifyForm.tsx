@@ -202,7 +202,8 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
 
   function pick(p: Picked) {
     setPicked(p);
-    if (p) setAsNext('id' in p ? p.nextActions === 0 : true);
+    // A parked project takes no next action (SPEC §3.4): the item becomes one of its later steps.
+    if (p) setAsNext('id' in p ? p.active && p.nextActions === 0 : true);
   }
 
   /** The decision the form currently describes, or why it can't be filed yet. */
@@ -394,9 +395,12 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
   const fold2 = answer === 'yes' && !unfold[2];
   const step1Summary = answer === 'yes' ? (picked ? 'Actionable · project' : 'Actionable') : NOT_ACTIONABLE.find((n) => n.value === answer)?.label ?? '';
   const primaryLabel = notActionable ? `${NOT_ACTIONABLE.find((n) => n.value === answer)!.file} and next` : 'File it and next';
+  const parked = existing !== null && !existing.active;
   const nextNote = !picked
     ? ''
-    : !existing
+    : parked
+      ? 'project is on hold — this becomes a later step (activate it on Someday / Maybe)'
+      : !existing
       ? 'new project, no next action yet'
       : existing.nextActions
         ? `project has ${existing.nextActions} next action${existing.nextActions === 1 ? '' : 's'} — this adds another`
@@ -510,11 +514,11 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
                 id="isnext"
                 type="checkbox"
                 checked={picked ? asNext : true}
-                disabled={!picked}
+                disabled={!picked || parked}
                 onChange={(e) => setAsNext(e.target.checked)}
                 className="m-0 size-4"
               />
-              <label htmlFor="isnext" className={cx(!picked && 'text-muted')}>Make this the project&apos;s next action</label>
+              <label htmlFor="isnext" className={cx((!picked || parked) && 'text-muted')}>Make this the project&apos;s next action</label>
               <span className="font-mono text-meta text-muted">{nextNote}</span>
             </div>
           </Step>

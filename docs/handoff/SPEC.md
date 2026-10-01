@@ -149,6 +149,10 @@ from Next and Inbox respectively. Phone rules: §3.8.
   finish, demote or drop them first"); nothing is closed on the user's behalf.
 - → Someday demotes the project's next actions to later steps, so nothing of a parked
   project stays on Next Actions. → Active brings it back, stalled until a step is promoted.
+  While parked (or completed) it takes no next action at all: no "↑ next" or drop into next
+  actions, no "+ action", Next Actions' "move to project" offers active projects only, and
+  Clarify files an actionable item picked into it as a later step (the checkbox is off and
+  says why). The api refuses each of these too.
 - Detail header: area · created ddd dd.mm · from inbox (parts left out when unknown).
 - Waiting-for card links to `/waiting?filter=overdue` when one of the project's items is
   overdue ("Overdue waiting-for →"), else to `/waiting` ("All waiting-for →").

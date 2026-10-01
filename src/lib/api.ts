@@ -429,6 +429,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   }
   if (route?.to === 'next') {
     check(state.contexts.includes(route.context), `unknown context ${route.context}`);
+    if (choice && 'id' in choice) checkTakesNextAction(choice.id, 'clarify');
     check(!route.deadline || ISO_DATE.test(route.deadline), 'deadline is not an ISO date');
   }
   if (route?.to === 'calendar') {
@@ -674,6 +675,7 @@ export function editNext(id: string, edit: NextEdit): { projectId?: string } {
   if (edit.context !== undefined) check(state.contexts.includes(edit.context), `unknown context ${edit.context}`, 'edit');
   const choice = edit.project;
   if (choice && 'id' in choice) check(state.projects.some((p) => p.id === choice.id), `unknown project ${choice.id}`, 'edit');
+  if (choice && 'id' in choice) checkTakesNextAction(choice.id, 'edit');
   if (choice && 'newTitle' in choice) checkNewTitle(state, choice.newTitle, 'edit');
 
   let projectId = item.projectId;
@@ -801,9 +803,20 @@ export function demote(id: string): void {
   });
 }
 
+/**
+ * Only an active project takes a next action (SPEC §3.4: nothing of a parked project stays on
+ * Next Actions). A project on Someday/Maybe or completed is refused — activate it first.
+ */
+function checkTakesNextAction(projectId: string | undefined, scope: string) {
+  if (!projectId) return;
+  const p = getProject(projectId);
+  check(!p || p.status === 'active', `project "${p?.title}" is ${p?.status === 'someday' ? 'on hold (Someday/Maybe)' : 'completed'} — activate it first`, scope);
+}
+
 /** Later step → next action, with the step-4 fields asked again. Numbered last in its priority. */
 export function promote(id: string, fields: NextFields): void {
   check(getItem(id)?.status === 'later', `item ${id} is not a later step`, 'promote');
+  checkTakesNextAction(getItem(id)!.projectId, 'promote');
   checkFields(fields, 'promote');
   store.update((s) => {
     applyFields(s.items, s.items.find((i) => i.id === id)!, fields);
@@ -820,6 +833,7 @@ function newProjectItem(projectId: string, text: string, scope: string): Item {
 /** "+ action" on a project: a new next action of it. */
 export function addAction(projectId: string, text: string, fields: NextFields): Item {
   const item = newProjectItem(projectId, text, 'addAction');
+  checkTakesNextAction(projectId, 'addAction');
   checkFields(fields, 'addAction');
   store.update((s) => {
     s.items.push(item);
