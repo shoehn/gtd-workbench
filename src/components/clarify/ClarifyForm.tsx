@@ -18,6 +18,7 @@ import { SectionHead } from '../ui/SectionHead';
 import { Tag } from '../ui/Tag';
 import { ENERGIES, PRIORITIES, TIMES } from '../ui/NextFields';
 import { ProjectPicker, type Picked, type PickerProject } from '../ui/ProjectPicker';
+import { clarifyStart, type Answer } from './start';
 
 export interface ClarifyItem {
   id: string;
@@ -37,7 +38,6 @@ export interface ClarifyItem {
   draft?: Draft;
 }
 
-type Answer = 'yes' | 'trash' | 'someday' | 'reference';
 type RouteTo = Route['to'];
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -160,42 +160,23 @@ interface ClarifyFormProps {
 export function ClarifyForm({ item, after, contexts, projects, similar }: ClarifyFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  // What the form starts with: an agent's draft if there is one (MCP §3.4), else the item itself.
-  const d = item.draft;
-  const toPicked = (p: PickerProject): Picked => ({ id: p.id, title: p.title, nextActions: p.nextActions, active: p.active });
-  const carried = projects.find((p) => p.id === item.projectId);
-  // A draft's project only if it can still be picked (it may have been completed since).
-  const draftProject: Picked = !d?.project
-    ? null
-    : 'newTitle' in d.project
-      ? { newTitle: d.project.newTitle }
-      : (() => {
-          const id = (d.project as { id: string }).id;
-          const p = projects.find((x) => x.id === id);
-          return p ? toPicked(p) : null;
-        })();
-  const startPicked: Picked = draftProject ?? (carried ? toPicked(carried) : null);
-  const startAnswer: Answer | null = !d ? null : d.kind === 'action' || d.kind === 'project' ? 'yes' : d.kind;
-
-  const [answer, setAnswer] = useState<Answer | null>(startAnswer);
-  const [text, setText] = useState(d?.text ?? item.text);
-  // The field shows a starting pick by its title, as a pick made by hand does.
-  const [query, setQuery] = useState(startPicked ? ('id' in startPicked ? startPicked.title : startPicked.newTitle) : '');
-  const [picked, setPicked] = useState<Picked>(startPicked);
-  // As pick() would set it for the starting project, unless the draft says.
-  const [asNext, setAsNext] = useState(d?.next ?? (startPicked && 'id' in startPicked ? startPicked.active && startPicked.nextActions === 0 : true));
-  // A day captured with `^date` is an offer for the calendar (SPEC §3.2).
-  const [routeTo, setRouteTo] = useState<RouteTo | null>(d?.route ?? (item.day ? 'calendar' : null));
-  const [context, setContext] = useState(d?.context && contexts.includes(d.context) ? d.context : (item.context ?? contexts[0]));
-  const [priority, setPriority] = useState<Priority>(d?.priority ?? item.priority ?? 'B');
-  const [time, setTime] = useState<TimeBucket>(d?.time ?? 30);
-  const [energy, setEnergy] = useState<Energy>(d?.energy ?? 'normal');
-  const [deadline, setDeadline] = useState(d?.deadline ?? '');
-  const [day, setDay] = useState(d?.day ?? item.day ?? '');
+  const begin = clarifyStart(item, projects, contexts);
+  const [answer, setAnswer] = useState<Answer | null>(begin.answer);
+  const [text, setText] = useState(begin.text);
+  const [query, setQuery] = useState(begin.query);
+  const [picked, setPicked] = useState<Picked>(begin.picked);
+  const [asNext, setAsNext] = useState(begin.asNext);
+  const [routeTo, setRouteTo] = useState<RouteTo | null>(begin.routeTo);
+  const [context, setContext] = useState(begin.context);
+  const [priority, setPriority] = useState<Priority>(begin.priority);
+  const [time, setTime] = useState<TimeBucket>(begin.time);
+  const [energy, setEnergy] = useState<Energy>(begin.energy);
+  const [deadline, setDeadline] = useState(begin.deadline);
+  const [day, setDay] = useState(begin.day);
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
-  const [who, setWho] = useState(d?.who ?? '');
-  const [followUp, setFollowUp] = useState(d?.followUp ?? '');
+  const [who, setWho] = useState(begin.who);
+  const [followUp, setFollowUp] = useState(begin.followUp);
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // "No → Reference": what came with the item, else the kind guessed from the text (a URL makes it a link).
