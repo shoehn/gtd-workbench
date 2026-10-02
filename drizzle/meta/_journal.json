@@ -43,6 +43,13 @@
       "when": 1790862343714,
       "tag": "0005_successor_id",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790928941051,
+      "tag": "0006_activity_clients",
+      "breakpoints": true
     }
   ]
 }

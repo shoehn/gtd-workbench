@@ -71,3 +71,47 @@ describe('sqlite store', () => {
     expect(createSqliteStore(file, seed as State).getState()).toEqual(seed);
   });
 });
+
+describe('activity and clients persist (MCP stage 1)', () => {
+  const entry = (n: number) => ({
+    id: `a${n}`,
+    at: `2026-10-01T10:00:0${n}.000Z`,
+    actor: { kind: 'client' as const, id: 'c1', name: 'Claude Desktop' },
+    summary: `Captured “x${n}”`,
+    changes: [
+      {
+        kind: 'item' as const,
+        id: `i${n}`,
+        before: null,
+        after: { id: `i${n}`, text: `x${n}`, captured: `x${n}`, source: 'typed' as const, capturedAt: '2026-10-01T10:00:00.000Z', status: 'inbox' as const, tags: [] },
+      },
+    ],
+  });
+
+  it('activity entries and clients survive a reopen', () => {
+    const file = tempFile();
+    const a = createSqliteStore(file, seed as State);
+    a.update((s) => {
+      s.activity.push(entry(1));
+      s.clients.push({ id: 'c1', name: 'Claude Desktop', preset: 'assistant', tokenHash: 'ab'.repeat(32), createdAt: '2026-10-01T09:00:00.000Z' });
+    });
+    const b = createSqliteStore(file, seed as State).getState();
+    expect(b.activity).toEqual([entry(1)]);
+    expect(b.clients).toEqual(a.getState().clients);
+  });
+
+  it('activity rows are only inserted, never rewritten', () => {
+    const file = tempFile();
+    const a = createSqliteStore(file, seed as State);
+    a.update((s) => {
+      s.activity.push(entry(1));
+    });
+    // a later write that leaves the entry alone must not touch its row
+    a.update((s) => {
+      s.activity[0].summary = 'tampered in memory';
+      s.activity.push(entry(2));
+    });
+    const b = createSqliteStore(file, seed as State).getState();
+    expect(b.activity.map((e) => e.summary)).toEqual(['Captured “x1”', 'Captured “x2”']);
+  });
+});

@@ -17,6 +17,8 @@
   "timezone": "Europe/Zurich",
   "theme": "system",
   "mailSeen": [],
+  "activity": [],
+  "clients": [],
   "areaKinds": {},
   "projects": [],
   "items": [],

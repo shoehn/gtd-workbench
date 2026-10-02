@@ -34,6 +34,45 @@ export interface MailboxStatus {
   lastErrorAt?: string;
 }
 
+/** Who made a change (MCP design §3.2). */
+export type Actor =
+  | { kind: 'user' }
+  | { kind: 'client'; id: string; name: string }
+  | { kind: 'mail' }
+  | { kind: 'share' }
+  | { kind: 'system' };
+
+/** One entity a change touched, as it was before and after (`null`: did not exist). */
+export interface ActivityChange {
+  kind: 'item' | 'project' | 'tickler';
+  id: string;
+  before: Item | Project | TicklerEntry | null;
+  after: Item | Project | TicklerEntry | null;
+}
+
+export interface ActivityEntry {
+  id: string;
+  /** ISO, UTC. */
+  at: string;
+  actor: Actor;
+  /** In words: "“Call Alice”: Inbox → Waiting For (Alice)". */
+  summary: string;
+  changes: ActivityChange[];
+  /** This entry undid that one. */
+  undoOf?: string;
+}
+
+/** An API client (MCP, scripts); only the SHA-256 of its token is kept. */
+export interface StoredClient {
+  id: string;
+  name: string;
+  preset: 'capture' | 'read-only' | 'assistant';
+  tokenHash: string;
+  createdAt: string;
+  lastUsedAt?: string;
+  revokedAt?: string;
+}
+
 export interface State {
   /** Fixed "today" (ISO date) for the seed; absent means the real date. */
   today?: string;
@@ -57,6 +96,10 @@ export interface State {
   externalEvents: ExternalEvent[];
   mailSeen: MailSeen[];
   mailbox?: MailboxStatus;
+  /** Every change to items, projects and tickler notes, oldest first (kept 365 days). */
+  activity: ActivityEntry[];
+  /** API clients (MCP, scripts): a name, a preset and the hash of their token. */
+  clients: StoredClient[];
   reviewTemplate: ReviewTemplate;
   /** All review runs, oldest first; at most one is open (no `outcome`). */
   reviewRuns: ReviewRun[];

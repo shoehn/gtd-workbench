@@ -11,7 +11,7 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { ExternalEvent, Item, Project, ReviewRun } from '../model';
 import * as t from './schema';
-import type { ExternalCalendar, MailSeen, State, Store } from './types';
+import type { ActivityEntry, ExternalCalendar, MailSeen, State, Store, StoredClient } from './types';
 
 type Db = BetterSQLite3Database<typeof t>;
 type Row = Record<string, unknown>;
@@ -151,7 +151,7 @@ function calendarRow(c: ExternalCalendar, seq: number) {
 }
 
 /** Every table's rows for a state, keyed by the table's primary key. */
-function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string; rows: Row[] }[] {
+function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string; rows: Row[]; appendOnly?: boolean }[] {
   return [
     { table: t.items, pk: t.items.id, key: 'id', rows: s.items.map(itemRow) },
     { table: t.projects, pk: t.projects.id, key: 'id', rows: s.projects.map(projectRow) },
@@ -164,6 +164,28 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
       pk: t.mailSeen.messageId,
       key: 'messageId',
       rows: s.mailSeen.map((m, seq) => ({ messageId: m.messageId, seq, at: m.at, outcome: m.outcome, itemId: m.itemId ?? null })),
+    },
+    {
+      table: t.activity,
+      pk: t.activity.id,
+      key: 'id',
+      appendOnly: true,
+      rows: s.activity.map((e, seq) => ({ id: e.id, seq, at: e.at, actor: e.actor, summary: e.summary, changes: e.changes, undoOf: e.undoOf ?? null })),
+    },
+    {
+      table: t.clients,
+      pk: t.clients.id,
+      key: 'id',
+      rows: s.clients.map((c, seq) => ({
+        id: c.id,
+        seq,
+        name: c.name,
+        preset: c.preset,
+        tokenHash: c.tokenHash,
+        createdAt: c.createdAt,
+        lastUsedAt: c.lastUsedAt ?? null,
+        revokedAt: c.revokedAt ?? null,
+      })),
     },
     { table: t.areaKinds, pk: t.areaKinds.area, key: 'area', rows: Object.entries(s.areaKinds).map(([area, kind], seq) => ({ area, seq, kind })) },
     {
@@ -184,7 +206,16 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
 function write(db: Db, before: State | null, after: State) {
   const old = before ? tablesOf(before) : null;
   db.transaction((tx) => {
-    tablesOf(after).forEach(({ table, pk, key, rows }, n) => {
+    tablesOf(after).forEach(({ table, pk, key, rows, appendOnly }, n) => {
+      if (appendOnly) {
+        // Entries never change: insert the new ones, delete the pruned ones, never compare JSON.
+        const had = new Set((old?.[n].rows ?? []).map((r) => String(r[key])));
+        const keep = new Set(rows.map((r) => String(r[key])));
+        for (const row of rows) if (!had.has(String(row[key]))) tx.insert(table).values(row).run();
+        const gone = [...had].filter((k) => !keep.has(k));
+        if (gone.length) tx.delete(table).where(inArray(pk, gone)).run();
+        return;
+      }
       const was = new Map((old?.[n].rows ?? []).map((r) => [String(r[key]), JSON.stringify(r)]));
       const keep = new Set<string>();
       for (const row of rows) {
@@ -229,6 +260,8 @@ function load(db: Db): State | null {
     ...(settings.externalSyncedAt && { externalSyncedAt: settings.externalSyncedAt }),
     externalEvents: bySeq(db.select().from(t.externalEvents).all()).map((e) => compact(unseq(e)) as unknown as ExternalEvent),
     mailSeen: bySeq(db.select().from(t.mailSeen).all()).map((m) => compact(unseq(m)) as unknown as MailSeen),
+    activity: bySeq(db.select().from(t.activity).all()).map((e) => compact(unseq(e)) as unknown as ActivityEntry),
+    clients: bySeq(db.select().from(t.clients).all()).map((c) => compact(unseq(c)) as unknown as StoredClient),
     ...(settings.mailbox && { mailbox: JSON.parse(settings.mailbox) }),
     reviewTemplate: user.reviewTemplate,
     reviewRuns: bySeq(db.select().from(t.reviewRuns).all()).map((r) => compact(unseq(r)) as unknown as ReviewRun),

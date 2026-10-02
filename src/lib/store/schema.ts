@@ -5,6 +5,7 @@
 // `seq` keeps each list in the order the store holds it (the memory store's array order).
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { ReviewRun, ReviewTemplate } from '../model';
+import type { ActivityChange, Actor } from './types';
 
 export const items = sqliteTable(
   'items',
@@ -123,6 +124,29 @@ export const mailSeen = sqliteTable('mail_seen', {
   at: text().notNull(),
   outcome: text().notNull(),
   itemId: text('item_id'),
+});
+
+/** The activity log: append-only; `actor` and `changes` are JSON, read whole. */
+export const activity = sqliteTable('activity', {
+  id: text().primaryKey(),
+  seq: integer().notNull(),
+  at: text().notNull(),
+  actor: text({ mode: 'json' }).$type<Actor>().notNull(),
+  summary: text().notNull(),
+  changes: text({ mode: 'json' }).$type<ActivityChange[]>().notNull(),
+  undoOf: text('undo_of'),
+});
+
+/** API clients; only the SHA-256 of a token is stored. */
+export const clients = sqliteTable('clients', {
+  id: text().primaryKey(),
+  seq: integer().notNull(),
+  name: text().notNull(),
+  preset: text().notNull(),
+  tokenHash: text('token_hash').notNull(),
+  createdAt: text('created_at').notNull(),
+  lastUsedAt: text('last_used_at'),
+  revokedAt: text('revoked_at'),
 });
 
 /**
