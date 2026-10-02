@@ -140,6 +140,30 @@ sheet: sharing a page puts its title in the inbox with the link attached, and a 
 confirmation offers "Clarify now" or "Done". iOS Safari has no Web Share Target — use the
 Shortcut above.
 
+## API for agents (`/api/v1`)
+
+What an MCP binary (or any agent or script) uses — every operation of the spec's tool list,
+with the same rules as the screens and every change in Activity under the client's name.
+
+1. Settings → Clients: create one per agent, preset **assistant** (or *read-only* for a
+   reporting agent, *capture* for a script that only adds to the inbox). Copy the token.
+2. `GET /api/v1/tools` — the tools this client may call, each with a description and the
+   JSON Schema of its arguments. `GET /api/v1/prompts` — the guided workflows.
+3. `POST /api/v1/tools/<name>` with the arguments as JSON → `200 { result, activity }`
+   (`activity`: the ids of the log entries the call made, for `undo`).
+
+```sh
+curl -s -H "Authorization: Bearer $TOKEN" https://gtd.example.com/api/v1/tools | jq '.tools[].name'
+curl -s -H "Authorization: Bearer $TOKEN" --json '{"context":"@calls","max_minutes":15}' \
+     https://gtd.example.com/api/v1/tools/list_next_actions
+```
+
+Answers: 400 arguments don't fit the schema (the message names the key), 401 no / wrong /
+revoked token (429 past 20 such a minute), 403 the client's preset doesn't allow the tool,
+404 no such tool, 413 body over 64 KB, 422 the app refused (its reason, e.g. "project … is on
+hold — activate it first"), 429 past 120 calls a minute, 500 a bug (logged, generic message).
+Item links come as paths (`href`); prefix the app's URL.
+
 ## Reverse proxy
 
 The container listens on `127.0.0.1:${GTD_PORT}` of the host only. Caddy on the same box:
@@ -179,6 +203,7 @@ What the proxy must get right:
 
 - **Bypass, no login** — these are fetched by clients that cannot do a login page:
   - `POST /api/capture` — scripts, Shortcuts, n8n; it has its own bearer token.
+  - `/api/v1/…` — the agent API (MCP); every request needs a client's bearer token.
   - `/manifest.webmanifest`, `/icon.svg`, `/icon-192.png`, `/icon-512.png`, `/sw.js` — the
     browser fetches the manifest without cookies; behind a login it gets a redirect and the
     app is neither installable nor a share target. They contain no data.
@@ -200,6 +225,10 @@ access_control:
       resources:
         - '^/api/capture$'
       methods: [POST]
+      policy: bypass
+    - domain: gtd.example.com
+      resources:
+        - '^/api/v1/'
       policy: bypass
     - domain: gtd.example.com
       resources:

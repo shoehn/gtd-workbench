@@ -24,6 +24,7 @@ phone is the same lists with one-hand capture.
 | `/settings` | — (built from the primitives) | Contexts, buckets, calendars, time zone, review checklist |
 | `/reference` | — (built from the primitives) | Reference: notes, links, file names — the index, not the archive |
 | `/activity` | — (built from the primitives) | Every change by anyone, with undo (§3.12) |
+| `/api/v1/tools`, `/api/v1/tools/<name>`, `/api/v1/prompts` | — (no screen) | The agent API: tools and guided workflows for MCP clients (OPERATIONS) |
 | `/share` → `/share/done` | — (built from the primitives) | Web Share Target: a share lands in the inbox, one-line confirmation (§3.1) |
 
 Reference is a sidebar entry with its count and its own screen (§3.11); on the phone it is
@@ -335,7 +336,9 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - Clients: API clients (MCP, scripts) with a name and a preset — capture (inbox and tickler
   notes), read-only, assistant (reads, captures, drafts and acts). The token is shown once
   and stored as a hash; revoke with one click; last use is shown. `CAPTURE_TOKEN` from the
-  environment is the built-in client "capture (env)".
+  environment is the built-in client "capture (env)". Presets decide the agent API's tools:
+  capture — `capture`, `add_tickler`; read-only — every read tool and `get_activity`;
+  assistant — all; every client may call `whoami`.
 
 ### 3.10 Command palette
 - A keyboard front door, not a second UI: every entry is an existing api operation or route.

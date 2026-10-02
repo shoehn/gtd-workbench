@@ -98,9 +98,9 @@ marks items that have a draft.
   to open them in the app.
 - Refusals carry the app's reason ("project *X* is on hold — activate it first").
 - Every write returns its activity entry id (for `undo`).
-- ✦ = not in the app yet. (Stages 1 and 2 built the activity log, undo, clients, drafts,
-  `file`, `edit_waiting`, `get_overview`, `find_free_time` and `prepare_weekly_review`; the
-  marks are gone from those.)
+- Everything in §5 and §6 exists in the app (Stages 1–3): `GET /api/v1/tools`,
+  `POST /api/v1/tools/<name>`, `GET /api/v1/prompts`. Items carry their link as a path
+  (`href`); the binary makes it absolute.
 
 ## 5. Tools
 
