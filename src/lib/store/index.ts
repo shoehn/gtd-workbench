@@ -6,7 +6,7 @@ import { log } from '../log';
 import { createMemoryStore } from './memory';
 import { baseSeed, demoSeed } from './seed';
 import { createSqliteStore } from './sqlite';
-import type { Store } from './types';
+import type { State, Store } from './types';
 
 export type StoreKind = 'memory' | 'sqlite';
 
@@ -45,14 +45,33 @@ function open(): Store {
   return g.__wbStore;
 }
 
+// Depth of store.update calls in progress: an update inside an update is part of the outer one.
+let depth = 0;
+
 export const store: Store = {
   getState: () => open().getState(),
-  // Every change is logged with its actor in the same write (lib/activity.ts).
-  update: (fn) =>
-    open().update((s) => {
-      const before = snapshot(s);
-      fn(s);
-      record(s, before);
-    }),
+  // Every change is logged with its actor in the same write (lib/activity.ts). An update made
+  // while another runs (an api function calling others) joins it: one write, one entry.
+  update: (fn) => {
+    if (depth > 0) {
+      fn(open().getState() as State);
+      return;
+    }
+    depth++;
+    try {
+      open().update((s) => {
+        const before = snapshot(s);
+        try {
+          fn(s);
+        } catch (e) {
+          Object.assign(s, before); // items, projects, tickler as they were (the memory store has no rollback)
+          throw e;
+        }
+        record(s, before);
+      });
+    } finally {
+      depth--;
+    }
+  },
   subscribe: (listener) => open().subscribe(listener),
 };

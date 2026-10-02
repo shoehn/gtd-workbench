@@ -156,3 +156,27 @@ describe('the activity view with a year of entries (review)', () => {
     ]);
   });
 });
+
+describe('nested updates (MCP stage 2)', () => {
+  it('a capture inside an update is part of it: one entry for both changes', () => {
+    const before = store.getState().activity.length;
+    store.update(() => {
+      api.capture('First');
+      api.capture('Second');
+    });
+    expect(store.getState().activity.length).toBe(before + 1);
+    expect(latest().summary).toBe('Captured “First”; Captured “Second”');
+  });
+
+  it('a throw inside rolls back everything the update did, in either store', () => {
+    const items = store.getState().items.length;
+    expect(() =>
+      store.update(() => {
+        api.capture('Never kept');
+        throw new Error('boom');
+      }),
+    ).toThrow('boom');
+    expect(store.getState().items.length).toBe(items);
+    expect(api.listInbox().some((i) => i.text === 'Never kept')).toBe(false);
+  });
+});
