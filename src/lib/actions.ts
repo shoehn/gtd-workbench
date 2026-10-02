@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import * as api from './api';
+import * as clients from './clients';
 import { pollMailbox } from './mail/poller';
 import type { Item, Reference } from './model';
 
@@ -287,4 +288,20 @@ export async function undoActivityAction(id: string): Promise<{ error?: string }
   }
   revalidatePath('/', 'layout');
   return {};
+}
+
+/** Settings → Clients → Create: the token is returned once, here, and never again. */
+export async function createClientAction(name: string, preset: clients.Preset): Promise<{ token?: string; error?: string }> {
+  try {
+    const { token } = clients.createClient(name, preset);
+    revalidatePath('/settings');
+    return { token };
+  } catch (e) {
+    return { error: (e instanceof Error ? e.message : String(e)).replace(/^clients: /, '') };
+  }
+}
+
+export async function revokeClientAction(id: string): Promise<void> {
+  clients.revokeClient(id);
+  revalidatePath('/settings');
 }

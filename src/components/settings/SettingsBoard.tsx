@@ -18,6 +18,7 @@ import type { ReviewTemplate, Theme } from '@/lib/model';
 import { isTyping } from '../inbox/keys';
 import { Btn } from '../ui/Btn';
 import { Card } from '../ui/Card';
+import { ClientsCard, type ClientsCardRow } from './ClientsCard';
 import { cx } from '../ui/cx';
 import { Kbd } from '../ui/Kbd';
 import { PhoneToast } from '../ui/PhoneToast';
@@ -56,6 +57,7 @@ interface SettingsBoardProps {
   /** The server's zone, shown for the empty choice. */
   serverZone: string;
   zones: string[];
+  clients: ClientsCardRow[];
   theme: Theme;
   template: ReviewTemplate;
   stepLinks: readonly string[];
@@ -297,6 +299,8 @@ export function SettingsBoard(props: SettingsBoardProps) {
           </p>
         )}
       </Card>
+
+      <ClientsCard rows={props.clients} />
 
       <Card aria-labelledby="appearance-head" className="flex flex-col">
         <CardTitle id="appearance-head" title="Appearance" hint="also from the palette: Toggle dark theme" />

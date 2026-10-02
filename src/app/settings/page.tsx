@@ -2,6 +2,7 @@ import { SettingsBoard } from '@/components/settings/SettingsBoard';
 import { Page } from '@/components/shell/Page';
 import * as api from '@/lib/api';
 import { fmtWeekdayTime } from '@/lib/format';
+import { listClients } from '@/lib/clients';
 import { mailConfigFromEnv } from '@/lib/mail/poller';
 
 export default async function SettingsPage() {
@@ -35,6 +36,14 @@ export default async function SettingsPage() {
         timezone={settings.timezone}
         serverZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
         zones={Intl.supportedValuesOf('timeZone')}
+        clients={listClients().map((c) => ({
+          id: c.id,
+          name: c.name,
+          preset: c.preset,
+          ...(c.lastUsedAt && { lastUsed: fmtWeekdayTime(c.lastUsedAt, api.timeZone()) }),
+          revoked: !!c.revokedAt,
+          builtIn: !!c.builtIn,
+        }))}
         theme={settings.theme}
         template={settings.reviewTemplate}
         stepLinks={api.STEP_LINKS}
