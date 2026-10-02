@@ -2,6 +2,7 @@
 // nothing derived is ever written back to the store.
 import { actorKey, actorLabel, applyUndo, runAs, runUndo, setActivityClock, undoBlocker } from './activity';
 import { parse } from './capture-syntax';
+import { daysBetween } from './format';
 import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
 import { URL_IN_TEXT, guessReference, referenceHost } from './reference';
@@ -1348,6 +1349,55 @@ export function upcomingDeadlines(days = 30): UpcomingDeadline[] {
     }
   }
   return out.sort((a, b) => a.day.localeCompare(b.day));
+}
+
+export interface FreeSlot {
+  day: string;
+  start: string; // hh:mm
+  end: string;
+  minutes: number;
+}
+
+const HH_MM_ANY = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Time with nothing on it (MCP find_free_time): gaps between timed appointments and time blocks
+ * (projected recurring ones included) inside the day hours. All-day entries do not block. Days
+ * before today have none; today starts at now, rounded up to the next 5 minutes.
+ */
+export function freeTime(from: string, to: string, minMinutes = 30, dayHours = { start: '08:00', end: '18:00' }): FreeSlot[] {
+  check(ISO_DATE.test(from) && ISO_DATE.test(to), 'dates are yyyy-mm-dd', 'freeTime');
+  check(from <= to, 'from is after to', 'freeTime');
+  check(daysBetween(from, to) <= 62, 'at most 62 days', 'freeTime');
+  check(HH_MM_ANY.test(dayHours.start) && HH_MM_ANY.test(dayHours.end), 'day hours are hh:mm', 'freeTime');
+  check(dayHours.start < dayHours.end, 'day hours end before they start', 'freeTime');
+  const busy = new Map<string, [number, number][]>();
+  for (const e of landscape(from, to)) {
+    if ((e.kind !== 'appointment' && e.kind !== 'timeblock') || !e.start || !e.end) continue;
+    const list = busy.get(e.day) ?? [];
+    list.push([minutesOf(e.start), e.end === '24:00' ? 24 * 60 : minutesOf(e.end)]);
+    busy.set(e.day, list);
+  }
+  const first = today();
+  const out: FreeSlot[] = [];
+  for (let day = from; day <= to; day = addDays(day, 1)) {
+    if (day < first) continue;
+    let cursor = minutesOf(dayHours.start);
+    if (day === first) cursor = Math.max(cursor, Math.ceil(minutesOfDay() / 5) * 5);
+    const end = minutesOf(dayHours.end);
+    const blocks = (busy.get(day) ?? []).sort((a, b) => a[0] - b[0]);
+    const gap = (a: number, b: number) => {
+      if (b - a >= minMinutes) out.push({ day, start: fromMinutes(a), end: fromMinutes(b), minutes: b - a });
+    };
+    for (const [s, e] of blocks) {
+      if (e <= cursor) continue;
+      if (s >= end) break;
+      gap(cursor, Math.min(s, end));
+      cursor = Math.max(cursor, e);
+    }
+    if (cursor < end) gap(cursor, end);
+  }
+  return out;
 }
 
 /**

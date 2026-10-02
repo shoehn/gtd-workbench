@@ -80,3 +80,42 @@ describe('overview', () => {
     expect(api.overview().inbox).toEqual({ count: 0 });
   });
 });
+
+describe('freeTime', () => {
+  const MON = '2026-09-28';
+  const setDay = () =>
+    runSilently(() =>
+      store.update((s) => {
+        for (const i of s.items) if (i.timeSlot?.start.startsWith(MON)) delete i.timeSlot;
+        s.externalEvents = [
+          { id: 'x1', calendar: 'Work', title: 'Studio meeting', start: `${MON}T09:00:00+02:00`, end: `${MON}T10:00:00+02:00`, allDay: false },
+          { id: 'x2', calendar: 'Work', title: 'Holiday', start: MON, end: '2026-09-29', allDay: true },
+        ];
+        s.items.find((i) => i.id === 'n2')!.timeSlot = { start: `${MON}T13:00`, end: `${MON}T14:30` };
+      }),
+    );
+
+  it('gaps between appointments and blocks within the day hours; all-day entries do not block', () => {
+    setDay();
+    expect(api.freeTime(MON, MON, 90)).toEqual([
+      { day: MON, start: '10:00', end: '13:00', minutes: 180 },
+      { day: MON, start: '14:30', end: '18:00', minutes: 210 },
+    ]);
+    expect(api.freeTime(MON, MON, 30, { start: '07:00', end: '09:00' })).toEqual([{ day: MON, start: '07:00', end: '09:00', minutes: 120 }]);
+  });
+
+  it('today starts at now; earlier days have no free time', () => {
+    expect(api.freeTime('2026-09-20', '2026-09-25')).toEqual([]);
+    const nowMin = api.minutesOfDay();
+    for (const slot of api.freeTime('2026-09-26', '2026-09-26', 5, { start: '00:00', end: '23:59' })) {
+      expect(Number(slot.start.slice(0, 2)) * 60 + Number(slot.start.slice(3))).toBeGreaterThanOrEqual(nowMin);
+    }
+  });
+
+  it('refuses bad ranges and hours', () => {
+    expect(() => api.freeTime('2026-09-30', '2026-09-28')).toThrow('freeTime: from is after to');
+    expect(() => api.freeTime('2026-09-28', '2026-12-31')).toThrow('freeTime: at most 62 days');
+    expect(() => api.freeTime('28.09', '2026-09-28')).toThrow('freeTime: dates are yyyy-mm-dd');
+    expect(() => api.freeTime(MON, MON, 30, { start: '18:00', end: '08:00' })).toThrow('freeTime: day hours end before they start');
+  });
+});
