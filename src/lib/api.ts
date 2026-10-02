@@ -2139,6 +2139,18 @@ export function undoActivity(id: string): string {
   check(entry, `unknown entry ${id}`, 'undo');
   const blocker = undoBlocker(store.getState(), entry);
   check(!blocker, blocker ?? '', 'undo');
-  runUndo(id, () => store.update((s) => applyUndo(s, entry)));
+  // The app's rules hold for what comes back: no two open projects share a title …
+  for (const c of entry.changes) {
+    const was = c.kind === 'project' ? (c.before as Project | null) : null;
+    if (!was || was.status === 'completed') continue;
+    const twin = store.getState().projects.find((p) => p.id !== was.id && p.status !== 'completed' && sameTitle(p.title, was.title));
+    check(!twin, `a project “${was.title}” is open — rename one first`, 'undo');
+  }
+  runUndo(id, () =>
+    store.update((s) => {
+      applyUndo(s, entry);
+      renumberIn(s.items); // … and priority numbers stay unique (others may have taken them since)
+    }),
+  );
   return store.getState().activity.at(-1)!.id;
 }

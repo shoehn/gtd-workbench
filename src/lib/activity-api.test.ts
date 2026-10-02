@@ -70,3 +70,27 @@ describe('undo through the api', () => {
     expect(() => api.undoActivity('nope')).toThrow('undo: unknown entry nope');
   });
 });
+
+describe('undo keeps the app’s rules (review)', () => {
+  it('no duplicate priority numbers: undoing a completion renumbers', () => {
+    api.complete('n1');
+    const done = latest().id;
+    api.clarify('i1', { kind: 'action', text: 'Call the dentist', route: { to: 'next', context: '@calls', priority: 'A', time: 15, energy: 'low' } });
+    api.undoActivity(done);
+    const as = store.getState().items.filter((i) => i.status === 'next' && i.priority === 'A').map((i) => i.priorityNo);
+    expect(new Set(as).size).toBe(as.length);
+    expect(as.sort()).toEqual(as.map((_, n) => n + 1));
+  });
+
+  it('a project is not brought back under a title an open project has taken since', () => {
+    api.clarify('i1', { kind: 'action', text: 'Get quotes', project: { newTitle: 'Studio extension' }, route: { to: 'done' } });
+    const created = latest().id;
+    store.update((s) => {
+      s.projects = s.projects.filter((p) => p.title !== 'Studio extension'); // gone (as if dropped and purged)
+    });
+    const removal = latest().id;
+    api.clarify('i2', { kind: 'action', text: 'Ask the builder', project: { newTitle: 'Studio extension' }, route: { to: 'done' } });
+    expect(() => api.undoActivity(removal)).toThrow(/undo: .*“Studio extension” is open/);
+    expect(created).toBeTruthy();
+  });
+});
