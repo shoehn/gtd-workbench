@@ -1,5 +1,6 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
+import { actorKey, actorLabel, applyUndo, runUndo, setActivityClock, undoBlocker } from './activity';
 import { parse } from './capture-syntax';
 import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
@@ -8,7 +9,7 @@ import { sourcesFromEnv, type CalendarSource } from './calendar/sources';
 import { liveLine, measuredNote, type CalendarFigures, type ListFacts, type LiveLine } from './review-notes';
 import { baseSeed } from './store/seed';
 import { STORE_KIND, createdThisBoot, store } from './store';
-import type { ExternalCalendar, MailboxStatus, MailSeen, TicklerEntry } from './store/types';
+import type { ActivityEntry, ExternalCalendar, MailboxStatus, MailSeen, TicklerEntry } from './store/types';
 import { sameTitle } from './titles';
 import { addDays, compareStamps, isoWeek, weekDays } from './week';
 
@@ -39,6 +40,8 @@ export function now(): Date {
   const w = wallClock(real, timeZone());
   return instantAt(day, w.hour, w.minute, w.second, real.getMilliseconds(), timeZone());
 }
+
+setActivityClock(now);
 
 /** Minutes since midnight on the wall clock of `timeZone()` (the calendar's now line). */
 export function minutesOfDay(at: Date = now()): number {
@@ -2100,4 +2103,42 @@ export function toSomeday(id: string): void {
   store.update((s) => {
     s.items.find((i) => i.id === id)!.status = 'someday';
   });
+}
+
+// ── Activity ────────────────────────────────────────────────────────────────
+
+export interface ActivityRow extends ActivityEntry {
+  actorLabel: string;
+  actorKey: string;
+  /** Why it can't be undone now, or null. */
+  blocker: string | null;
+}
+
+/** Newest first. `actor`: 'you' | a client id | 'mail' | 'share' | 'system'. `subject`: an item or project id. */
+export function listActivity(filter: { actor?: string; subject?: string; limit?: number } = {}): ActivityRow[] {
+  const s = store.getState();
+  const touches = (e: ActivityEntry, id: string) =>
+    e.changes.some((c) => c.id === id || (c.kind === 'item' && [c.before, c.after].some((x) => (x as Item | null)?.projectId === id)));
+  const out: ActivityRow[] = [];
+  for (let n = s.activity.length - 1; n >= 0 && out.length < (filter.limit ?? 200); n--) {
+    const e = s.activity[n];
+    if (filter.actor && actorKey(e.actor) !== filter.actor) continue;
+    if (filter.subject && !touches(e, filter.subject)) continue;
+    out.push({ ...e, actorLabel: actorLabel(e.actor), actorKey: actorKey(e.actor), blocker: undoBlocker(s, e) });
+  }
+  return out;
+}
+
+export function getActivityEntry(id: string): ActivityEntry | undefined {
+  return store.getState().activity.find((e) => e.id === id);
+}
+
+/** Undo an entry while nothing has touched its items since; returns the undo's own entry id. */
+export function undoActivity(id: string): string {
+  const entry = getActivityEntry(id);
+  check(entry, `unknown entry ${id}`, 'undo');
+  const blocker = undoBlocker(store.getState(), entry);
+  check(!blocker, blocker ?? '', 'undo');
+  runUndo(id, () => store.update((s) => applyUndo(s, entry)));
+  return store.getState().activity.at(-1)!.id;
 }

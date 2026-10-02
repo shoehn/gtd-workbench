@@ -1,6 +1,7 @@
 // The one store the api uses: `STORE=memory|sqlite`, sqlite by default in production and
 // memory otherwise (dev, tests). `DATABASE_FILE` names the SQLite file (default data/gtd.db).
 // The store opens on first use, not on import, so `next build` never touches a database.
+import { record, snapshot } from '../activity';
 import { log } from '../log';
 import { createMemoryStore } from './memory';
 import { baseSeed, demoSeed } from './seed';
@@ -46,6 +47,12 @@ function open(): Store {
 
 export const store: Store = {
   getState: () => open().getState(),
-  update: (fn) => open().update(fn),
+  // Every change is logged with its actor in the same write (lib/activity.ts).
+  update: (fn) =>
+    open().update((s) => {
+      const before = snapshot(s);
+      fn(s);
+      record(s, before);
+    }),
   subscribe: (listener) => open().subscribe(listener),
 };
