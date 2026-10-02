@@ -398,7 +398,6 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
     const result: ClarifyResult = { itemId, projectCreated: false };
     store.update((s) => {
       const item = s.items.find((i) => i.id === itemId)!;
-    delete item.draft; // filed: the draft has done its job
       delete item.draft; // filed: the draft has done its job
       item.status = 'reference';
       item.reference = cleanReference(reference);
@@ -461,6 +460,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
     result.projectId = projectId;
 
     const item = s.items.find((i) => i.id === itemId)!;
+    delete item.draft; // filed: the draft has done its job
     item.text = text;
     // Step 3 decides: a project, or none — an old one the item carried in does not survive.
     if (projectId) item.projectId = projectId;

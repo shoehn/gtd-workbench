@@ -64,3 +64,17 @@ describe('drafts', () => {
     expect(store.getState().items.find((i) => i.id === 'i1')!.draft!.reason).toBe(action.reason);
   });
 });
+
+describe('drafts go with every way of filing (review)', () => {
+  it('filed as a next action, a later step or a waiting-for, the item keeps no draft', () => {
+    api.setDraft('i1', action);
+    api.clarify('i1', { kind: 'action', text: 'Call the dentist', route: { to: 'next', context: '@calls', priority: 'B', time: 15, energy: 'low' } });
+    expect(api.getItem('i1')!.draft).toBeUndefined();
+    api.setDraft('i2', action);
+    api.clarify('i2', { kind: 'later', text: 'Run the retro', project: { id: 'p-table' } });
+    expect(api.getItem('i2')!.draft).toBeUndefined();
+    api.setDraft('i4', action);
+    api.clarify('i4', { kind: 'action', text: 'Ask the plumber', route: { to: 'waiting', who: 'Plumber' } });
+    expect(api.getItem('i4')!.draft).toBeUndefined();
+  });
+});
