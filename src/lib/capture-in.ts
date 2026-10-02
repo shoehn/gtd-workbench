@@ -92,17 +92,17 @@ export function createLimiter(limit: number, windowMs: number, clock: () => numb
 }
 
 type Limiter = ReturnType<typeof createLimiter>;
-const g = globalThis as typeof globalThis & { __wbLimiters?: { capture: Limiter; share: Limiter; badToken: Limiter } };
+const QUOTAS = { capture: 60, share: 60, badToken: 20, api: 120 } as const;
+const g = globalThis as typeof globalThis & { __wbLimiters?: Partial<Record<keyof typeof QUOTAS, Limiter>> };
 /**
- * Separate quotas, so one kind of traffic can't use up another's: authenticated captures
- * (60 a minute), shares (60 a minute), and requests with a missing or wrong token (20 a
- * minute — they never count against the real captures).
+ * Separate quotas a minute, so one kind of traffic can't use up another's: authenticated
+ * captures (60), shares (60), requests with a missing or wrong token (20 — they never count
+ * against the real ones), and agent API calls (120). Kept across dev reloads; a quota added
+ * later is filled in rather than missing.
  */
-export const limiters = (g.__wbLimiters ??= {
-  capture: createLimiter(60, 60_000),
-  share: createLimiter(60, 60_000),
-  badToken: createLimiter(20, 60_000),
-});
+const kept = (g.__wbLimiters ??= {});
+for (const [k, n] of Object.entries(QUOTAS) as [keyof typeof QUOTAS, number][]) kept[k] ??= createLimiter(n, 60_000);
+export const limiters = kept as Record<keyof typeof QUOTAS, Limiter>;
 
 /**
  * A request body, at most `max` bytes, counted while it streams in: a longer one (declared or
