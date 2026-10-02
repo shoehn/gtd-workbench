@@ -43,3 +43,21 @@ describe('file: capture and clarify in one', () => {
     expect(() => api.file('  ', { kind: 'trash' })).toThrow('file: text is empty');
   });
 });
+
+describe('editWaiting', () => {
+  const waitingId = () => store.getState().items.find((i) => i.status === 'waiting')!.id;
+
+  it('moves the follow-up date ("she said next week") and renames who', () => {
+    const id = waitingId();
+    api.editWaiting(id, { followUp: '2026-10-09', who: ' Shop owner ' });
+    expect(api.getItem(id)!.waiting).toMatchObject({ who: 'Shop owner', followUp: '2026-10-09' });
+    api.editWaiting(id, { followUp: null });
+    expect(api.getItem(id)!.waiting!.followUp).toBeUndefined();
+  });
+
+  it('refused for anything that is not a waiting-for, and for bad values', () => {
+    expect(() => api.editWaiting('n1', { followUp: '2026-10-09' })).toThrow('waiting: item n1 is not a waiting-for');
+    expect(() => api.editWaiting(waitingId(), { who: '  ' })).toThrow('waiting: who is empty');
+    expect(() => api.editWaiting(waitingId(), { followUp: '09.10' })).toThrow('waiting: follow-up is not an ISO date');
+  });
+});

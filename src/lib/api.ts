@@ -1004,6 +1004,20 @@ export function followUp(id: string): Item {
   return action;
 }
 
+/** Change who a waiting-for is waiting on, or its follow-up date (`null` removes the date). */
+export function editWaiting(id: string, edit: { who?: string; followUp?: string | null }): void {
+  const item = getItem(id);
+  check(item?.status === 'waiting' && item.waiting, `item ${id} is not a waiting-for`, 'waiting');
+  if (edit.who !== undefined) check(edit.who.trim(), 'who is empty', 'waiting');
+  if (edit.followUp) check(ISO_DATE.test(edit.followUp), 'follow-up is not an ISO date', 'waiting');
+  store.update((s) => {
+    const w = s.items.find((i) => i.id === id)!.waiting!;
+    if (edit.who !== undefined) w.who = edit.who.trim();
+    if (edit.followUp === null) delete w.followUp;
+    else if (edit.followUp !== undefined) w.followUp = edit.followUp;
+  });
+}
+
 /**
  * `x` on a waiting-for: it arrived, so it is done. Returns the undo token, and whether its
  * project is now active without a next action (the screen then asks for one).
