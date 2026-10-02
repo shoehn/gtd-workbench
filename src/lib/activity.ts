@@ -94,7 +94,10 @@ function phrase(c: ActivityChange): string | null {
   if (c.kind === 'item') {
     const b = c.before as Item | null;
     const a = c.after as Item | null;
-    if (!b) return a!.status === 'inbox' ? `Captured “${a!.text}”` : `Added “${a!.text}” to ${LIST[a!.status]}`;
+    if (!b) {
+      if (a!.status === 'inbox') return `Captured “${a!.text}”`;
+      return `Added “${a!.text}” to ${LIST[a!.status]}${a!.status === 'waiting' && a!.waiting ? ` (${a!.waiting.who})` : ''}`;
+    }
     if (!a) return `Deleted “${b.text}” for good`;
     if (a.status !== b.status) return `“${a.text}”: ${LIST[b.status]} → ${LIST[a.status]}${a.status === 'waiting' && a.waiting ? ` (${a.waiting.who})` : ''}`;
     const fields = ITEM_FIELDS.filter(([f]) => canon(a[f]) !== canon(b[f])).map(([, name]) => name);

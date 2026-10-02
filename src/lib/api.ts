@@ -506,6 +506,21 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   return result;
 }
 
+/**
+ * Capture and clarify in one — "I'm waiting on Alice for the video, add it". One atomic write,
+ * one log entry; a decision Clarify refuses leaves nothing behind. Projects can be born here as
+ * in Clarify (step 3 `{ newTitle }`).
+ */
+export function file(text: string, decision: Decision): ClarifyResult {
+  check(text.trim(), 'text is empty', 'file');
+  let result: ClarifyResult | undefined;
+  store.update(() => {
+    const item = capture(text)!;
+    result = clarify(item.id, decision);
+  });
+  return result!;
+}
+
 // ── Similar items ──────────────────────────────────────────────────────────
 
 const STOPWORDS = new Set(
