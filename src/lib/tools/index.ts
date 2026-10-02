@@ -5,9 +5,10 @@ import { actorOf, can, type ClientIdentity } from '../clients';
 import { log } from '../log';
 import { store } from '../store';
 import type { ToolDef } from './define';
+import { READ_TOOLS } from './read';
 import { REVIEW_TOOLS } from './review';
 
-export const TOOLS: ToolDef[] = [...REVIEW_TOOLS];
+export const TOOLS: ToolDef[] = [...READ_TOOLS, ...REVIEW_TOOLS];
 
 export function toolNamed(name: string): ToolDef | undefined {
   return TOOLS.find((t) => t.name === name);
@@ -31,7 +32,7 @@ export type ToolOutcome =
   | { status: 400 | 403 | 404 | 422 | 500; body: { error: string } };
 
 /** Errors the api throws on purpose carry their scope: "complete: item x cannot be completed". */
-const REFUSAL = /^[a-zA-Z]+: /;
+const REFUSAL = /^[a-zA-Z_]+: /;
 
 export function runTool(client: ClientIdentity, name: string, rawArgs: unknown): ToolOutcome {
   const t = toolNamed(name);
