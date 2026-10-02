@@ -1785,7 +1785,11 @@ export function setReviewNotes(notes: string): void {
 }
 
 /** Finish the review. Emptying the trash is its implicit last step. */
-export function finishReview(): void {
+/**
+ * Finish the open run. On the screen it also empties the trash for good; an agent finishing
+ * the review leaves the trash alone (`emptyTrash: false` — agents never delete for good, MCP §1).
+ */
+export function finishReview({ emptyTrash = true }: { emptyTrash?: boolean } = {}): void {
   requireOpenRun('finishReview');
   store.update(() => {
     const run = openRun()!;
@@ -1793,7 +1797,7 @@ export function finishReview(): void {
     run.finishedAt = now().toISOString();
     run.outcome = 'finished';
   });
-  purgeTrash();
+  if (emptyTrash) purgeTrash();
 }
 
 /**

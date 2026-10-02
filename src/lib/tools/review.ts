@@ -44,10 +44,10 @@ const reviewTools = [
   }),
   tool({
     name: 'finish_review',
-    description: 'Finish the weekly review in progress.',
+    description: 'Finish the weekly review in progress. The trash stays as it is (finishing on the screen empties it; agents never delete for good).',
     capability: 'write',
     input: z.strictObject({}),
-    run: () => api.finishReview(),
+    run: () => api.finishReview({ emptyTrash: false }),
   }),
   tool({
     name: 'undo',

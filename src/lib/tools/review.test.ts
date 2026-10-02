@@ -4,7 +4,7 @@ import * as api from '../api';
 import { store } from '../store';
 import { demoSeed as seed } from '../store/seed';
 import type { State } from '../store/types';
-import { runTool } from './index';
+import { runTool, toolNamed } from './index';
 
 beforeEach(() =>
   runSilently(() =>
@@ -38,5 +38,18 @@ describe('review and trust tools', () => {
     expect(run('undo', { entry })).toMatchObject({ status: 200 });
     expect(api.getItem(r.body.result[0].id)).toBeUndefined();
     expect(run('undo', { entry })).toMatchObject({ status: 422, body: { error: 'undo: changed since by Phone agent' } });
+  });
+});
+
+describe('an agent never deletes for good (review)', () => {
+  it('finish_review by a client keeps the trash; finishing on the screen still empties it', () => {
+    api.trash(['i1']);
+    run('start_review', {});
+    expect(run('finish_review', {})).toMatchObject({ status: 200 });
+    expect(api.getItem('i1')!.status).toBe('trash');
+    expect(toolNamed('finish_review')!.description).toMatch(/trash stays/);
+    api.startReview();
+    api.finishReview();
+    expect(api.getItem('i1')).toBeUndefined();
   });
 });
