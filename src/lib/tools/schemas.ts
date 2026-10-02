@@ -30,7 +30,9 @@ const route = z.discriminatedUnion('to', [
 export const decision = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('trash') }),
   z.strictObject({ kind: z.literal('someday'), bucket: z.string().optional() }),
-  z.strictObject({ kind: z.literal('reference'), reference_kind: z.enum(['note', 'link', 'file']).optional(), url: z.string().optional(), body: z.string().optional(), project: projectChoice.optional() }),
+  z
+    .strictObject({ kind: z.literal('reference'), reference_kind: z.enum(['note', 'link', 'file']).optional(), url: z.string().optional(), body: z.string().optional(), project: projectChoice.optional() })
+    .refine((d) => d.reference_kind || (d.url === undefined && d.body === undefined), { message: 'url and body need reference_kind (link: url; note or file: body)', path: ['reference_kind'] }),
   z.strictObject({ kind: z.literal('later'), text: z.string().min(1), project: projectChoice }),
   z.strictObject({ kind: z.literal('action'), text: z.string().min(1).describe('the outcome, verb first'), project: projectChoice.optional(), route }),
 ]);

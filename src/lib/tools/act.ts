@@ -193,7 +193,9 @@ export const PROJECT_TOOLS = [
     name: 'edit_reference',
     description: 'Change a reference entry: text, kind with url/body, or project (null = loose).',
     capability: 'write',
-    input: z.strictObject({ id, text: z.string().min(1).optional(), kind: z.enum(['note', 'link', 'file']).optional(), url: z.string().optional(), body: z.string().optional(), project: id.nullable().optional() }),
+    input: z
+      .strictObject({ id, text: z.string().min(1).optional(), kind: z.enum(['note', 'link', 'file']).optional(), url: z.string().optional(), body: z.string().optional(), project: id.nullable().optional() })
+      .refine((e) => e.kind || (e.url === undefined && e.body === undefined), { message: 'url and body need kind (link: url; note or file: body)', path: ['kind'] }),
     run: ({ id: x, text, kind, url, body, project }) => {
       api.editReference(x, {
         ...(text !== undefined && { text }),

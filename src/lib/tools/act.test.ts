@@ -112,3 +112,18 @@ describe('project, someday and reference tools', () => {
     expect(api.getItem(r.id)!.projectId).toBeUndefined();
   });
 });
+
+describe('nothing is dropped silently (review)', () => {
+  it('edit_reference with url but no kind is refused, not ignored', () => {
+    const r = api.listReference()[0];
+    const res = run('edit_reference', { id: r.id, url: 'https://example.com/new' });
+    expect(res.status).toBe(400);
+    expect((res.body as { error: string }).error).toMatch(/kind/);
+  });
+
+  it('a reference decision with url or body but no reference_kind is refused', () => {
+    const res = run('clarify', { item: 'i1', decision: { kind: 'reference', url: 'https://example.com/x' } });
+    expect(res.status).toBe(400);
+    expect((res.body as { error: string }).error).toMatch(/reference_kind/);
+  });
+});
