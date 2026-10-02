@@ -107,6 +107,12 @@ from Next and Inbox respectively. Phone rules: §3.8.
    A `^date` typed at capture is an intent, not a commitment: it is kept as `day` (never as
    `deadline`), and when present step 4 preselects Defer → Calendar with that day.
 - "File it and next" (Enter) commits and loads the next inbox item. "Skip" leaves it.
+- Drafts (MCP): an inbox item may carry one draft from a client — the decision prefilled
+  (outcome, kind, project or "+ new", the step-4 fields) and "drafted by <client> · <reason>"
+  under the item. Filing works as always; any change by the human wins; the draft goes when
+  the item is filed or trashed. The inbox marks drafted items. A drafted project that can no
+  longer be picked leaves step 3 empty. Clients can also file in one step (capture and
+  clarify, one log entry).
 - Right rail: similar items already on the lists (search by words), "Result of this
   clarify" summary (what will be created — Clarify only ever adds), keys.
 
@@ -172,6 +178,7 @@ from Next and Inbox respectively. Phone rules: §3.8.
   next action, an inline "Next action for <project>?" asks for one (skip allowed).
   `/waiting?filter=overdue` shows only overdue rows (linked from Health and project detail).
   `?highlight=<id>` puts the cursor on that row, in whichever pane holds it (from ⌘K).
+  Who and the follow-up date can also be changed through the api (`editWaiting`; clients).
   `f` follow up creates a @calls/@computer action; `x` received (closes, optionally
   creates the next action).
 - Someday/Maybe: grouped by bucket (user-defined), in the store's bucket order, "No bucket"
@@ -371,6 +378,7 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
   touched entity before and after; a renumbering alone reads "Renumbered priorities".
 - `/activity` lists them newest first, filtered by who; "history" on Clarify's item card and
   on a project opens the entries about it. Kept 365 days.
+- Drafts read "Drafted “…”" / "Removed the draft of “…”".
 - Undo works on any entry while every entity is still as the entry left it; otherwise it is
   refused with "changed since by …" and nothing is applied. An undo is an entry itself
   (Redo). The 5 s undo toasts on the screens stay as they are.
@@ -425,8 +433,17 @@ interface Item {
   tags: string[];
   doneAt?: string;
   successorId?: string;       // done recurring item: the occurrence completing it created
+  draft?: Draft;              // inbox only: a client's proposed decision (§3.2)
   trashedAt?: string;         // ISO; purged by the weekly review or after 30 d
 }
+
+// §3.2: a client's proposed Clarify decision on an inbox item; never applied on its own.
+interface Draft { by: string; at: string; reason: string;
+  kind: 'action' | 'project' | 'someday' | 'reference' | 'trash';
+  text?: string; project?: { id: string } | { newTitle: string }; next?: boolean;
+  route?: 'next' | 'waiting' | 'calendar' | 'done';
+  context?: string; priority?: Priority; time?: TimeBucket; energy?: Energy;
+  deadline?: string; who?: string; followUp?: string; day?: string }
 
 interface Reference {
   kind: 'note' | 'link' | 'file';

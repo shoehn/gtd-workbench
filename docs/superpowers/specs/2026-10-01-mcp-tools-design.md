@@ -33,7 +33,7 @@ Principles:
 Claude Desktop / Claude Code / Codex / chat agent on a server
         │ stdio (MCP)
         ▼
-gtd-mcp  — thin binary, one per machine, no GTD logic
+gtd-mcp  — thin Go binary, one per machine, no GTD logic
         │ HTTPS, Authorization: Bearer <client token>
         ▼
 Next.js app — REST API /api/v1/…  →  lib/api.ts  →  store
@@ -45,6 +45,9 @@ Next.js app — REST API /api/v1/…  →  lib/api.ts  →  store
 - **The binary** translates MCP to REST. It fetches its tool list and schemas from the app
   (`GET /api/v1/tools`), so app updates need no binary update. Configuration: the app's
   URL and the client token, from the agent's MCP config.
+- **The binary is written in Go:** one static binary per OS and architecture (macOS arm64 /
+  amd64, Linux amd64 / arm64), so no Node or other runtime is needed where an agent runs.
+  Built on the official Go MCP SDK.
 - **Exposure:** `/api/v1/*` bypasses the proxy login (like `/api/capture` today) and relies
   on the bearer token: long random tokens, the bad-token throttle, revocable clients. An
   agent on the same server may call the app internally.
@@ -95,7 +98,9 @@ marks items that have a draft.
   to open them in the app.
 - Refusals carry the app's reason ("project *X* is on hold — activate it first").
 - Every write returns its activity entry id (for `undo`).
-- ✦ = not in the app yet.
+- ✦ = not in the app yet. (Stages 1 and 2 built the activity log, undo, clients, drafts,
+  `file`, `edit_waiting`, `get_overview`, `find_free_time` and `prepare_weekly_review`; the
+  marks are gone from those.)
 
 ## 5. Tools
 
@@ -103,7 +108,7 @@ marks items that have a draft.
 
 | Tool | Purpose |
 |---|---|
-| `get_overview` ✦ | Inbox count and oldest, focus today, today's hard landscape, stalled projects, overdue waiting-fors, deadlines in 7 days, review due / open |
+| `get_overview` | Inbox count and oldest, focus today, today's hard landscape, stalled projects, overdue waiting-fors, deadlines in 7 days, review due / open |
 | `search(query, lists?)` | Everything incl. Reference and done, ranked word match; its description: search before capturing or filing, and judge the hits |
 | `get_item(id)` | Captured text, source, attached context, project, draft, history |
 | `list_inbox(source?, older_than_days?)` | With draft markers |
@@ -114,7 +119,7 @@ marks items that have a draft.
 | `list_projects(status?, stalled_only?)` | |
 | `get_project(id)` | Next actions, later steps, waiting, reference, done, deadline |
 | `get_calendar(from, to)` | All five kinds incl. external appointments |
-| `find_free_time(from, to, min_minutes, day_hours?)` ✦ | Gaps between appointments and blocks |
+| `find_free_time(from, to, min_minutes, day_hours?)` | Gaps between appointments and blocks |
 | `get_settings` | Contexts, buckets, time zone, review template (read only) |
 
 ### 5.2 Collect
@@ -128,9 +133,9 @@ marks items that have a draft.
 
 | Tool | Purpose |
 |---|---|
-| `draft_clarification(item_id, draft \| null, reason)` ✦ | §3.4; `null` removes it |
+| `draft_clarification(item_id, draft \| null, reason)` | §3.4; `null` removes it |
 | `clarify(item_id, decision)` | The human said what it is |
-| `file(text, decision)` ✦ | Capture and clarify in one — "I'm waiting on Alice for the video, add it"; one log entry |
+| `file(text, decision)` | Capture and clarify in one — "I'm waiting on Alice for the video, add it"; one log entry |
 
 `decision` mirrors the four steps: `trash` · `someday(bucket?)` ·
 `reference(kind, url?, body?, project?)` · `later(text, project)` ·
@@ -155,7 +160,7 @@ marks items that have a draft.
 |---|---|
 | `follow_up(id)` | The chase action, as `f` |
 | `received(id)` | |
-| `edit_waiting(id, who?, follow_up?)` ✦ | |
+| `edit_waiting(id, who?, follow_up?)` | |
 
 ### 5.6 Projects, Someday, Reference
 
@@ -171,15 +176,15 @@ marks items that have a draft.
 
 | Tool | Purpose |
 |---|---|
-| `prepare_weekly_review` ✦ | Findings per template step: inbox and age, stalled projects, overdue waiting-fors, deadlines in 14 days, someday items untouched > 90 days, last week's numbers, what clients did this week |
+| `prepare_weekly_review` | Findings per template step: inbox and age, stalled projects, overdue waiting-fors, deadlines in 14 days, someday items untouched > 90 days, last week's numbers, what clients did this week |
 | `get_review_state` · `start_review` · `tick_step(step, on)` · `set_review_notes(step, text)` · `finish_review` | |
 
 ### 5.8 Trust
 
 | Tool | Purpose |
 |---|---|
-| `get_activity(since?, actor?, item?)` ✦ | |
-| `undo(entry_id)` ✦ | |
+| `get_activity(since?, actor?, item?)` | |
+| `undo(entry_id)` | |
 | `whoami` | Client name, preset, allowed tools |
 
 ## 6. Guided workflows (MCP prompts)
