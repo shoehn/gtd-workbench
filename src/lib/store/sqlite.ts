@@ -3,7 +3,7 @@
 // the rows that changed in one transaction. If `fn` or the write throws, the state is put back
 // as it was, so memory and database never disagree.
 import Database from 'better-sqlite3';
-import { inArray } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
@@ -151,7 +151,7 @@ function calendarRow(c: ExternalCalendar, seq: number) {
 }
 
 /** Every table's rows for a state, keyed by the table's primary key. */
-function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string; rows: Row[]; appendOnly?: boolean }[] {
+function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string; rows: Row[] }[] {
   return [
     { table: t.items, pk: t.items.id, key: 'id', rows: s.items.map(itemRow) },
     { table: t.projects, pk: t.projects.id, key: 'id', rows: s.projects.map(projectRow) },
@@ -164,13 +164,6 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
       pk: t.mailSeen.messageId,
       key: 'messageId',
       rows: s.mailSeen.map((m, seq) => ({ messageId: m.messageId, seq, at: m.at, outcome: m.outcome, itemId: m.itemId ?? null })),
-    },
-    {
-      table: t.activity,
-      pk: t.activity.id,
-      key: 'id',
-      appendOnly: true,
-      rows: s.activity.map((e, seq) => ({ id: e.id, seq, at: e.at, actor: e.actor, summary: e.summary, changes: e.changes, undoOf: e.undoOf ?? null })),
     },
     {
       table: t.clients,
@@ -202,20 +195,36 @@ function tablesOf(s: State): { table: SQLiteTable; pk: SQLiteColumn; key: string
   ];
 }
 
+/**
+ * The activity log is append-only and pruned from the front: insert what was appended, delete
+ * what was pruned — looking only at the two ends, so a year of entries costs nothing per write.
+ * Entries are never rewritten. When the ends don't line up (db:seed replacing everything),
+ * fall back to comparing ids.
+ */
+function writeActivity(tx: Pick<Db, 'insert' | 'delete'>, before: ActivityEntry[], after: ActivityEntry[]) {
+  const row = (e: ActivityEntry, seq: number) => ({ id: e.id, seq, at: e.at, actor: e.actor, summary: e.summary, changes: e.changes, undoOf: e.undoOf ?? null });
+  const last = before.at(-1)?.id;
+  const from = last === undefined ? 0 : after.findLastIndex((e) => e.id === last) + 1;
+  const firstKept = after[0]?.id;
+  const pruned = firstKept === undefined ? before.length : before.findIndex((e) => e.id === firstKept);
+  if ((last !== undefined && from === 0) || pruned < 0) {
+    const had = new Set(before.map((e) => e.id));
+    const keep = new Set(after.map((e) => e.id));
+    after.forEach((e, seq) => !had.has(e.id) && tx.insert(t.activity).values(row(e, seq)).run());
+    const gone = [...had].filter((id) => !keep.has(id));
+    if (gone.length) tx.delete(t.activity).where(inArray(t.activity.id, gone)).run();
+    return;
+  }
+  for (let k = from; k < after.length; k++) tx.insert(t.activity).values(row(after[k], k)).run();
+  if (pruned > 0) tx.delete(t.activity).where(inArray(t.activity.id, before.slice(0, pruned).map((e) => e.id))).run();
+}
+
 /** Write what differs between two states: upsert changed rows, delete the ones that are gone. */
 function write(db: Db, before: State | null, after: State) {
   const old = before ? tablesOf(before) : null;
   db.transaction((tx) => {
-    tablesOf(after).forEach(({ table, pk, key, rows, appendOnly }, n) => {
-      if (appendOnly) {
-        // Entries never change: insert the new ones, delete the pruned ones, never compare JSON.
-        const had = new Set((old?.[n].rows ?? []).map((r) => String(r[key])));
-        const keep = new Set(rows.map((r) => String(r[key])));
-        for (const row of rows) if (!had.has(String(row[key]))) tx.insert(table).values(row).run();
-        const gone = [...had].filter((k) => !keep.has(k));
-        if (gone.length) tx.delete(table).where(inArray(pk, gone)).run();
-        return;
-      }
+    writeActivity(tx, before?.activity ?? [], after.activity);
+    tablesOf(after).forEach(({ table, pk, key, rows }, n) => {
       const was = new Map((old?.[n].rows ?? []).map((r) => [String(r[key]), JSON.stringify(r)]));
       const keep = new Set<string>();
       for (const row of rows) {
@@ -260,7 +269,13 @@ function load(db: Db): State | null {
     ...(settings.externalSyncedAt && { externalSyncedAt: settings.externalSyncedAt }),
     externalEvents: bySeq(db.select().from(t.externalEvents).all()).map((e) => compact(unseq(e)) as unknown as ExternalEvent),
     mailSeen: bySeq(db.select().from(t.mailSeen).all()).map((m) => compact(unseq(m)) as unknown as MailSeen),
-    activity: bySeq(db.select().from(t.activity).all()).map((e) => compact(unseq(e)) as unknown as ActivityEntry),
+    // Append-only: insertion order (rowid) is the log's order; `seq` restarts after pruning.
+    activity: db
+      .select()
+      .from(t.activity)
+      .orderBy(sql`rowid`)
+      .all()
+      .map((e) => compact(unseq(e)) as unknown as ActivityEntry),
     clients: bySeq(db.select().from(t.clients).all()).map((c) => compact(unseq(c)) as unknown as StoredClient),
     ...(settings.mailbox && { mailbox: JSON.parse(settings.mailbox) }),
     reviewTemplate: user.reviewTemplate,
@@ -299,7 +314,9 @@ export function createSqliteStore(file: string, seed: State, onOpen?: (seeded: b
   return {
     getState: () => state,
     update(fn) {
-      const before = structuredClone(state);
+      // Activity entries never change: a shallow copy of the log restores it, no deep clone.
+      const { activity, ...rest } = state;
+      const before = { ...structuredClone(rest), activity: activity.slice() } as State;
       try {
         fn(state);
         write(db, before, state);

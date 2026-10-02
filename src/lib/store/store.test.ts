@@ -100,6 +100,19 @@ describe('activity and clients persist (MCP stage 1)', () => {
     expect(b.clients).toEqual(a.getState().clients);
   });
 
+  it('after old entries are pruned, a reopen still reads the log in order', () => {
+    const file = tempFile();
+    const a = createSqliteStore(file, seed as State);
+    a.update((s) => {
+      s.activity.push(entry(1), entry(2), entry(3));
+    });
+    a.update((s) => {
+      s.activity = s.activity.slice(2); // pruned: 1 and 2
+      s.activity.push(entry(4));
+    });
+    expect(createSqliteStore(file, seed as State).getState().activity.map((e) => e.id)).toEqual(['a3', 'a4']);
+  });
+
   it('activity rows are only inserted, never rewritten', () => {
     const file = tempFile();
     const a = createSqliteStore(file, seed as State);
@@ -113,5 +126,30 @@ describe('activity and clients persist (MCP stage 1)', () => {
     });
     const b = createSqliteStore(file, seed as State).getState();
     expect(b.activity.map((e) => e.summary)).toEqual(['Captured “x1”', 'Captured “x2”']);
+  });
+});
+
+describe('a year of activity does not slow down writes (review)', () => {
+  it('a write with 15 000 entries in the log costs about what it costs with none', () => {
+    const big = (n: number) =>
+      Array.from({ length: n }, (_, k) => ({
+        id: `e${k}`,
+        at: '2026-10-01T10:00:00.000Z',
+        actor: { kind: 'user' as const },
+        summary: `Captured “x${k}”`,
+        changes: [{ kind: 'item' as const, id: `i${k}`, before: null, after: { id: `i${k}`, text: `x${k}`, captured: `x${k}`, source: 'typed' as const, capturedAt: '2026-10-01T10:00:00.000Z', status: 'inbox' as const, tags: [] } }],
+      }));
+    const timed = (n: number) => {
+      const st = createSqliteStore(tempFile(), { ...(seed as State), activity: big(n) });
+      const t0 = performance.now();
+      for (let k = 0; k < 20; k++)
+        st.update((s) => {
+          s.tickler.push({ id: `t${k}`, day: '2026-10-05', text: 'x' });
+        });
+      return (performance.now() - t0) / 20;
+    };
+    const empty = timed(0);
+    const full = timed(15_000);
+    expect(full).toBeLessThan(empty * 3 + 5);
   });
 });
