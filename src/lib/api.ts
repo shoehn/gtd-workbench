@@ -1080,7 +1080,7 @@ export function followUp(id: string): Item {
   return action;
 }
 
-/** Change who a waiting-for is waiting on, or its follow-up date (`null` removes the date). */
+/** Change who a waiting-for is waiting on, or its follow-up date (`null` or `''` removes the date). */
 export function editWaiting(id: string, edit: { who?: string; followUp?: string | null }): void {
   const item = getItem(id);
   check(item?.status === 'waiting' && item.waiting, `item ${id} is not a waiting-for`, 'waiting');
@@ -1089,7 +1089,7 @@ export function editWaiting(id: string, edit: { who?: string; followUp?: string 
   store.update((s) => {
     const w = s.items.find((i) => i.id === id)!.waiting!;
     if (edit.who !== undefined) w.who = edit.who.trim();
-    if (edit.followUp === null) delete w.followUp;
+    if (edit.followUp === null || edit.followUp === '') delete w.followUp; // "" clears too (clients send it)
     else if (edit.followUp !== undefined) w.followUp = edit.followUp;
   });
 }

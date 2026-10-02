@@ -170,3 +170,11 @@ describe('freeTime and multi-day appointments (review)', () => {
     ]);
   });
 });
+
+describe('editWaiting with an empty follow-up (review)', () => {
+  it('"" clears the date like null — no empty string is stored', () => {
+    const id = store.getState().items.find((i) => i.status === 'waiting' && i.waiting?.followUp)!.id;
+    api.editWaiting(id, { followUp: '' });
+    expect(api.getItem(id)!.waiting).not.toHaveProperty('followUp');
+  });
+});
