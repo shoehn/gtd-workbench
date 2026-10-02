@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactN
 import { clarifyAction } from '@/lib/actions';
 import type { Decision, Route, Similar } from '@/lib/api';
 import { fmtDate, fmtDay, fmtTime } from '@/lib/format';
-import type { Energy, Priority, Reference, Source, TimeBucket } from '@/lib/model';
+import type { Draft, Energy, Priority, Reference, Source, TimeBucket } from '@/lib/model';
 import { URL_IN_TEXT, guessReference } from '@/lib/reference';
 import { isTyping } from '../inbox/keys';
 import { Btn } from '../ui/Btn';
@@ -33,6 +33,8 @@ export interface ClarifyItem {
   reference?: Reference;
   /** A project it carries in (e.g. back from Someday): step 3 starts with it, and may clear it. */
   projectId?: string;
+  /** A proposed decision (MCP §3.4): the form starts from it. */
+  draft?: Draft;
 }
 
 type Answer = 'yes' | 'trash' | 'someday' | 'reference';
@@ -158,27 +160,42 @@ interface ClarifyFormProps {
 export function ClarifyForm({ item, after, contexts, projects, similar }: ClarifyFormProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [answer, setAnswer] = useState<Answer | null>(null);
-  const [text, setText] = useState(item.text);
-  const [query, setQuery] = useState('');
+  // What the form starts with: an agent's draft if there is one (MCP §3.4), else the item itself.
+  const d = item.draft;
+  const toPicked = (p: PickerProject): Picked => ({ id: p.id, title: p.title, nextActions: p.nextActions, active: p.active });
   const carried = projects.find((p) => p.id === item.projectId);
-  const [picked, setPicked] = useState<Picked>(
-    carried ? { id: carried.id, title: carried.title, nextActions: carried.nextActions, active: carried.active } : null,
-  );
-  // As pick() would set it for the carried project.
-  const [asNext, setAsNext] = useState(carried ? carried.active && carried.nextActions === 0 : true);
+  // A draft's project only if it can still be picked (it may have been completed since).
+  const draftProject: Picked = !d?.project
+    ? null
+    : 'newTitle' in d.project
+      ? { newTitle: d.project.newTitle }
+      : (() => {
+          const id = (d.project as { id: string }).id;
+          const p = projects.find((x) => x.id === id);
+          return p ? toPicked(p) : null;
+        })();
+  const startPicked: Picked = draftProject ?? (carried ? toPicked(carried) : null);
+  const startAnswer: Answer | null = !d ? null : d.kind === 'action' || d.kind === 'project' ? 'yes' : d.kind;
+
+  const [answer, setAnswer] = useState<Answer | null>(startAnswer);
+  const [text, setText] = useState(d?.text ?? item.text);
+  // The field shows a starting pick by its title, as a pick made by hand does.
+  const [query, setQuery] = useState(startPicked ? ('id' in startPicked ? startPicked.title : startPicked.newTitle) : '');
+  const [picked, setPicked] = useState<Picked>(startPicked);
+  // As pick() would set it for the starting project, unless the draft says.
+  const [asNext, setAsNext] = useState(d?.next ?? (startPicked && 'id' in startPicked ? startPicked.active && startPicked.nextActions === 0 : true));
   // A day captured with `^date` is an offer for the calendar (SPEC §3.2).
-  const [routeTo, setRouteTo] = useState<RouteTo | null>(item.day ? 'calendar' : null);
-  const [context, setContext] = useState(item.context ?? contexts[0]);
-  const [priority, setPriority] = useState<Priority>(item.priority ?? 'B');
-  const [time, setTime] = useState<TimeBucket>(30);
-  const [energy, setEnergy] = useState<Energy>('normal');
-  const [deadline, setDeadline] = useState('');
-  const [day, setDay] = useState(item.day ?? '');
+  const [routeTo, setRouteTo] = useState<RouteTo | null>(d?.route ?? (item.day ? 'calendar' : null));
+  const [context, setContext] = useState(d?.context && contexts.includes(d.context) ? d.context : (item.context ?? contexts[0]));
+  const [priority, setPriority] = useState<Priority>(d?.priority ?? item.priority ?? 'B');
+  const [time, setTime] = useState<TimeBucket>(d?.time ?? 30);
+  const [energy, setEnergy] = useState<Energy>(d?.energy ?? 'normal');
+  const [deadline, setDeadline] = useState(d?.deadline ?? '');
+  const [day, setDay] = useState(d?.day ?? item.day ?? '');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
-  const [who, setWho] = useState('');
-  const [followUp, setFollowUp] = useState('');
+  const [who, setWho] = useState(d?.who ?? '');
+  const [followUp, setFollowUp] = useState(d?.followUp ?? '');
   const [tried, setTried] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // "No → Reference": what came with the item, else the kind guessed from the text (a URL makes it a link).
@@ -442,6 +459,11 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
           )}
           {item.reference?.body && (
             <p className="m-0 max-h-40 overflow-y-auto border-l-2 border-line pl-2.5 text-sm whitespace-pre-wrap text-muted">{item.reference.body}</p>
+          )}
+          {item.draft && (
+            <p className="m-0 font-mono text-meta text-accent">
+              drafted by {item.draft.by} · {item.draft.reason}
+            </p>
           )}
         </Card>
 

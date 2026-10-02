@@ -91,6 +91,7 @@ export default async function ClarifyPage({ searchParams }: PageProps<'/clarify'
           tags: item.tags,
           reference: item.reference,
           projectId: item.projectId,
+          draft: item.draft,
         }}
         after={after}
         contexts={api.listContexts()}

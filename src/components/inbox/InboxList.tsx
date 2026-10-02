@@ -26,6 +26,8 @@ export interface InboxRow {
   priority?: Priority;
   day?: string; // `fri 02.10`
   tags: string[];
+  /** An agent left a draft: Clarify opens with it (MCP §3.4). */
+  drafted: boolean;
 }
 
 type Trashed = { id: string; status: Item['status'] }[];
@@ -172,6 +174,7 @@ export function InboxList({ rows: allRows, empty }: { rows: InboxRow[]; empty?: 
                 {r.tags.map((t) => (
                   <Tag key={t}>#{t}</Tag>
                 ))}
+                {r.drafted && <Tag variant="accent">draft</Tag>}
               </span>
               <span className="flex items-center gap-1.5 font-mono text-meta text-muted">
                 <SourceIcon source={r.source} />

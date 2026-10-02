@@ -100,6 +100,7 @@ export function PhoneInbox({ rows: allRows, empty }: { rows: InboxRow[]; empty?:
             <SwipeRow onRight={() => router.push(clarify(r.id))} onLeft={() => trash(r)} rightLabel="clarify →" leftLabel="← trash">
               <Link href={clarify(r.id)} className="flex min-h-14 flex-col justify-center gap-1 bg-panel px-4 py-3 text-ink no-underline">
                 <span>{r.text}</span>
+                {r.drafted && <span className="font-mono text-meta text-accent">draft ready</span>}
                 <span className={cx('flex items-center gap-1.5 font-mono text-meta', r.aging ? 'text-warn' : 'text-muted')}>
                   <SourceIcon source={r.source} />
                   {r.source} · {r.captured} · {r.age}

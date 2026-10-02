@@ -26,6 +26,7 @@ export default async function InboxPage({ searchParams }: PageProps<'/inbox'>) {
     priority: i.priority,
     day: i.day && fmtDay(i.day),
     tags: i.tags,
+    drafted: !!i.draft,
   }));
   const empty = source && all.length ? `No ${source} items — all shows the other ${all.length}.` : undefined;
   // Counts and age are the whole inbox's; the filter only narrows the list.
