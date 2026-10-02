@@ -30,7 +30,7 @@ describe('tool registry', () => {
 
   it('a client lists only what its preset allows, with JSON Schemas', () => {
     const cap = listToolsFor(client('capture')).map((t) => t.name);
-    expect(cap.sort()).toEqual(['whoami']); // capture and add_tickler join in Task 4
+    expect(cap.sort()).toEqual(['add_tickler', 'capture', 'whoami']);
     const whoami = listToolsFor(client('assistant')).find((t) => t.name === 'whoami')!;
     expect(whoami.inputSchema).toMatchObject({ type: 'object', additionalProperties: false });
   });
