@@ -150,6 +150,7 @@ describe('a year of activity does not slow down writes (review)', () => {
     };
     const empty = timed(0);
     const full = timed(15_000);
-    expect(full).toBeLessThan(empty * 3 + 5);
+    // The regression this guards against was 77 ms against 1 ms; the margin absorbs a loaded machine.
+    expect(full).toBeLessThan(empty * 4 + 20);
   });
 });
