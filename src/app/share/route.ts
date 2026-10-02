@@ -1,3 +1,4 @@
+import { runAs } from '@/lib/activity';
 import { SHARE_MAX, captureRequest, fromShare, limiters, readLimited } from '@/lib/capture-in';
 
 /**
@@ -26,6 +27,6 @@ export async function POST(req: Request) {
   };
   const request = fromShare({ title: field('title'), text: field('text'), url: field('url') });
   if (!request) return back('error=empty');
-  const result = captureRequest(request);
+  const result = runAs({ kind: 'share' }, () => captureRequest(request));
   return 'error' in result ? back('error=empty') : back(`item=${encodeURIComponent(result.item.id)}`);
 }

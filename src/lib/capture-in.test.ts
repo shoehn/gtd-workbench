@@ -3,6 +3,7 @@ import { POST as capturePost } from '../app/api/capture/route';
 import { POST as sharePost } from '../app/share/route';
 import * as api from './api';
 import { NOTE_MAX, SHARE_MAX, TEXT_MAX, createLimiter, fromShare, limiters, readLimited } from './capture-in';
+import { createClient, revokeClient } from './clients';
 import { store } from './store';
 import { demoSeed as seed } from './store/seed';
 import type { State } from './store/types';
@@ -162,5 +163,37 @@ describe('share', () => {
     expect((await share({ title: '', text: '' })).headers.get('location')).toBe('/share/done?error=empty');
     expect((await share({ title: 'Injected' }, { 'sec-fetch-site': 'cross-site' })).status).toBe(403);
     expect(api.listInbox().length).toBe(before);
+  });
+});
+
+describe('clients on the capture endpoint (MCP stage 1)', () => {
+  beforeEach(() => {
+    delete process.env.CAPTURE_TOKEN;
+  });
+
+  it('a capture through a named client is logged under its name', async () => {
+    const { token } = createClient('n8n scan', 'capture');
+    expect((await capture({ text: 'Warranty card' }, `Bearer ${token}`)).status).toBe(201);
+    expect(api.listActivity({ limit: 1 })[0]).toMatchObject({ actorLabel: 'n8n scan', summary: 'Captured “Warranty card”' });
+  });
+
+  it('a revoked client gets 401; a read-only client gets 403', async () => {
+    createClient('n8n scan', 'capture'); // the endpoint is in use (with no client that may capture it is off: 404)
+    const a = createClient('Old script', 'capture');
+    revokeClient(a.client.id);
+    expect((await capture({ text: 'x' }, `Bearer ${a.token}`)).status).toBe(401);
+    const ro = createClient('Report', 'read-only');
+    expect((await capture({ text: 'x' }, `Bearer ${ro.token}`)).status).toBe(403);
+  });
+
+  it('the env token is logged as "capture (env)"', async () => {
+    process.env.CAPTURE_TOKEN = TOKEN;
+    await capture({ text: 'From the shell' });
+    expect(api.listActivity({ limit: 1 })[0].actorLabel).toBe('capture (env)');
+  });
+
+  it('a share is logged as share', async () => {
+    await share({ title: 'Glaze recipes', url: 'https://example.com/glaze' });
+    expect(api.listActivity({ limit: 1 })[0].actorLabel).toBe('share');
   });
 });

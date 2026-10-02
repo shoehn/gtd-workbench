@@ -1,5 +1,6 @@
 // Calendar sync in the server process: once at start, then every 15 minutes. A single-user app
 // runs one server, so a timer is enough; api.syncCalendars() already keeps runs from overlapping.
+import { runAs } from '../activity';
 import * as api from '../api';
 import { log } from '../log';
 import { sourcesFromEnv } from './sources';
@@ -9,7 +10,7 @@ const g = globalThis as typeof globalThis & { __wbCalendarSync?: ReturnType<type
 
 async function runOnce() {
   try {
-    for (const r of await api.syncCalendars()) {
+    for (const r of await runAs({ kind: 'system' }, () => api.syncCalendars())) {
       if (r.ok) log.debug(`calendar ${r.source}: ${r.events} events`);
       else log.warn(`calendar ${r.source}: sync failed — ${r.error}`);
     }

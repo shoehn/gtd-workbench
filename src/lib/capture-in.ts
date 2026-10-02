@@ -1,6 +1,5 @@
 // The ways into the inbox other than the rapid log (SPEC §3.1): POST /api/capture (a shell alias,
 // a Shortcut, an agent) and /share (the Web Share Target). Both end in api.capture and nothing else.
-import { createHash, timingSafeEqual } from 'node:crypto';
 import * as api from './api';
 import type { Item, Reference, Source } from './model';
 import { URL_IN_TEXT, referenceHost } from './reference';
@@ -68,13 +67,6 @@ function cut(s: string, max: number): string {
     out += ch;
   }
   return `${out}…`;
-}
-
-/** Constant-time check of an `Authorization: Bearer …` header against the configured token. */
-export function bearerOk(header: string | null, token: string): boolean {
-  const given = header?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim() ?? '';
-  const digest = (s: string) => createHash('sha256').update(s).digest();
-  return given.length > 0 && timingSafeEqual(digest(given), digest(token));
 }
 
 /** At most `limit` requests in any `windowMs`; one limiter for the whole server (one user). */

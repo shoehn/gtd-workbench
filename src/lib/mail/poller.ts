@@ -2,6 +2,7 @@
 // from an allowed sender, then move it to the Processed folder — never delete. A mail from anyone
 // else stays where it is and is counted once. Single process, so a timer is enough.
 import { ImapFlow } from 'imapflow';
+import { runAs } from '../activity';
 import * as api from '../api';
 import { log } from '../log';
 import { keptBody, parseMail } from './parse';
@@ -103,15 +104,15 @@ export async function pollMailbox(): Promise<{ ok: boolean; error?: string; resu
   if (g.__wbMailRunning) return { ok: true };
   g.__wbMailRunning = true;
   try {
-    const result = await pollOnce(config);
-    api.recordMailPoll();
+    const result = await runAs({ kind: 'mail' }, () => pollOnce(config));
+    runAs({ kind: 'mail' }, () => api.recordMailPoll());
     if (result.captured || result.duplicates || result.ignored) {
       log.info(`mail: ${result.captured} captured, ${result.duplicates} duplicates, ${result.ignored} ignored`);
     }
     return { ok: true, result };
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
-    api.recordMailPoll(error);
+    runAs({ kind: 'mail' }, () => api.recordMailPoll(error));
     log.warn(`mail: poll failed — ${error}`);
     return { ok: false, error };
   } finally {
