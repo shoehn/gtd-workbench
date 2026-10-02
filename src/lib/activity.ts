@@ -159,7 +159,14 @@ export function undoBlocker(s: State, entry: ActivityEntry): string | null {
   for (const c of entry.changes) {
     const current = collection(s, c.kind).find((e) => e.id === c.id) ?? null;
     if (canon(current) === canon(c.after)) continue;
-    const by = s.activity.filter((e) => e.id !== entry.id && e.at >= entry.at && e.changes.some((x) => x.kind === c.kind && x.id === c.id)).at(-1);
+    // The latest later entry touching it: walk back from the newest, stop at this entry.
+    let by: ActivityEntry | undefined;
+    for (let k = s.activity.length - 1; k >= 0 && s.activity[k].id !== entry.id; k--) {
+      if (s.activity[k].changes.some((x) => x.kind === c.kind && x.id === c.id)) {
+        by = s.activity[k];
+        break;
+      }
+    }
     return `changed since${by ? ` by ${actorLabel(by.actor)}` : ''}`;
   }
   return null;

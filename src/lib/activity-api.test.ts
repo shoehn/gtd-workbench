@@ -121,3 +121,38 @@ describe('who purges the trash (review)', () => {
     expect(api.getItem('i2')?.status).toBe('trash');
   });
 });
+
+describe('the activity view with a year of entries (review)', () => {
+  const fill = (n: number) =>
+    runSilently(() =>
+      store.update((s) => {
+        const n1 = s.items.find((i) => i.id === 'n1')!;
+        s.activity = Array.from({ length: n }, (_, k) => ({
+          id: `e${k}`,
+          at: '2026-09-01T10:00:00.000Z',
+          actor: k === 0 ? ({ kind: 'mail' } as const) : ({ kind: 'user' } as const),
+          summary: `Edited “x”: text`,
+          // every entry left n1 differently than it is now: all are blocked
+          changes: [{ kind: 'item' as const, id: 'n1', before: null, after: { ...n1, text: `v${k}` } }],
+        }));
+      }),
+    );
+
+  it('200 blocked rows out of 15 000 are listed quickly', () => {
+    fill(15_000);
+    const t0 = performance.now();
+    const rows = api.listActivity({ limit: 200 });
+    // the newest has nothing after it: changed since, by no later entry; the others name who
+    expect(rows[0].blocker).toBe('changed since');
+    expect(rows.slice(1).every((r) => r.blocker === 'changed since by you')).toBe(true);
+    expect(performance.now() - t0).toBeLessThan(60);
+  });
+
+  it('every actor in the log is offered as a filter, also ones only seen long ago', () => {
+    fill(2_000);
+    expect(api.listActivityActors()).toEqual([
+      { key: 'you', label: 'you' },
+      { key: 'mail', label: 'mail' },
+    ]);
+  });
+});

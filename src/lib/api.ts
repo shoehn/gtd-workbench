@@ -2130,6 +2130,17 @@ export function listActivity(filter: { actor?: string; subject?: string; limit?:
   return out;
 }
 
+/** Everyone who appears in the log, most recent first — the Activity view's filter. */
+export function listActivityActors(): { key: string; label: string }[] {
+  const seen = new Map<string, string>();
+  const log = store.getState().activity;
+  for (let n = log.length - 1; n >= 0; n--) {
+    const key = actorKey(log[n].actor);
+    if (!seen.has(key)) seen.set(key, actorLabel(log[n].actor));
+  }
+  return [...seen].map(([key, label]) => ({ key, label }));
+}
+
 export function getActivityEntry(id: string): ActivityEntry | undefined {
   return store.getState().activity.find((e) => e.id === id);
 }

@@ -10,8 +10,7 @@ export default async function ActivityPage({ searchParams }: PageProps<'/activit
   const { actor, subject } = await searchParams;
   const a = typeof actor === 'string' ? actor : undefined;
   const s = typeof subject === 'string' ? subject : undefined;
-  const all = api.listActivity({ limit: 1000 });
-  const actors = [...new Map(all.map((e) => [e.actorKey, e.actorLabel])).entries()].map(([key, label]) => ({ key, label }));
+  const actors = api.listActivityActors();
   const rows = api.listActivity({ actor: a, subject: s, limit: 200 }).map((e) => ({
     id: e.id,
     when: `${fmtWeekdayTime(e.at, api.timeZone())} · ${fmtDate(e.at.slice(0, 10))}`,
