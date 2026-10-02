@@ -2194,7 +2194,8 @@ export interface PaletteData {
   canSync: boolean;
 }
 
-const PALETTE_LISTS: Partial<Record<Item['status'], string>> = {
+/** The list an item is on, by name (the palette's tags, the tools' `list`). */
+export const LIST_NAMES: Record<Item['status'], string> = {
   inbox: 'Inbox',
   next: 'Next Actions',
   waiting: 'Waiting For',
@@ -2203,10 +2204,11 @@ const PALETTE_LISTS: Partial<Record<Item['status'], string>> = {
   calendar: 'Calendar',
   done: 'Done',
   reference: 'Reference',
+  trash: 'Trash',
 };
 
-/** Where an item is opened from the palette: its row on its screen. */
-function paletteHref(i: Item): string | undefined {
+/** Where an item is opened: its row on its screen (the palette, the tools' `href`). */
+export function itemHref(i: Item): string | undefined {
   const id = encodeURIComponent(i.id);
   switch (i.status) {
     case 'inbox':
@@ -2246,9 +2248,9 @@ export function paletteData(): PaletteData {
       href: p.status === 'completed' ? `/projects?filter=completed&p=${encodeURIComponent(p.id)}` : `/projects?p=${encodeURIComponent(p.id)}`,
     })),
     items: items.flatMap((i) => {
-      const href = paletteHref(i);
-      const list = PALETTE_LISTS[i.status];
-      if (!href || !list) return [];
+      const href = itemHref(i);
+      if (!href || i.status === 'trash') return [];
+      const list = LIST_NAMES[i.status];
       const detail = [i.waiting?.who, i.projectId && title.get(i.projectId), i.context].filter(Boolean).join(' · ');
       return [{ id: i.id, text: i.text, list, detail, href }];
     }),
