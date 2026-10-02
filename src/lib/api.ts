@@ -1,9 +1,9 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
-import { actorKey, actorLabel, applyUndo, runAs, runUndo, setActivityClock, undoBlocker } from './activity';
+import { actorKey, actorLabel, applyUndo, currentActor, runAs, runUndo, setActivityClock, undoBlocker } from './activity';
 import { parse } from './capture-syntax';
 import { daysBetween, fmtDate } from './format';
-import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
+import type { Draft, Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
 import { URL_IN_TEXT, guessReference, referenceHost } from './reference';
 import { sourcesFromEnv, type CalendarSource } from './calendar/sources';
@@ -244,6 +244,7 @@ export function trash(ids: string[]): { id: string; status: Item['status'] }[] {
       if (ids.includes(item.id) && item.status !== 'trash') {
         moved.push({ id: item.id, status: item.status });
         item.status = 'trash';
+        delete item.draft;
         item.trashedAt = at;
       }
     }
@@ -397,6 +398,8 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
     const result: ClarifyResult = { itemId, projectCreated: false };
     store.update((s) => {
       const item = s.items.find((i) => i.id === itemId)!;
+    delete item.draft; // filed: the draft has done its job
+      delete item.draft; // filed: the draft has done its job
       item.status = 'reference';
       item.reference = cleanReference(reference);
       delete item.day;
@@ -416,6 +419,7 @@ export function clarify(itemId: string, decision: Decision): ClarifyResult {
   if (decision.kind === 'trash' || decision.kind === 'someday') {
     store.update((s) => {
       const item = s.items.find((i) => i.id === itemId)!;
+      delete item.draft; // filed: the draft has done its job
       item.status = decision.kind;
       if (decision.kind === 'trash') item.trashedAt = now().toISOString();
     });
@@ -520,6 +524,42 @@ export function file(text: string, decision: Decision): ClarifyResult {
     result = clarify(item.id, decision);
   });
   return result!;
+}
+
+export type DraftInput = Omit<Draft, 'by' | 'at'>;
+const DRAFT_KINDS = ['action', 'project', 'someday', 'reference', 'trash'];
+const DRAFT_ROUTES = ['next', 'waiting', 'calendar', 'done'];
+
+/** A proposed Clarify decision on an inbox item (MCP §3.4); `null` removes it. Never applied on its own. */
+export function setDraft(itemId: string, draft: DraftInput | null): void {
+  const item = getItem(itemId);
+  check(item?.status === 'inbox', `item ${itemId} is not in the inbox`, 'draft');
+  if (draft) {
+    const s = store.getState();
+    check(draft.reason?.trim(), 'a draft needs a reason', 'draft');
+    check(draft.reason.length <= 280, 'a reason is one line (≤ 280 characters)', 'draft');
+    check(DRAFT_KINDS.includes(draft.kind), `unknown kind ${draft.kind}`, 'draft');
+    check(draft.kind !== 'project' || (draft.project && 'newTitle' in draft.project && draft.project.newTitle.trim()), 'a project draft needs project.newTitle', 'draft');
+    const p = draft.project;
+    if (p && 'id' in p) {
+      const project = getProject(p.id);
+      check(project && project.status !== 'completed', `unknown project ${p.id}`, 'draft');
+      if (draft.next) check(project.status === 'active', `project "${project.title}" is on hold — a next action needs it active`, 'draft');
+    }
+    if (draft.route !== undefined) check(DRAFT_ROUTES.includes(draft.route), `unknown route ${draft.route}`, 'draft');
+    if (draft.context !== undefined) check(s.contexts.includes(draft.context), `unknown context ${draft.context}`, 'draft');
+    if (draft.priority !== undefined) check(['A', 'B', 'C'].includes(draft.priority), `unknown priority ${draft.priority}`, 'draft');
+    if (draft.time !== undefined) check([15, 30, 60, 120].includes(draft.time), `unknown time ${draft.time}`, 'draft');
+    if (draft.energy !== undefined) check(['focus', 'normal', 'low'].includes(draft.energy), `unknown energy ${draft.energy}`, 'draft');
+    for (const f of ['deadline', 'followUp', 'day'] as const) {
+      if (draft[f] !== undefined) check(ISO_DATE.test(draft[f]!), `${f === 'followUp' ? 'follow-up' : f} is not an ISO date`, 'draft');
+    }
+  }
+  store.update((s) => {
+    const it = s.items.find((i) => i.id === itemId)!;
+    if (draft) it.draft = { ...structuredClone(draft), reason: draft.reason.trim(), by: actorLabel(currentActor()), at: now().toISOString() };
+    else delete it.draft;
+  });
 }
 
 // ── Similar items ──────────────────────────────────────────────────────────

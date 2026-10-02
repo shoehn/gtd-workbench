@@ -50,6 +50,13 @@
       "when": 1790928941051,
       "tag": "0006_activity_clients",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1790932151344,
+      "tag": "0007_item_draft",
+      "breakpoints": true
     }
   ]
 }

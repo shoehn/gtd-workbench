@@ -4,7 +4,7 @@
 // The user's Settings are one JSON row in `settings`.
 // `seq` keeps each list in the order the store holds it (the memory store's array order).
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import type { ReviewRun, ReviewTemplate } from '../model';
+import type { Draft, ReviewRun, ReviewTemplate } from '../model';
 import type { ActivityChange, Actor } from './types';
 
 export const items = sqliteTable(
@@ -39,6 +39,7 @@ export const items = sqliteTable(
     tags: text({ mode: 'json' }).$type<string[]>().notNull(),
     doneAt: text('done_at'),
     successorId: text('successor_id'),
+    draft: text({ mode: 'json' }).$type<Draft>(),
     trashedAt: text('trashed_at'),
   },
   (t) => [

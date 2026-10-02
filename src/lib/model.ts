@@ -28,6 +28,7 @@ export interface Item {
   tags: string[];
   doneAt?: string;
   successorId?: string;       // a done weekly item: the next occurrence completing it created
+  draft?: Draft;              // inbox only: a proposed decision (MCP §3.4)
   trashedAt?: string;         // ISO; trash is purged by the weekly review or after 30 d
 }
 
@@ -36,6 +37,26 @@ export interface Reference {
   kind: 'note' | 'link' | 'file';
   url?: string;               // link: any scheme (https, obsidian://, a document system's URL)
   body?: string;              // note: the text kept here; file: the path or file name
+}
+
+/** A proposed Clarify decision for an inbox item (MCP design §3.4). Never applied on its own. */
+export interface Draft {
+  by: string;             // who drafted it: a client's name ('you' when made in the app)
+  at: string;             // ISO
+  reason: string;         // one line, ≤ 280 characters
+  kind: 'action' | 'project' | 'someday' | 'reference' | 'trash';
+  text?: string;          // the outcome, rewritten (action / project: the first action)
+  project?: { id: string } | { newTitle: string };   // 'project' requires { newTitle }
+  next?: boolean;         // in a project: its next action (default: as Clarify would)
+  route?: 'next' | 'waiting' | 'calendar' | 'done';
+  context?: string;
+  priority?: Priority;
+  time?: TimeBucket;
+  energy?: Energy;
+  deadline?: string;
+  who?: string;
+  followUp?: string;
+  day?: string;
 }
 
 export interface Project {

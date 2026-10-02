@@ -100,6 +100,9 @@ function phrase(c: ActivityChange): string | null {
     }
     if (!a) return `Deleted “${b.text}” for good`;
     if (a.status !== b.status) return `“${a.text}”: ${LIST[b.status]} → ${LIST[a.status]}${a.status === 'waiting' && a.waiting ? ` (${a.waiting.who})` : ''}`;
+    if (canon(a.draft) !== canon(b.draft) && ITEM_FIELDS.every(([f]) => canon(a[f]) === canon(b[f]))) {
+      return a.draft ? `Drafted “${a.text}”` : `Removed the draft of “${a.text}”`;
+    }
     const fields = ITEM_FIELDS.filter(([f]) => canon(a[f]) !== canon(b[f])).map(([, name]) => name);
     return fields.length ? `Edited “${a.text}”: ${fields.join(', ')}` : null; // priorityNo only: a renumbering
   }
@@ -147,6 +150,11 @@ export function record(s: State, before: Tracked): void {
 
 function collection(s: State, kind: ActivityChange['kind']): Entity[] {
   return kind === 'item' ? s.items : kind === 'project' ? s.projects : s.tickler;
+}
+
+/** Who is acting right now (outside any scope: the user). */
+export function currentActor(): Actor {
+  return scope.getStore()?.actor ?? USER;
 }
 
 export function actorLabel(a: Actor): string {
