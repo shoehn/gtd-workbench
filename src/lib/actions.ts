@@ -277,3 +277,14 @@ export async function toSomedayAction(id: string): Promise<void> {
   api.toSomeday(id);
   revalidatePath('/', 'layout');
 }
+
+/** Activity → Undo: refused with the reason when something touched those items since. */
+export async function undoActivityAction(id: string): Promise<{ error?: string }> {
+  try {
+    api.undoActivity(id);
+  } catch (e) {
+    return { error: (e instanceof Error ? e.message : String(e)).replace(/^undo: /, '') };
+  }
+  revalidatePath('/', 'layout');
+  return {};
+}

@@ -419,6 +419,10 @@ export function ClarifyForm({ item, after, contexts, projects, similar }: Clarif
           <SectionHead className="m-0">
             <span className="max-lg:hidden">Inbox item · </span>
             {item.source} · {item.when}
+            {' · '}
+            <Link href={`/activity?subject=${encodeURIComponent(item.id)}`} className="text-muted underline-offset-2 hover:text-ink">
+              history
+            </Link>
           </SectionHead>
           <div className="font-medium lg:text-[16px]">{item.text}</div>
           {(item.context || item.priority || item.day || item.tags.length > 0) && (

@@ -123,6 +123,9 @@ export function ProjectDetail({ project: p, contexts }: { project: DetailData; c
       <div className="flex flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2.5">
           <span className="font-mono text-label tracking-[0.1em] text-muted">{p.headline}</span>
+          <Link href={`/activity?subject=${encodeURIComponent(p.id)}`} className="font-mono text-label tracking-[0.1em] text-muted no-underline hover:text-ink">
+            HISTORY
+          </Link>
           <span className="grow" />
           {active && (
             <>

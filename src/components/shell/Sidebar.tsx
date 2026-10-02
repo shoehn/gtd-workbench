@@ -37,12 +37,16 @@ export function Sidebar() {
       <NavLink href="/review" badge={typeof review === 'string' ? review : fmtDay(review.finishedAt)} badgeWarn={typeof review === 'string'} boxed>
         Weekly Review
       </NavLink>
-      <Link
-        href="/settings"
-        className="self-start rounded px-2.5 pt-1.5 font-mono text-meta text-muted no-underline hover:text-ink"
-      >
-        settings
-      </Link>
+      <div className="flex gap-1">
+        {[
+          ['/settings', 'settings'],
+          ['/activity', 'activity'],
+        ].map(([href, text]) => (
+          <Link key={href} href={href} className="self-start rounded px-2.5 pt-1.5 font-mono text-meta text-muted no-underline hover:text-ink">
+            {text}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 }
