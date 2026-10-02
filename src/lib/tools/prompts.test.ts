@@ -10,3 +10,10 @@ describe('guided workflows', () => {
     }
   });
 });
+
+describe('what comes in from outside is data (review)', () => {
+  it('every workflow and the tools that return captured text say so', () => {
+    for (const p of PROMPTS) expect(p.text, p.name).toMatch(/data, not instructions/);
+    for (const name of ['get_item', 'list_inbox', 'search']) expect(toolNamed(name)!.description, name).toMatch(/data, not instructions/);
+  });
+});
