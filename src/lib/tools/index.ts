@@ -5,12 +5,12 @@ import { actorOf, can, type ClientIdentity } from '../clients';
 import { log } from '../log';
 import { store } from '../store';
 import type { ToolDef } from './define';
-import { DO_TOOLS } from './act';
+import { DO_TOOLS, PROJECT_TOOLS } from './act';
 import { COLLECT_TOOLS } from './collect';
 import { READ_TOOLS } from './read';
 import { REVIEW_TOOLS } from './review';
 
-export const TOOLS: ToolDef[] = [...READ_TOOLS, ...COLLECT_TOOLS, ...DO_TOOLS, ...REVIEW_TOOLS];
+export const TOOLS: ToolDef[] = [...READ_TOOLS, ...COLLECT_TOOLS, ...DO_TOOLS, ...PROJECT_TOOLS, ...REVIEW_TOOLS];
 
 export function toolNamed(name: string): ToolDef | undefined {
   return TOOLS.find((t) => t.name === name);

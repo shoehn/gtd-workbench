@@ -107,3 +107,100 @@ export const DO_TOOLS = [
     run: ({ id: x, who, follow_up }) => (api.editWaiting(x, { ...(who !== undefined && { who }), ...(follow_up !== undefined && { followUp: follow_up }) }), itemOut(api.getItem(x)!)),
   }),
 ];
+
+const fields = { context, priority, time, energy };
+
+export const PROJECT_TOOLS = [
+  tool({
+    name: 'add_action',
+    description: 'A new next action in an active project (a parked project takes none — activate it first).',
+    capability: 'write',
+    input: z.strictObject({ project: id, text: z.string().min(1), ...fields }),
+    run: ({ project, text, ...f }) => itemOut(api.addAction(project, text, f)),
+  }),
+  tool({
+    name: 'add_step',
+    description: 'A later step in a project (not yet a next action).',
+    capability: 'write',
+    input: z.strictObject({ project: id, text: z.string().min(1) }),
+    run: ({ project, text }) => itemOut(api.addStep(project, text)),
+  }),
+  tool({
+    name: 'promote',
+    description: 'Make a later step a next action, with its context, priority, time and energy.',
+    capability: 'write',
+    input: z.strictObject({ id, ...fields }),
+    run: ({ id: x, ...f }) => (api.promote(x, f), itemOut(api.getItem(x)!)),
+  }),
+  tool({
+    name: 'demote',
+    description: 'Make a next action a later step again (drops its context, priority, time, energy, day, block, star).',
+    capability: 'write',
+    input: z.strictObject({ id }),
+    run: ({ id: x }) => (api.demote(x), itemOut(api.getItem(x)!)),
+  }),
+  tool({
+    name: 'update_project',
+    description: 'Change a project\'s own fields: title (the outcome), successful_when, area, deadline, goal, notes. An empty string removes an optional field.',
+    capability: 'write',
+    input: z.strictObject({ id, title: z.string().min(1).optional(), successful_when: z.string().optional(), area: z.string().optional(), deadline: isoDate.or(z.literal('')).optional(), goal: z.string().optional(), notes: z.string().optional() }),
+    run: ({ id: x, successful_when, ...rest }) => {
+      api.updateProject(x, { ...rest, ...(successful_when !== undefined && { successfulWhen: successful_when }) });
+      return api.getProject(x);
+    },
+  }),
+  tool({
+    name: 'move_project',
+    description: 'Park a project on Someday / Maybe, make it active again, or complete it (refused while it has open next actions or later steps).',
+    capability: 'write',
+    input: z.strictObject({ id, to: z.enum(['someday', 'active', 'completed']) }),
+    run: ({ id: x, to }) => {
+      if (to === 'someday') api.moveProjectToSomeday(x);
+      else if (to === 'active') api.activateProject(x);
+      else api.completeProject(x);
+      return api.getProject(x);
+    },
+  }),
+  tool({
+    name: 'activate',
+    description: 'Take a Someday / Maybe item back into the inbox, to be clarified as something to do now.',
+    capability: 'write',
+    input: z.strictObject({ id }),
+    run: ({ id: x }) => (api.activate(x), itemOut(api.getItem(x)!)),
+  }),
+  tool({
+    name: 'drop',
+    description: 'Drop a Someday / Maybe item (to the trash, undoable).',
+    capability: 'write',
+    input: z.strictObject({ id }),
+    run: ({ id: x }) => api.drop(x),
+  }),
+  tool({
+    name: 'set_bucket',
+    description: 'Move a Someday / Maybe item to another bucket (see get_settings for the names).',
+    capability: 'write',
+    input: z.strictObject({ id, bucket: z.string().min(1) }),
+    run: ({ id: x, bucket }) => (api.setBucket(x, bucket), itemOut(api.getItem(x)!)),
+  }),
+  tool({
+    name: 'add_reference',
+    description: 'File something to keep, not to do: a note (body), a link (url) or a file (its name or path), optionally on a project. The app is the index, not the archive.',
+    capability: 'write',
+    input: z.strictObject({ text: z.string().min(1), kind: z.enum(['note', 'link', 'file']), url: z.string().optional(), body: z.string().optional(), project: id.optional() }),
+    run: ({ text, kind, url, body, project }) => itemOut(api.addReference(text, { kind, ...(url && { url }), ...(body && { body }) }, project)),
+  }),
+  tool({
+    name: 'edit_reference',
+    description: 'Change a reference entry: text, kind with url/body, or project (null = loose).',
+    capability: 'write',
+    input: z.strictObject({ id, text: z.string().min(1).optional(), kind: z.enum(['note', 'link', 'file']).optional(), url: z.string().optional(), body: z.string().optional(), project: id.nullable().optional() }),
+    run: ({ id: x, text, kind, url, body, project }) => {
+      api.editReference(x, {
+        ...(text !== undefined && { text }),
+        ...(kind && { reference: { kind, ...(url && { url }), ...(body && { body }) } }),
+        ...(project !== undefined && { project: project === null ? null : { id: project } }),
+      });
+      return itemOut(api.getItem(x)!);
+    },
+  }),
+];

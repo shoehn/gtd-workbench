@@ -69,3 +69,46 @@ describe('do and waiting tools', () => {
     expect(api.getItem(w)!.status).toBe('done');
   });
 });
+
+describe('project, someday and reference tools', () => {
+  const fields = { context: '@home', priority: 'B', time: 30, energy: 'low' } as const;
+
+  it('add_action, add_step, promote, demote', () => {
+    const a = (run('add_action', { project: 'p-table', text: 'Measure the alcove', ...fields }) as { body: { result: { id: string; list: string } } }).body.result;
+    expect(a.list).toBe('Next Actions');
+    const s = (run('add_step', { project: 'p-table', text: 'Book the van' }) as { body: { result: { id: string } } }).body.result;
+    expect(run('promote', { id: s.id, ...fields })).toMatchObject({ status: 200 });
+    expect(run('demote', { id: s.id })).toMatchObject({ status: 200 });
+    expect(api.getItem(s.id)!.status).toBe('later');
+  });
+
+  it('update_project and move_project (someday, active, completed with its refusal)', () => {
+    run('update_project', { id: 'p-table', deadline: '2026-10-20', successful_when: 'table delivered' });
+    expect(api.getProject('p-table')).toMatchObject({ deadline: '2026-10-20', successfulWhen: 'table delivered' });
+    run('move_project', { id: 'p-table', to: 'someday' });
+    expect(api.getProject('p-table')!.status).toBe('someday');
+    run('move_project', { id: 'p-table', to: 'active' });
+    expect(run('move_project', { id: 'p-table', to: 'completed' })).toMatchObject({ status: 422, body: { error: expect.stringMatching(/open/) } });
+  });
+
+  it('someday: set_bucket, activate (back to the inbox), drop', () => {
+    const [g] = api.listSomeday();
+    const item = g.items[0].id;
+    const other = api.listBuckets().find((b) => b !== g.bucket)!;
+    run('set_bucket', { id: item, bucket: other });
+    expect(api.getItem(item)!.bucket).toBe(other);
+    run('activate', { id: item });
+    expect(api.getItem(item)!.status).toBe('inbox');
+    const next = api.listSomeday()[0].items[0].id;
+    run('drop', { id: next });
+    expect(api.getItem(next)!.status).toBe('trash');
+  });
+
+  it('reference: add_reference to a project, edit_reference', () => {
+    const r = (run('add_reference', { text: 'Oak samples', kind: 'link', url: 'https://example.com/oak', project: 'p-table' }) as { body: { result: { id: string; list: string } } }).body.result;
+    expect(r.list).toBe('Reference');
+    run('edit_reference', { id: r.id, text: 'Oak and ash samples', project: null });
+    expect(api.getItem(r.id)).toMatchObject({ text: 'Oak and ash samples' });
+    expect(api.getItem(r.id)!.projectId).toBeUndefined();
+  });
+});
