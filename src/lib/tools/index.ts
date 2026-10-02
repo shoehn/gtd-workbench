@@ -31,7 +31,7 @@ export function listToolsFor(client: ClientIdentity): { name: string; descriptio
 
 export type ToolOutcome =
   | { status: 200; body: { result: unknown; activity: string[] } }
-  | { status: 400 | 403 | 404 | 422 | 500; body: { error: string } };
+  | { status: 400 | 403 | 404 | 422 | 500; body: { error: string; activity?: string[] } };
 
 /** Errors the api throws on purpose carry their scope: "complete: item x cannot be completed". */
 const REFUSAL = /^[a-zA-Z_]+: /;
@@ -43,15 +43,21 @@ export function runTool(client: ClientIdentity, name: string, rawArgs: unknown):
   const parsed = t.input.safeParse(rawArgs ?? {});
   if (!parsed.success) return { status: 400, body: { error: z.prettifyError(parsed.error) } };
   const before = store.getState().activity.at(-1)?.id;
+  // The log entries this call made — also when it failed after writing, so nothing is silent.
+  const made = () => {
+    const entries = store.getState().activity;
+    const from = before === undefined ? 0 : entries.findLastIndex((e) => e.id === before) + 1;
+    return entries.slice(from).map((e) => e.id);
+  };
   try {
     const result = runAs(actorOf(client), () => t.run(parsed.data, { client }));
-    const log_ = store.getState().activity;
-    const from = before === undefined ? 0 : log_.findLastIndex((e) => e.id === before) + 1;
-    return { status: 200, body: { result: result ?? null, activity: log_.slice(from).map((e) => e.id) } };
+    return { status: 200, body: { result: result ?? null, activity: made() } };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    if (e instanceof Error && e.constructor === Error && REFUSAL.test(message)) return { status: 422, body: { error: message } };
+    const activity = made();
+    const partial = activity.length ? { activity } : {};
+    if (e instanceof Error && e.constructor === Error && REFUSAL.test(message)) return { status: 422, body: { error: message, ...partial } };
     log.error(`tool ${name}: ${e instanceof Error ? (e.stack ?? message) : message}`);
-    return { status: 500, body: { error: 'internal error' } };
+    return { status: 500, body: { error: 'internal error', ...partial } };
   }
 }

@@ -71,12 +71,18 @@ export const COLLECT_TOOLS = [
     input: z.strictObject({
       items: z.array(z.strictObject({ text: z.string().min(1), source: z.enum(['typed', 'voice', 'email', 'share', 'scan']).optional(), url: z.string().optional(), note: z.string().optional() })).min(1).max(50),
     }),
-    run: ({ items }) =>
-      items.map((it) => {
-        const r = captureRequest(it);
-        if ('error' in r) throw new Error(`capture: ${r.error}`);
-        return itemOut(r.item);
-      }),
+    // All or nothing, one log entry: a refused item rolls back the ones before it.
+    run: ({ items }) => {
+      let out: ReturnType<typeof itemOut>[] = [];
+      store.update(() => {
+        out = items.map((it) => {
+          const r = captureRequest(it);
+          if ('error' in r) throw new Error(`capture: ${r.error}`);
+          return itemOut(r.item);
+        });
+      });
+      return out;
+    },
   }),
   tool({
     name: 'add_tickler',

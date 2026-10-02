@@ -25,7 +25,7 @@ describe('collect and clarify tools', () => {
     expect(listToolsFor({ id: 'c1', name: 'x', preset: 'capture' }).map((t) => t.name).sort()).toEqual(['add_tickler', 'capture', 'whoami']);
     const r = capture('capture', { items: [{ text: 'Buy clay @errands' }, { text: 'Read the glaze article', url: 'https://example.com/glaze' }] }) as { status: 200; body: { result: { text: string }[]; activity: string[] } };
     expect(r.body.result.map((i) => i.text)).toEqual(['Buy clay', 'Read the glaze article']);
-    expect(r.body.activity).toHaveLength(2);
+    expect(r.body.activity).toHaveLength(1); // one call, one entry (captures are grouped)
     expect(capture('add_tickler', { day: '2026-09-29', text: 'Tiles fired' })).toMatchObject({ status: 200 });
     expect(capture('clarify', { item: 'i1', decision: { kind: 'trash' } })).toMatchObject({ status: 403 });
   });
@@ -64,5 +64,19 @@ describe('collect and clarify tools', () => {
     const t = (assistant('add_tickler', { day: '2026-09-29', text: 'Tiles fired' }) as { body: { result: { id: string } } }).body.result;
     expect(assistant('edit_tickler', { id: t.id, text: 'Tiles out of the kiln' })).toMatchObject({ status: 200 });
     expect(assistant('delete_tickler', { id: t.id })).toMatchObject({ status: 200 });
+  });
+});
+
+describe('capture is all or nothing (review)', () => {
+  it('one refused item: nothing captured, the reason named', () => {
+    const before = api.listInbox().length;
+    const r = as('capture')('capture', { items: [{ text: 'First line' }, { text: 'Second', url: 'example.com/x' }] });
+    expect(r).toMatchObject({ status: 422, body: { error: 'capture: url needs a scheme (https://, obsidian://, …)' } });
+    expect(api.listInbox().length).toBe(before);
+  });
+
+  it('several items: one log entry, one undo', () => {
+    const r = as('capture')('capture', { items: [{ text: 'A' }, { text: 'B' }] }) as { body: { activity: string[] } };
+    expect(r.body.activity).toHaveLength(1);
   });
 });

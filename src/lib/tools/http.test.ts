@@ -108,3 +108,17 @@ describe('/api/v1/tools', () => {
     expect((await call('whoami', token)).status).toBe(429);
   });
 });
+
+describe('a partial write is never silent (review)', () => {
+  it('a tool that wrote before it was refused answers the entries it made', async () => {
+    TOOLS.push(tool({ name: 'zz_partial', description: 'probe tool that writes, then is refused', capability: 'write', input: z.strictObject({}), run: () => { api.capture('Written first'); throw new Error('zz_partial: refused after a write'); } }));
+    try {
+      const { token } = createClient('Phone agent', 'assistant');
+      const res = await call('zz_partial', token);
+      expect(res.status).toBe(422);
+      expect(((await res.json()) as { activity: string[] }).activity).toHaveLength(1);
+    } finally {
+      TOOLS.pop();
+    }
+  });
+});
