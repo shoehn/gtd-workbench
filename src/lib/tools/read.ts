@@ -131,7 +131,7 @@ export const READ_TOOLS = [
     input: z.strictObject({ from: isoDate, to: isoDate }),
     run: ({ from, to }) => {
       if (from > to) refuse('get_calendar', 'from is after to');
-      if (days(from, to) > MAX_RANGE_DAYS) refuse('get_calendar', `at most ${MAX_RANGE_DAYS} days`);
+      if (!(days(from, to) <= MAX_RANGE_DAYS)) refuse('get_calendar', `at most ${MAX_RANGE_DAYS} days`); // also NaN
       return api.landscapeBetween(from, to);
     },
   }),

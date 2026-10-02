@@ -76,3 +76,12 @@ describe('read tools', () => {
     expect(names.every((n) => toolNamed(n)!.capability === 'read' || toolNamed(n)!.capability === 'any')).toBe(true);
   });
 });
+
+describe('dates that cannot exist (review)', () => {
+  it('impossible dates are refused by the schema, so the 62-day cap always holds', () => {
+    expect(run('get_calendar', { from: '2026-09-21', to: '2026-99-99' })).toMatchObject({ status: 400 });
+    expect(run('get_calendar', { from: '2026-02-30', to: '2026-03-01' })).toMatchObject({ status: 400 });
+    expect(run('find_free_time', { from: '2026-09-28', to: '2026-13-01' })).toMatchObject({ status: 400 });
+    expect(run('get_calendar', { from: '2026-09-21', to: '9999-12-31' })).toMatchObject({ status: 422, body: { error: 'get_calendar: at most 62 days' } });
+  });
+});

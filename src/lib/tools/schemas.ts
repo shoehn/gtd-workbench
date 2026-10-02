@@ -1,7 +1,11 @@
 // Shared pieces of the tool schemas. Descriptions end up in the JSON Schema the agent reads.
 import * as z from 'zod';
 
-export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'yyyy-mm-dd');
+/** A real calendar date (2026-02-30 and 2026-99-99 are refused: they would break the ranges). */
+export const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'yyyy-mm-dd')
+  .refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && new Date(`${d}T00:00:00Z`).toISOString().slice(0, 10) === d, 'not a real date');
 export const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'hh:mm');
 export const slot = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'yyyy-mm-ddThh:mm');
 export const id = z.string().min(1);
