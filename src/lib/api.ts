@@ -2,7 +2,7 @@
 // nothing derived is ever written back to the store.
 import { actorKey, actorLabel, applyUndo, runAs, runUndo, setActivityClock, undoBlocker } from './activity';
 import { parse } from './capture-syntax';
-import { daysBetween } from './format';
+import { daysBetween, fmtDate } from './format';
 import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
 import { URL_IN_TEXT, guessReference, referenceHost } from './reference';
@@ -1778,6 +1778,94 @@ export function weekStats(): WeekStats {
     captured: items.filter((i) => after(i.capturedAt)).length,
     completedProjects: projects.filter((p) => p.status === 'completed' && !p.dropped && after(p.completedAt)).length,
     stalled: health().stalled,
+  };
+}
+
+export interface ReviewPrepStep {
+  id: string;
+  phaseId: string;
+  text: string;
+  findings: string[];
+  items: { id: string; text: string }[];
+}
+export interface ReviewPrep {
+  open: boolean;
+  steps: ReviewPrepStep[];
+  week: WeekStats;
+  clients: { actor: string; changes: number; examples: string[] }[];
+}
+
+const UNTOUCHED_DAYS = 90;
+const dayCount = (n: number) => `${n} day${n === 1 ? '' : 's'}`;
+
+/** When an item was last changed: its newest log entry, else its capture. */
+function lastTouched(id: string): string {
+  const log = store.getState().activity;
+  for (let n = log.length - 1; n >= 0; n--) if (log[n].changes.some((c) => c.id === id)) return log[n].at;
+  return getItem(id)!.capturedAt;
+}
+
+/** Findings per step of the weekly review (MCP prepare_weekly_review) — what to look at, not what to decide. */
+export function prepareWeeklyReview(): ReviewPrep {
+  const day = today();
+  const t = now().getTime();
+  const { items, activity } = store.getState();
+  const ref = (i: { id: string; text: string }) => ({ id: i.id, text: i.text });
+  const findings = (rule: string): Pick<ReviewPrepStep, 'findings' | 'items'> => {
+    switch (rule) {
+      case 'inbox-zero': {
+        const inbox = listInbox();
+        const oldest = inbox.at(-1);
+        return { findings: [oldest ? `${inbox.length} in the inbox, oldest ${dayCount(ageDays(oldest))}` : 'the inbox is empty'], items: inbox.slice(0, 20).map(ref) };
+      }
+      case 'next': {
+        const next = listNext();
+        const old = next.filter((i) => ageDays(i) > 30);
+        return { findings: [`${next.length} next actions`, ...(old.length ? [`${old.length} captured more than 30 days ago`] : [])], items: old.map(ref) };
+      }
+      case 'past-cal': {
+        const open = items.filter((i) => i.status === 'calendar' && i.day && i.day < day && i.day >= addDays(day, -7));
+        return { findings: open.length ? [`${open.length} calendar items of the last 7 days not ticked`] : [], items: open.map(ref) };
+      }
+      case 'future-cal': {
+        const due = upcomingDeadlines(14);
+        return { findings: due.map((d) => `${fmtDate(d.day)} ${d.text}`), items: due.map((d) => ({ id: d.id, text: d.text })) };
+      }
+      case 'waiting': {
+        const over = items.filter((i) => isOverdue(i, day));
+        return { findings: over.map((i) => `${i.text} — ${i.waiting!.who}, follow-up ${fmtDate(i.waiting!.followUp!)}`), items: over.map(ref) };
+      }
+      case 'projects': {
+        const stalled = listProjects().filter(projectStalled);
+        return { findings: stalled.map((p) => `${p.title} has no next action`), items: stalled.map((p) => ({ id: p.id, text: p.title })) };
+      }
+      case 'someday': {
+        const stale = items.filter((i) => i.status === 'someday' && t - Date.parse(lastTouched(i.id)) > UNTOUCHED_DAYS * DAY_MS);
+        return { findings: stale.length ? [`${stale.length} untouched for more than ${UNTOUCHED_DAYS} days`] : [], items: stale.map(ref) };
+      }
+      case 'areas': {
+        const areas = [...new Set(listProjects().map((p) => p.area).filter((a): a is string => !!a))];
+        return { findings: areas.length ? [`areas: ${areas.join(', ')}`] : [], items: [] };
+      }
+      default:
+        return { findings: [], items: [] };
+    }
+  };
+  const run = openRun();
+  const byClient = new Map<string, { changes: number; examples: string[] }>();
+  for (let n = activity.length - 1; n >= 0 && t - Date.parse(activity[n].at) <= 7 * DAY_MS; n--) {
+    const e = activity[n];
+    if (e.actor.kind === 'user') continue;
+    const k = byClient.get(actorLabel(e.actor)) ?? { changes: 0, examples: [] };
+    k.changes++;
+    if (k.examples.length < 3) k.examples.push(e.summary);
+    byClient.set(actorLabel(e.actor), k);
+  }
+  return {
+    open: !!run,
+    steps: reviewSteps(run).map((s) => ({ id: s.id, phaseId: s.phaseId, text: s.text, ...findings(ruleOf(s, s.id)) })),
+    week: weekStats(),
+    clients: [...byClient].map(([actor, v]) => ({ actor, ...v })),
   };
 }
 

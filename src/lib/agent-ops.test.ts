@@ -119,3 +119,39 @@ describe('freeTime', () => {
     expect(() => api.freeTime(MON, MON, 30, { start: '18:00', end: '08:00' })).toThrow('freeTime: day hours end before they start');
   });
 });
+
+describe('prepareWeeklyReview', () => {
+  const step = (id: string) => api.prepareWeeklyReview().steps.find((s) => s.id === id)!;
+
+  it('one entry per template step, findings from the lists the step links to', () => {
+    const prep = api.prepareWeeklyReview();
+    expect(prep.steps.map((s) => s.id)).toEqual(api.reviewSteps().map((s) => s.id));
+    expect(step('inbox-zero').findings[0]).toMatch(new RegExp(`^${api.listInbox().length} in the inbox, oldest \\d+ days?$`));
+    expect(step('projects').items.map((i) => i.id)).toEqual(api.listProjects().filter(api.projectStalled).map((p) => p.id));
+    expect(step('waiting').items.every((i) => api.isOverdue(api.getItem(i.id)!))).toBe(true);
+    expect(step('collect').findings).toEqual([]);
+    expect(prep.week).toEqual(api.weekStats());
+  });
+
+  it('someday items untouched for 90 days are named; a recent log entry counts as a touch', () => {
+    runSilently(() =>
+      store.update((s) => {
+        const it = s.items.find((i) => i.status === 'someday')!;
+        it.capturedAt = '2026-05-01T10:00:00.000Z';
+      }),
+    );
+    const old = store.getState().items.find((i) => i.capturedAt === '2026-05-01T10:00:00.000Z')!;
+    expect(step('someday').items.map((i) => i.id)).toContain(old.id);
+    api.setBucket(old.id, api.getSettings().buckets[1]);
+    expect(step('someday').items.map((i) => i.id)).not.toContain(old.id);
+  });
+
+  it('what clients did this week, by client', () => {
+    runAs(PHONE, () => {
+      api.capture('Buy glaze');
+      api.capture('Book the kiln');
+    });
+    api.capture('Typed by me');
+    expect(api.prepareWeeklyReview().clients).toEqual([{ actor: 'Phone agent', changes: 2, examples: ['Captured “Book the kiln”', 'Captured “Buy glaze”'] }]);
+  });
+});
