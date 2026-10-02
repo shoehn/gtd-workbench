@@ -74,8 +74,12 @@ waits in the inbox for Clarify like anything typed.
 
 ### Endpoint
 
+Create a client in **Settings → Clients** (name, preset *capture* or *assistant*) and copy
+its token — it is shown once. Every capture is logged under the client's name (Activity).
+`CAPTURE_TOKEN` still works as the built-in client "capture (env)":
+
 ```sh
-CAPTURE_TOKEN=…            # a long random string, e.g. `openssl rand -hex 32`; unset = endpoint off
+CAPTURE_TOKEN=…            # optional; a long random string, e.g. `openssl rand -hex 32`
 ```
 
 ```sh
@@ -86,8 +90,10 @@ curl -H "Authorization: Bearer $CAPTURE_TOKEN" \
 
 Body: `text` (required, ≤ 4 KB, the rapid-log shorthand works), `note` ≤ 8 KB, `source` (`typed`
 default, or `voice` `email` `share` `scan`), `url` and `note` (kept with the item as
-context). 401 without the token (429 past 20 such requests a minute), 429 past 60 captures a minute, 413 for a body over 16 KB.
-To rotate the token, change it and restart.
+context). 401 without a valid token (429 past 20 such requests a minute), 403 for a client
+whose preset may not capture, 429 past 60 captures a minute, 413 for a body over 16 KB.
+404 while no client may capture. To rotate a token, revoke the client and create a new one
+(or change `CAPTURE_TOKEN` and restart).
 
 A shell function (needs `jq`), then `in Call the shop @calls`:
 

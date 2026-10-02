@@ -23,6 +23,7 @@ phone is the same lists with one-hand capture.
 | `/review` | `Review` / `M-Review` | Weekly review checklist with timer |
 | `/settings` | — (built from the primitives) | Contexts, buckets, calendars, time zone, review checklist |
 | `/reference` | — (built from the primitives) | Reference: notes, links, file names — the index, not the archive |
+| `/activity` | — (built from the primitives) | Every change by anyone, with undo (§3.12) |
 | `/share` → `/share/done` | — (built from the primitives) | Web Share Target: a share lands in the inbox, one-line confirmation (§3.1) |
 
 Reference is a sidebar entry with its count and its own screen (§3.11); on the phone it is
@@ -324,6 +325,10 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
   force one. The server renders it as `data-theme` on `<html>` (every page is rendered per
   request), so a reload never flashes the other theme; `system` renders no attribute and the
   `prefers-color-scheme` block in `tokens.css` applies. Also the palette's "Toggle dark theme".
+- Clients: API clients (MCP, scripts) with a name and a preset — capture (inbox and tickler
+  notes), read-only, assistant (reads, captures, drafts and acts). The token is shown once
+  and stored as a hash; revoke with one click; last use is shown. `CAPTURE_TOKEN` from the
+  environment is the built-in client "capture (env)".
 
 ### 3.10 Command palette
 - A keyboard front door, not a second UI: every entry is an existing api operation or route.
@@ -357,6 +362,18 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - Someday ↔ Reference: "→ Reference" on a Someday row (`r`), "→ Someday" on a reference
   row, both also in ⌘K for the row under the cursor. The entry keeps what it was (bucket,
   link) for the way back.
+
+### 3.12 Activity
+- Every change to items, projects and tickler notes is logged, by whoever made it: you (the
+  screens), a named client, mail, share, or the app (trash purge, recurring successors).
+  Settings, review runs, calendar sync and mail bookkeeping are not in the log.
+- An entry says it in words ("“Call Alice”: Inbox → Waiting For (Alice)") and keeps every
+  touched entity before and after; a renumbering alone reads "Renumbered priorities".
+- `/activity` lists them newest first, filtered by who; "history" on Clarify's item card and
+  on a project opens the entries about it. Kept 365 days.
+- Undo works on any entry while every entity is still as the entry left it; otherwise it is
+  refused with "changed since by …" and nothing is applied. An undo is an entry itself
+  (Redo). The 5 s undo toasts on the screens stay as they are.
 
 ## 4. The "one control per decision" rule
 
@@ -467,6 +484,14 @@ interface ExternalEvent {
 // Store-level, with the sync status of configured sources (env `CAL_<ID>_URL`):
 interface ExternalCalendar { name: string; via: string; sourceId?: string; host?: string;
   lastSyncAt?: string; lastError?: string; lastErrorAt?: string }
+
+// §3.12; store-level, append-only. Actor: you | a client (id, name) | mail | share | the app.
+interface ActivityEntry { id: string; at: string; actor: Actor; summary: string;
+  changes: { kind: 'item' | 'project' | 'tickler'; id: string; before: object | null; after: object | null }[];
+  undoOf?: string }
+// §3.9; only the token's SHA-256 is kept.
+interface StoredClient { id: string; name: string; preset: 'capture' | 'read-only' | 'assistant';
+  tokenHash: string; createdAt: string; lastUsedAt?: string; revokedAt?: string }
 ```
 
 Storage (`STORE=memory|sqlite`, sqlite by default in production, memory in dev and tests;

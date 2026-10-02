@@ -53,6 +53,8 @@ lib/model.ts         types (Item, Project, Context, WaitingFor, ReviewRun …) �
 lib/api.ts           typed operations: capture, clarify, complete, star, promote/demote …
 lib/store/           index.ts picks memory.ts or sqlite.ts (same interface), schema.ts
 lib/capture-syntax.ts  parser for `#tag @context !prio ^date`
+lib/activity.ts      the activity log: who changed what, undo
+lib/clients.ts       API clients and presets
 ```
 
 ## Rules that shape the code
