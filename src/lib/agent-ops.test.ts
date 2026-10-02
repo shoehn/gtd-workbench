@@ -155,3 +155,18 @@ describe('prepareWeeklyReview', () => {
     expect(api.prepareWeeklyReview().clients).toEqual([{ actor: 'Phone agent', changes: 2, examples: ['Captured “Book the kiln”', 'Captured “Buy glaze”'] }]);
   });
 });
+
+describe('freeTime and multi-day appointments (review)', () => {
+  it('the middle days of a timed trip are not free; its first and last day are free around it', () => {
+    runSilently(() =>
+      store.update((s) => {
+        for (const i of s.items) if (i.timeSlot && i.timeSlot.start >= '2026-09-28' && i.timeSlot.start < '2026-10-01') delete i.timeSlot;
+        s.externalEvents = [{ id: 'trip', calendar: 'Work', title: 'Design fair', start: '2026-09-28T12:00:00+02:00', end: '2026-09-30T10:00:00+02:00', allDay: false }];
+      }),
+    );
+    expect(api.freeTime('2026-09-28', '2026-09-30', 30)).toEqual([
+      { day: '2026-09-28', start: '08:00', end: '12:00', minutes: 240 },
+      { day: '2026-09-30', start: '10:00', end: '18:00', minutes: 480 },
+    ]);
+  });
+});

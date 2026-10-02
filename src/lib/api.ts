@@ -1412,11 +1412,17 @@ export function freeTime(from: string, to: string, minMinutes = 30, dayHours = {
   check(HH_MM_ANY.test(dayHours.start) && HH_MM_ANY.test(dayHours.end), 'day hours are hh:mm', 'freeTime');
   check(dayHours.start < dayHours.end, 'day hours end before they start', 'freeTime');
   const busy = new Map<string, [number, number][]>();
-  for (const e of landscape(from, to)) {
-    if ((e.kind !== 'appointment' && e.kind !== 'timeblock') || !e.start || !e.end) continue;
-    const list = busy.get(e.day) ?? [];
-    list.push([minutesOf(e.start), e.end === '24:00' ? 24 * 60 : minutesOf(e.end)]);
-    busy.set(e.day, list);
+  const add = (day: string, start?: string, end?: string) => {
+    const list = busy.get(day) ?? [];
+    list.push([start ? minutesOf(start) : 0, !end || end === '24:00' ? 24 * 60 : minutesOf(end)]);
+    busy.set(day, list);
+  };
+  for (const e of landscape(from, to)) if (e.kind === 'timeblock') add(e.day, e.start, e.end);
+  // Appointments from the events themselves: a timed event's middle days (no start of their
+  // own) are taken whole; only all-day events leave the day free.
+  for (const ev of store.getState().externalEvents) {
+    if (ev.allDay) continue;
+    for (const part of appointmentDays(ev, from, to)) add(part.day, part.start, part.end);
   }
   const first = today();
   const out: FreeSlot[] = [];
