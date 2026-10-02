@@ -127,3 +127,14 @@ describe('nothing is dropped silently (review)', () => {
     expect((res.body as { error: string }).error).toMatch(/reference_kind/);
   });
 });
+
+describe('reopen only what was a next action (review)', () => {
+  it('a received waiting-for or a ticked calendar item is refused, with undo as the way back', () => {
+    const w = api.listWaiting()[0].id;
+    run('received', { id: w });
+    expect(run('reopen', { id: w })).toMatchObject({ status: 422, body: { error: expect.stringMatching(/was not a next action — undo its log entry/) } });
+    expect(api.getItem(w)!.status).toBe('done');
+    run('complete', { ids: ['n2'] });
+    expect(run('reopen', { id: 'n2' })).toMatchObject({ status: 200 });
+  });
+});

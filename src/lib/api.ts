@@ -715,6 +715,9 @@ export function uncomplete(done: Completed): void {
 export function reopen(id: string): void {
   const item = getItem(id);
   check(item?.status === 'done', `item ${id} is not done`, 'reopen');
+  // Only a done next action (it keeps its context) comes back as one; a received waiting-for
+  // or a ticked calendar item would become a next action without context.
+  check(item.context, `item ${id} was not a next action — undo its log entry instead`, 'reopen');
   store.update((s) => {
     const it = s.items.find((i) => i.id === id)!;
     it.status = 'next';
