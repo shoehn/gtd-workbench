@@ -374,6 +374,11 @@ Same routes and api, composed for capture, ticking and reading; planning stays o
 - Undo works on any entry while every entity is still as the entry left it; otherwise it is
   refused with "changed since by …" and nothing is applied. An undo is an entry itself
   (Redo). The 5 s undo toasts on the screens stay as they are.
+- Undo keeps the app's rules: priority numbers are renumbered in the same write, and a
+  project is not brought back under a title an open project has taken since ("rename one
+  first"). An item brought back from "deleted for good" gets a fresh 30 days in the trash.
+- The automatic 30-day trash purge is the app's; emptying the trash in the weekly review is
+  yours.
 
 ## 4. The "one control per decision" rule
 

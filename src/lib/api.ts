@@ -1,6 +1,6 @@
 // The only module the UI imports. Reads return store data plus derived values;
 // nothing derived is ever written back to the store.
-import { actorKey, actorLabel, applyUndo, runUndo, setActivityClock, undoBlocker } from './activity';
+import { actorKey, actorLabel, applyUndo, runAs, runUndo, setActivityClock, undoBlocker } from './activity';
 import { parse } from './capture-syntax';
 import type { Energy, ExternalEvent, Item, Priority, Project, Reference, ReviewCounters, ReviewRun, ReviewTemplate, Settings, Source, Theme, TimeBucket } from './model';
 import { instantAt, isTimeZone, wallClock } from './clock';
@@ -247,7 +247,8 @@ export function trash(ids: string[]): { id: string; status: Item['status'] }[] {
       }
     }
   });
-  purgeTrash(TRASH_KEEP_DAYS);
+  // The 30-day purge is the app's doing, not whoever happened to trash something.
+  runAs({ kind: 'system' }, () => purgeTrash(TRASH_KEEP_DAYS));
   return moved;
 }
 
@@ -2150,6 +2151,13 @@ export function undoActivity(id: string): string {
     store.update((s) => {
       applyUndo(s, entry);
       renumberIn(s.items); // … and priority numbers stay unique (others may have taken them since)
+      // An item brought back from "deleted for good" gets a fresh 30 days in the trash,
+      // or the next purge would take it again at once.
+      for (const c of entry.changes) {
+        if (c.kind !== 'item' || c.after !== null || (c.before as Item).status !== 'trash') continue;
+        const back = s.items.find((i) => i.id === c.id);
+        if (back) back.trashedAt = now().toISOString();
+      }
     }),
   );
   return store.getState().activity.at(-1)!.id;

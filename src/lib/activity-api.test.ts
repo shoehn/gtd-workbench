@@ -94,3 +94,30 @@ describe('undo keeps the app’s rules (review)', () => {
     expect(created).toBeTruthy();
   });
 });
+
+describe('who purges the trash (review)', () => {
+  const oldTrash = () =>
+    store.update((s) => {
+      const i = s.items.find((x) => x.id === 'i2')!;
+      i.status = 'trash';
+      i.trashedAt = '2026-07-01T10:00:00.000Z'; // long over 30 days
+    });
+
+  it('the automatic 30-day purge is the app’s, not whoever trashed something else', () => {
+    oldTrash();
+    runAs({ kind: 'client', id: 'c1', name: 'Phone agent' }, () => api.trash(['i1']));
+    const [purge, trashed] = api.listActivity({ limit: 2 });
+    expect(trashed).toMatchObject({ actorLabel: 'Phone agent' });
+    expect(purge).toMatchObject({ actorLabel: 'the app' });
+    expect(purge.summary).toContain('for good');
+  });
+
+  it('undoing a purge sticks: the item is not purged again by the next trash', () => {
+    oldTrash();
+    api.trash(['i1']);
+    api.undoActivity(api.listActivity({ limit: 1 })[0].id); // the purge of i2
+    expect(api.getItem('i2')!.status).toBe('trash');
+    api.trash(['i4']);
+    expect(api.getItem('i2')?.status).toBe('trash');
+  });
+});
