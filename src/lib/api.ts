@@ -791,6 +791,41 @@ export function health(): Health {
   };
 }
 
+/** The situation now (MCP get_overview): what an agent reads first. */
+export interface Overview {
+  now: string;
+  today: string;
+  inbox: { count: number; oldest?: { id: string; text: string; days: number } };
+  focus: { id: string; text: string; done: boolean }[];
+  landscape: LandscapeEntry[];
+  stalled: { id: string; title: string }[];
+  waitingOverdue: { id: string; text: string; who: string; followUp: string }[];
+  deadlines: UpcomingDeadline[];
+  review: ReviewBadge;
+}
+
+export function overview(): Overview {
+  const day = today();
+  const inbox = listInbox();
+  const oldest = inbox.at(-1);
+  return {
+    now: now().toISOString(),
+    today: day,
+    inbox: { count: inbox.length, ...(oldest && { oldest: { id: oldest.id, text: oldest.text, days: ageDays(oldest) } }) },
+    focus: focusToday().map((i) => ({ id: i.id, text: i.text, done: i.status === 'done' })),
+    landscape: todayLandscape(day),
+    stalled: listProjects()
+      .filter(projectStalled)
+      .map((p) => ({ id: p.id, title: p.title })),
+    waitingOverdue: store
+      .getState()
+      .items.filter((i) => isOverdue(i, day))
+      .map((i) => ({ id: i.id, text: i.text, who: i.waiting!.who, followUp: i.waiting!.followUp! })),
+    deadlines: upcomingDeadlines(7),
+    review: reviewBadge(),
+  };
+}
+
 // ── Projects ───────────────────────────────────────────────────────────────
 
 export function getProject(id: string): Project | undefined {

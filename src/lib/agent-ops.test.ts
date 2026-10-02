@@ -61,3 +61,22 @@ describe('editWaiting', () => {
     expect(() => api.editWaiting(waitingId(), { followUp: '09.10' })).toThrow('waiting: follow-up is not an ISO date');
   });
 });
+
+describe('overview', () => {
+  it('the situation right now, from the lists', () => {
+    const o = api.overview();
+    expect(o.today).toBe('2026-09-26');
+    expect(o.inbox.count).toBe(api.listInbox().length);
+    expect(o.inbox.oldest).toMatchObject({ id: api.listInbox().at(-1)!.id });
+    expect(o.stalled.map((p) => p.id)).toEqual(api.listProjects().filter(api.projectStalled).map((p) => p.id));
+    expect(o.waitingOverdue.every((w) => w.followUp < o.today)).toBe(true);
+    expect(o.deadlines.every((d) => d.day <= '2026-10-03')).toBe(true);
+    expect(o.landscape).toEqual(api.todayLandscape());
+    expect(['due', 'in progress']).toContain(typeof o.review === 'string' ? o.review : 'done');
+  });
+
+  it('an empty inbox has no oldest', () => {
+    runSilently(() => store.update((s) => (s.items = s.items.filter((i) => i.status !== 'inbox'))));
+    expect(api.overview().inbox).toEqual({ count: 0 });
+  });
+});
