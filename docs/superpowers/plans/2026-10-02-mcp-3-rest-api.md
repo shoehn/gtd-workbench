@@ -22,11 +22,11 @@
 
 ## Review Focus
 
-- A tool call that the api refuses half-way (e.g. `complete` with two ids, the second unknown) must not leave the first one done without saying so — Task 6 test `complete refuses unknown ids before changing anything`.
+- A tool call that the api refuses half-way (e.g. `complete` with two ids, the second unknown) must not leave the first one done without saying so — Task 5 test `complete refuses unknown ids before changing anything`.
 - A client must never see or call a tool its preset forbids, also when it guesses the name — Task 2 test `a capture client gets 403 for a write tool and does not see it listed`.
 - Unknown argument keys (a typo like `follow_up_date`) must be refused, not silently ignored — Task 2 test `unknown keys are refused with the key named`.
 - An internal error (a bug, not a refusal) must answer 500 without leaking a stack trace, and be logged — Task 2 test `a bug in a tool is a 500 with a generic message`.
-- The automatic trash purge stays "the app", not the client, when a client trashes through the API — Task 6 test `trash through the API: the purge is still the app's`.
+- The automatic trash purge stays "the app", not the client, when a client trashes through the API — Task 5 test `trash through the API: the purge is still the app's`.
 
 ---
 
@@ -456,7 +456,7 @@ describe('/api/v1/tools', () => {
   });
 
   it('a write answers with the ids of the log entries it made, under the client’s name', async () => {
-    TOOLS.push(tool({ name: 'zz_capture', description: 'probe tool that captures one line', capability: 'capture', input: z.strictObject({ text: z.string() }), run: ({ text }) => (store.getState(), require('../api').capture(text)).id }));
+    TOOLS.push(tool({ name: 'zz_capture', description: 'probe tool that captures one line', capability: 'capture', input: z.strictObject({ text: z.string() }), run: ({ text }) => api.capture(text)!.id }));
     try {
       const { token } = createClient('Phone agent', 'assistant');
       const res = await call('zz_capture', token, { text: 'Buy clay' });
@@ -476,7 +476,7 @@ describe('/api/v1/tools', () => {
 });
 ```
 
-(The `zz_capture` probe uses `require('../api')` to keep the probe inline; if ESM/vitest refuses `require`, import `* as api from '../api'` at the top and use `api.capture(text)!.id`.)
+(Add `import * as api from '../api';` to the test's imports for the `zz_capture` probe.)
 
 - [ ] **Step 2: Run to see them fail**
 
