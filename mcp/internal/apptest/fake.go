@@ -76,7 +76,7 @@ func NewAt(t testing.TB, token, prefix string) *Fake {
 		case "whoami":
 			io.WriteString(w, `{"result":{"name":"Test"},"activity":[]}`)
 		case "list_next_actions":
-			io.WriteString(w, `{"result":[{"id":"n1","text":"Call the shop","href":"/next?highlight=n1","project":{"id":"p1","title":"Shop"}}],"activity":[]}`)
+			io.WriteString(w, `{"result":[{"id":"n1","text":"Call the shop","href":"/next?highlight=n1","project":{"id":"p1","title":"Shop"}},{"id":"s1","text":"Learn to throw","href":"/waiting?tab=someday&highlight=s1"}],"activity":[]}`)
 		case "complete":
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			io.WriteString(w, `{"error":"complete: item nope cannot be completed","activity":["a1"]}`)
