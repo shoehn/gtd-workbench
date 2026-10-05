@@ -142,3 +142,17 @@ func TestASchemaThatIsNotAnObjectSkipsThatToolOnly(t *testing.T) {
 		t.Fatalf("the others must stay: %d", len(tools.Tools))
 	}
 }
+
+func TestAGatewayPageMeansTheAppIsNotReachable(t *testing.T) {
+	f := apptest.New(t, token)
+	cs := session(t, f)
+	f.ServeGatewayError(502)
+	r, err := cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "whoami", Arguments: map[string]any{}})
+	if err != nil || !r.IsError {
+		t.Fatalf("want a tool error: %+v %v", r, err)
+	}
+	out := text(t, r)
+	if !strings.Contains(out, "not reachable") || strings.Contains(out, "<html") {
+		t.Fatalf("message: %s", out)
+	}
+}

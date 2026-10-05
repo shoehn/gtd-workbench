@@ -47,6 +47,11 @@ func (r Reply) FromApp() bool {
 	return json.Unmarshal(r.Body, &e) == nil && e.Error != ""
 }
 
+// Unreachable is what the app being down means — also when a proxy in front of it says so.
+func (c *Client) Unreachable(status int) error {
+	return fmt.Errorf("the GTD app is not reachable at %s (the proxy in front of it answered HTTP %d)", c.base, status)
+}
+
 // LoginInFront is what a 401 from something other than the app means: the proxy login was asked.
 func (c *Client) LoginInFront(path string) error {
 	return fmt.Errorf("a login in front of the GTD app at %s answered 401 to %s — let /api/v1/ through without login (docs/OPERATIONS.md, \"Reachable from outside\"); the token was not checked", c.base, path)

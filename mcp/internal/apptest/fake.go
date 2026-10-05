@@ -16,6 +16,14 @@ type Fake struct {
 	server   *httptest.Server
 	mu       sync.Mutex
 	lastArgs string
+	gateway  int
+}
+
+// ServeGatewayError makes every tool call answer like a proxy whose app is down (502, 503, 504).
+func (f *Fake) ServeGatewayError(status int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.gateway = status
 }
 
 // LastArgs is the body of the latest tool call.
@@ -69,6 +77,15 @@ func newFake(t testing.TB, token, prefix, extraTool string) *Fake {
 		}
 	})
 	mux.HandleFunc("POST "+prefix+"/api/v1/tools/{name}", func(w http.ResponseWriter, r *http.Request) {
+		f.mu.Lock()
+		gateway := f.gateway
+		f.mu.Unlock()
+		if gateway != 0 {
+			w.Header().Set("Content-Type", "text/html")
+			w.WriteHeader(gateway)
+			io.WriteString(w, "<html><body><h1>Bad Gateway</h1></body></html>")
+			return
+		}
 		if !auth(w, r) {
 			return
 		}
