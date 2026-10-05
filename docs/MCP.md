@@ -58,12 +58,12 @@ Use the absolute path; Desktop does not expand `~` or `${VAR}`.
 **Claude Code** — for all your projects:
 
 ```sh
-claude mcp add --transport stdio --scope user \
-  --env GTD_URL=https://gtd.example.com --env GTD_TOKEN=gtd_… \
-  gtd -- /Users/you/bin/gtd-mcp
+claude mcp add --env GTD_URL=https://gtd.example.com --env GTD_TOKEN=gtd_… \
+  --transport stdio --scope user gtd -- /Users/you/bin/gtd-mcp
 ```
 
-In a shared `.mcp.json`, write `"GTD_TOKEN": "${GTD_TOKEN}"` and keep the token in your
+(`--env` takes several pairs, so the server name must not follow it directly.) In a shared
+`.mcp.json`, write `"GTD_TOKEN": "${GTD_TOKEN}"` and keep the token in your
 environment — Claude Code expands it.
 
 **Codex** — `codex mcp add gtd --env GTD_URL=https://gtd.example.com --env GTD_TOKEN=gtd_… -- /Users/you/bin/gtd-mcp`,
