@@ -30,14 +30,20 @@ export function timeZone(): string | undefined {
   return store.getState().timezone || undefined;
 }
 
+/** When this process started: tests run on a clock that starts at noon and moves on from there. */
+const TEST_START = Date.now();
+
 /**
  * The one clock. Everything time-dependent (ages, "today", focus, review due) reads this,
- * never `new Date()`. Pinned: the real time of day (in `timeZone()`) on the seed's date.
+ * never `new Date()`. Pinned (`pnpm dev:demo`): the real time of day (in `timeZone()`) on the
+ * seed's date. In tests the time of day is pinned too — noon, then running — so a test never
+ * depends on when it runs (the seed has items captured that morning).
  */
 export function now(): Date {
   const real = new Date();
   const day = pinnedDay();
   if (!day) return real;
+  if (process.env.NODE_ENV === 'test') return new Date(instantAt(day, 12, 0, 0, 0, timeZone()).getTime() + (real.getTime() - TEST_START));
   const w = wallClock(real, timeZone());
   return instantAt(day, w.hour, w.minute, w.second, real.getMilliseconds(), timeZone());
 }

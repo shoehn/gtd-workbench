@@ -73,8 +73,9 @@ lib/clients.ts       API clients and presets
   strings; energy `focus|normal|low`; time buckets `15|30|60|120+` minutes.
 - Time comes from `api.now()` / `api.today()` only, never `new Date()`; wall-clock
   conversions go through `lib/clock.ts` in `api.timeZone()`. Tests and
-  `pnpm dev:demo` (DEMO_DATE=1) run on the demo's pinned date (sat 26.09); every
-  other run, `pnpm dev` included, uses the real date.
+  `pnpm dev:demo` (DEMO_DATE=1) run on the demo's pinned date (sat 26.09) — tests
+  also at a pinned noon, so they never depend on when they run; every other run,
+  `pnpm dev` included, uses the real date.
 - Dates are ISO strings in the store; display formats follow the mockups
   (`sat 26.09`, `03.10`).
 - Accessibility as drawn: real `<button>`, `<a>`, `<input>`+`<label>`; icon-only
