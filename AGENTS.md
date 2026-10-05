@@ -57,6 +57,9 @@ lib/activity.ts      the activity log: who changed what, undo
 lib/clients.ts       API clients and presets
 ```
 
+`mcp/` holds `gtd-mcp`, the Go MCP binary over `/api/v1` (`pnpm mcp:test`, `pnpm mcp:build`;
+docs/MCP.md).
+
 ## Rules that shape the code
 
 - **One control per decision.** A state is _set_ on exactly one screen and only

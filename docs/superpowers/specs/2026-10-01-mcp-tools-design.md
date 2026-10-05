@@ -47,7 +47,8 @@ Next.js app — REST API /api/v1/…  →  lib/api.ts  →  store
   URL and the client token, from the agent's MCP config.
 - **The binary is written in Go:** one static binary per OS and architecture (macOS arm64 /
   amd64, Linux amd64 / arm64), so no Node or other runtime is needed where an agent runs.
-  Built on the official Go MCP SDK.
+  Built on the official Go MCP SDK. Stage 4 built it: `mcp/` (Go module), setup in
+  `docs/MCP.md`.
 - **Exposure:** `/api/v1/*` bypasses the proxy login (like `/api/capture` today) and relies
   on the bearer token: long random tokens, the bad-token throttle, revocable clients. An
   agent on the same server may call the app internally.

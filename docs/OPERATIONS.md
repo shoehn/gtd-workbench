@@ -164,6 +164,9 @@ revoked token (429 past 20 such a minute), 403 the client's preset doesn't allow
 hold — activate it first"), 429 past 120 calls a minute, 500 a bug (logged, generic message).
 Item links come as paths (`href`); prefix the app's URL.
 
+For MCP clients (Claude Desktop, Claude Code, Codex, an agent on a server) use `gtd-mcp`, which
+does all of this: docs/MCP.md.
+
 ## Reverse proxy
 
 The container listens on `127.0.0.1:${GTD_PORT}` of the host only. Caddy on the same box:
