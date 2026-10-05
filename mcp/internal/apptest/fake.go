@@ -42,6 +42,7 @@ func NewAt(t testing.TB, token, prefix string) *Fake {
 	mux := http.NewServeMux()
 	auth := func(w http.ResponseWriter, r *http.Request) bool {
 		if r.Header.Get("Authorization") != "Bearer "+token {
+			w.Header().Set("WWW-Authenticate", "Bearer") // as the real routes do
 			w.WriteHeader(http.StatusUnauthorized)
 			io.WriteString(w, `{"error":"missing, wrong or revoked bearer token"}`)
 			return false

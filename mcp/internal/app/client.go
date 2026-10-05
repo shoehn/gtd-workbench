@@ -32,6 +32,24 @@ type Prompt struct {
 type Reply struct {
 	Status int
 	Body   []byte
+	Header http.Header
+}
+
+// FromApp tells the app's own answers (a JSON {"error": …}, or the Bearer challenge its 401s
+// carry) from those of something in front of it — a login proxy, a gateway page.
+func (r Reply) FromApp() bool {
+	if strings.HasPrefix(strings.ToLower(r.Header.Get("WWW-Authenticate")), "bearer") {
+		return true
+	}
+	var e struct {
+		Error string `json:"error"`
+	}
+	return json.Unmarshal(r.Body, &e) == nil && e.Error != ""
+}
+
+// LoginInFront is what a 401 from something other than the app means: the proxy login was asked.
+func (c *Client) LoginInFront(path string) error {
+	return fmt.Errorf("a login in front of the GTD app at %s answered 401 to %s — let /api/v1/ through without login (docs/OPERATIONS.md, \"Reachable from outside\"); the token was not checked", c.base, path)
 }
 
 var ErrUnauthorized = errors.New("the GTD app refused GTD_TOKEN (missing, wrong or revoked) — create a client in Settings → Clients and use its token")
@@ -94,7 +112,7 @@ func (c *Client) do(ctx context.Context, method, path string, body []byte) (Repl
 	if res.StatusCode >= 300 && res.StatusCode < 400 {
 		return Reply{}, fmt.Errorf("the GTD app at %s answered %s with a redirect to %q — a login in front of it? Let /api/v1/ through without login (docs/OPERATIONS.md, \"Reachable from outside\")", c.base, path, res.Header.Get("Location"))
 	}
-	return Reply{Status: res.StatusCode, Body: b}, nil
+	return Reply{Status: res.StatusCode, Body: b, Header: res.Header}, nil
 }
 
 func (c *Client) get(ctx context.Context, path string, v any) error {
@@ -103,6 +121,9 @@ func (c *Client) get(ctx context.Context, path string, v any) error {
 		return err
 	}
 	if r.Status == http.StatusUnauthorized {
+		if !r.FromApp() {
+			return c.LoginInFront(path)
+		}
 		return ErrUnauthorized
 	}
 	if r.Status != http.StatusOK {

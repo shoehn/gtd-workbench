@@ -52,6 +52,9 @@ func forward(c *app.Client, name string) mcp.ToolHandler {
 		if reply.Status == http.StatusOK {
 			return success(c, reply.Body), nil
 		}
+		if reply.Status == http.StatusUnauthorized && !reply.FromApp() {
+			return failure(c.LoginInFront("/api/v1/tools/" + name).Error()), nil
+		}
 		return failure(explain(name, reply)), nil
 	}
 }

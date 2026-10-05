@@ -100,6 +100,19 @@ func TestErrors(t *testing.T) {
 			t.Fatalf("got %v", err)
 		}
 	})
+	t.Run("a proxy login answering 401 is not a bad token", func(t *testing.T) {
+		login := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("401 Unauthorized"))
+		}))
+		defer login.Close()
+		c, _ := app.New(login.URL, token)
+		_, err := c.Tools(context.Background())
+		if err == nil || errors.Is(err, app.ErrUnauthorized) || !strings.Contains(err.Error(), "login in front") || !strings.Contains(err.Error(), "/api/v1/") {
+			t.Fatalf("got %v", err)
+		}
+	})
 	t.Run("not reachable", func(t *testing.T) {
 		c, _ := app.New("http://127.0.0.1:1", token)
 		if _, err := c.Call(context.Background(), "whoami", nil); err == nil || !strings.Contains(err.Error(), "not reachable") {
