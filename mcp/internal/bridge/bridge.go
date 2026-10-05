@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -29,6 +30,12 @@ func New(ctx context.Context, c *app.Client, version string) (*mcp.Server, error
 	}
 	s := mcp.NewServer(&mcp.Implementation{Name: "gtd-workbench", Title: "GTD Workbench", Version: version}, &mcp.ServerOptions{Instructions: instructions})
 	for _, t := range tools {
+		// MCP wants an object schema; the SDK panics on anything else. Skip such a tool rather
+		// than lose them all — a newer app may have one this binary can't offer yet.
+		if !objectSchema(t.InputSchema) {
+			log.Printf("skipping tool %s: its input schema is not a JSON object schema", t.Name)
+			continue
+		}
 		s.AddTool(&mcp.Tool{Name: t.Name, Description: t.Description, InputSchema: t.InputSchema}, forward(c, t.Name))
 	}
 	for _, p := range prompts {
@@ -41,6 +48,11 @@ func New(ctx context.Context, c *app.Client, version string) (*mcp.Server, error
 		})
 	}
 	return s, nil
+}
+
+func objectSchema(raw json.RawMessage) bool {
+	var m map[string]any
+	return json.Unmarshal(raw, &m) == nil && m["type"] == "object"
 }
 
 func forward(c *app.Client, name string) mcp.ToolHandler {

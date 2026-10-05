@@ -36,9 +36,18 @@ const prompts = `{"prompts":[{"name":"weekly_review","title":"Weekly review with
 
 func New(t testing.TB, token string) *Fake { return NewAt(t, token, "") }
 
+// NewWithExtraTool lists one more tool (raw JSON) after the usual three.
+func NewWithExtraTool(t testing.TB, token, toolJSON string) *Fake { return newFake(t, token, "", toolJSON) }
+
 // NewAt serves the API under a path prefix, as behind a proxy at https://host/gtd/.
-func NewAt(t testing.TB, token, prefix string) *Fake {
+func NewAt(t testing.TB, token, prefix string) *Fake { return newFake(t, token, prefix, "") }
+
+func newFake(t testing.TB, token, prefix, extraTool string) *Fake {
 	f := &Fake{}
+	toolList := tools
+	if extraTool != "" {
+		toolList = strings.TrimSuffix(tools, "]}") + "," + extraTool + "]}"
+	}
 	mux := http.NewServeMux()
 	auth := func(w http.ResponseWriter, r *http.Request) bool {
 		if r.Header.Get("Authorization") != "Bearer "+token {
@@ -51,7 +60,7 @@ func NewAt(t testing.TB, token, prefix string) *Fake {
 	}
 	mux.HandleFunc("GET "+prefix+"/api/v1/tools", func(w http.ResponseWriter, r *http.Request) {
 		if auth(w, r) {
-			io.WriteString(w, tools)
+			io.WriteString(w, toolList)
 		}
 	})
 	mux.HandleFunc("GET "+prefix+"/api/v1/prompts", func(w http.ResponseWriter, r *http.Request) {

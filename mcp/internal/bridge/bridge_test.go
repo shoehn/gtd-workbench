@@ -125,3 +125,20 @@ func TestStartingWithAWrongTokenFails(t *testing.T) {
 		t.Fatalf("got %v", err)
 	}
 }
+
+func TestASchemaThatIsNotAnObjectSkipsThatToolOnly(t *testing.T) {
+	f := apptest.NewWithExtraTool(t, token, `{"name":"bad","description":"A tool with a union schema.","inputSchema":{"anyOf":[{"type":"object"},{"type":"string"}]}}`)
+	cs := session(t, f)
+	tools, err := cs.ListTools(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tl := range tools.Tools {
+		if tl.Name == "bad" {
+			t.Fatal("the bad tool must be skipped")
+		}
+	}
+	if len(tools.Tools) != 3 {
+		t.Fatalf("the others must stay: %d", len(tools.Tools))
+	}
+}
