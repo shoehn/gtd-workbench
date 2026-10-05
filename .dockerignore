@@ -9,3 +9,4 @@ docs
 .env*
 Dockerfile
 compose.yaml
+mcp
