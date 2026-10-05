@@ -66,7 +66,17 @@ func New(rawURL, token string) (*Client, error) {
 	raw := strings.TrimRight(strings.TrimSpace(rawURL), "/")
 	u, err := url.Parse(raw)
 	if raw == "" || err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return nil, fmt.Errorf("GTD_URL must be the app's address, e.g. https://gtd.example.com (got %q)", rawURL)
+		shown := rawURL
+		if err == nil {
+			shown = u.Redacted() // never echo a password
+		} else if strings.Contains(rawURL, "@") {
+			shown = "…"
+		}
+		return nil, fmt.Errorf("GTD_URL must be the app's address, e.g. https://gtd.example.com (got %q)", shown)
+	}
+	// A password here would show in every link the model sees; the token is what authenticates.
+	if u.User != nil || u.RawQuery != "" || u.Fragment != "" || strings.HasSuffix(raw, "?") || strings.HasSuffix(raw, "#") {
+		return nil, errors.New("GTD_URL must be just the app's address — no user or password, no ?query or #fragment (the token authenticates; a proxy login needs /api/v1/ let through, docs/OPERATIONS.md)")
 	}
 	token = strings.TrimSpace(token)
 	if token == "" {

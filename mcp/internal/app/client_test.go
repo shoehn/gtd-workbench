@@ -75,6 +75,12 @@ func TestBaseURL(t *testing.T) {
 				t.Fatalf("%q: %v", u, err)
 			}
 		}
+		for _, u := range []string{"https://user:secretpw@gtd.example.com", "ftp://user:secretpw@gtd.example.com", "https://gtd.example.com/?x=1", "https://gtd.example.com/#top"} {
+			_, err := app.New(u, token)
+			if err == nil || !strings.Contains(err.Error(), "GTD_URL") || strings.Contains(err.Error(), "secretpw") {
+				t.Fatalf("%q must be refused without echoing a password: %v", u, err)
+			}
+		}
 		if _, err := app.New("https://gtd.example.com", " "); err == nil || !strings.Contains(err.Error(), "GTD_TOKEN") {
 			t.Fatalf("empty token: %v", err)
 		}
