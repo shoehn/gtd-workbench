@@ -2,7 +2,7 @@
 services:
   gtd:
     build: .
-    image: gtd-workbench:0.1.1
+    image: gtd-workbench:0.2.0
     restart: unless-stopped
     # Calendars (CAL_<ID>_URL / _USER / _PASS …), CAPTURE_TOKEN, CAPTURE_MAIL_* and other
     # overrides; the file is optional.
@@ -35,7 +35,7 @@ services:
 
   gtd-backup:
     build: .
-    image: gtd-workbench:0.1.1
+    image: gtd-workbench:0.2.0
     restart: unless-stopped
     depends_on:
       gtd:
